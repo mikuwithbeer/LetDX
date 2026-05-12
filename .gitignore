@@ -1,0 +1,33 @@
+# CMake build directories
+cmake-build-*/
+build/
+out/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Compiled executables
+LetDB
+LetDB.exe
+
+# C/C++ compiled objects
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# OS specific
+.DS_Store
+Thumbs.db
