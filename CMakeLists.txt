@@ -14,6 +14,7 @@ set(CMAKE_C_FLAGS_DEBUG "-g -O0 -DDEBUG")
 
 # --- Source Files ---
 set(SOURCES
+    src/account.c
     src/main.c
 )
 
