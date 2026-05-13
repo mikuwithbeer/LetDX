@@ -4,6 +4,7 @@
 #include "common.h"
 
 constexpr let_u64_t LET_ACCOUNT_CAPACITY_DEFAULT = 1 << 10;
+constexpr auto LET_ACCOUNT_MAXIMUM_TRANSACTIONS = LET_U64_MAX;
 
 typedef enum : let_u8_t {
     LET_ACCOUNT_ERROR_NONE,

@@ -20,6 +20,7 @@ typedef let_u64_t let_time_t;
 
 typedef void *let_pointer_t;
 
+constexpr let_u64_t LET_U64_MAX = ~(let_u64_t) 0;
 constexpr let_u128_t LET_U128_MAX = ~(let_u128_t) 0;
 
 #endif //LET_COMMON_H
