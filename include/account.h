@@ -11,21 +11,21 @@ typedef enum : let_u8_t {
     LET_ACCOUNT_ERROR_NOT_FOUND,
 } let_account_error_t;
 
-typedef enum : let_u16_t {
+typedef enum : let_u8_t {
     LET_ACCOUNT_FLAG_NONE = 0,
     LET_ACCOUNT_FLAG_CAN_SEND = 1 << 0,
     LET_ACCOUNT_FLAG_CAN_RECEIVE = 1 << 1
-} let_account_flags_t;
+} let_account_flag_t;
 
 typedef struct {
     let_u128_t credits;
     let_u128_t debits;
 
-    let_u64_t created_at;
-    let_u64_t updated_at;
     let_u64_t transactions;
+    let_time_t created_at;
+    let_time_t updated_at;
 
-    let_account_flags_t flags;
+    let_account_flag_t flags;
 } let_account_t;
 
 typedef struct {

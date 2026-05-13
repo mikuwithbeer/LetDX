@@ -16,6 +16,9 @@ typedef uint64_t let_u64_t;
 typedef unsigned _BitInt(128) let_u128_t;
 
 typedef let_u64_t let_size_t;
+typedef let_u64_t let_time_t;
+
+typedef void *let_pointer_t;
 
 constexpr let_u128_t LET_U128_MAX = ~(let_u128_t) 0;
 

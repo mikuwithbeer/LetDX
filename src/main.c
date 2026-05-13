@@ -1,10 +1,12 @@
-#include "state.h"
+#include "network.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
 int main(void) {
+    /*
     const auto account_list = let_account_list_new();
     const auto state = let_state_new(account_list);
 
@@ -70,6 +72,44 @@ int main(void) {
 
     let_state_free(state);
     let_account_list_free(account_list);
+
+    */
+
+    let_network_server_t server = {
+        .port = 3169
+    };
+
+    let_network_client_t client = {};
+
+    if (let_network_server_init(&server) != LET_NETWORK_ERROR_NONE) {
+        return -1;
+    }
+
+    if (let_network_server_accept(&server, &client) != LET_NETWORK_ERROR_NONE) {
+        return -1;
+    }
+
+    int counter = 3;
+    while (true) {
+        char buffer[1024] = {0};
+        if (let_network_client_read(&client, &buffer, 1024) != LET_NETWORK_ERROR_NONE) {
+            return -1;
+        }
+
+        printf("%s", buffer);
+
+        if (let_network_client_write(&client, buffer, strlen(buffer)) != LET_NETWORK_ERROR_NONE) {
+            return -1;
+        }
+
+        counter--;
+        if (counter == 0) {
+            break;
+        }
+    }
+
+    let_network_free(&client);
+    let_network_free(&server);
 
     return 0;
 }
