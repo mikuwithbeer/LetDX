@@ -1,11 +1,11 @@
-#include "account.h"
+#include "state.h"
 
 #include <stdio.h>
 #include <time.h>
 
 int main(void) {
-    let_account_list_t *account_list = let_account_list_new();
-    if (account_list == nullptr) {
+    const auto state = let_state_new();
+    if (state == nullptr) {
         return -1;
     }
 
@@ -17,30 +17,19 @@ int main(void) {
         .updated_at = time(nullptr),
 
         .transactions = 0,
-        .flags = JET_ACCOUNT_FLAG_CAN_SEND | JET_ACCOUNT_FLAG_CAN_RECEIVE
+        .flags = LET_ACCOUNT_FLAG_CAN_SEND | LET_ACCOUNT_FLAG_CAN_RECEIVE
     };
 
-    if (!let_account_list_add(account_list, add_account)) {
-        puts("Add account failed");
+    let_u64_t account_id;
+    const auto add_account_result = let_state_add_account(state, add_account, &account_id);
+
+    if (add_account_result != LET_STATE_ERROR_NONE) {
+        printf("Failed to add account: %d\n", add_account_result);
         return -1;
     }
 
-    let_account_t get_account;
-    if (!let_account_list_get(account_list,4, &get_account)) {
-        puts("Get account failed on purpose");
-    }
+    printf("Account ID: %llu\n", account_id);
 
-    if (!let_account_list_get(account_list, 0, &get_account)) {
-        puts("Get account failed");
-        return -1;
-    }
-
-    printf("Add Credits: %llu\n", (let_u64_t) add_account.credits);
-    printf("Add Debits: %llu\n", (let_u64_t) add_account.debits);
-
-    printf("Get Credits: %llu\n", (let_u64_t) get_account.credits);
-    printf("Get Debits: %llu\n", (let_u64_t) get_account.debits);
-
-    let_account_list_free(account_list);
+    let_state_free(state);
     return 0;
 }
