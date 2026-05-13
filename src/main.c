@@ -2,34 +2,74 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 int main(void) {
-    const auto state = let_state_new();
+    const auto account_list = let_account_list_new();
+    const auto state = let_state_new(account_list);
+
     if (state == nullptr) {
         return -1;
     }
 
-    const let_account_t add_account = {
-        .credits = 1000,
-        .debits = 31,
+    const let_account_t add_account_1 = {
+        .credits = 0,
+        .debits = 100,
 
         .created_at = time(nullptr),
         .updated_at = time(nullptr),
 
         .transactions = 0,
-        .flags = LET_ACCOUNT_FLAG_CAN_SEND | LET_ACCOUNT_FLAG_CAN_RECEIVE
+        .flags = LET_ACCOUNT_FLAG_CAN_SEND
     };
 
-    let_u64_t account_id;
-    const auto add_account_result = let_state_add_account(state, add_account, &account_id);
 
-    if (add_account_result != LET_STATE_ERROR_NONE) {
-        printf("Failed to add account: %d\n", add_account_result);
+    const let_account_t add_account_2 = {
+        .credits = 0,
+        .debits = 50,
+
+        .created_at = time(nullptr),
+        .updated_at = time(nullptr),
+
+        .transactions = 0,
+        .flags = LET_ACCOUNT_FLAG_CAN_RECEIVE
+    };
+
+    let_u64_t account_id_1, account_id_2;
+    const auto add_account_result_1 = let_state_add_account(state, add_account_1, &account_id_1);
+    const auto add_account_result_2 = let_state_add_account(state, add_account_2, &account_id_2);
+
+    if (add_account_result_1 != LET_STATE_ERROR_NONE || add_account_result_2 != LET_STATE_ERROR_NONE) {
+        printf("Failed to add account: %d\n", add_account_result_1);
+        printf("Failed to add account: %d\n", add_account_result_2);
         return -1;
     }
 
-    printf("Account ID: %llu\n", account_id);
+    printf("Account ID: %llu\n", account_id_1);
+    printf("Account ID: %llu\n", account_id_2);
+
+    sleep(2);
+
+    const auto transfer_result = let_state_make_transfer(state, account_id_1, account_id_2, 100);
+    if (transfer_result != LET_STATE_ERROR_NONE) {
+        printf("Failed to transfer: %d\n", transfer_result);
+        return -1;
+    }
+
+    printf("Transfer successful\n");
+
+    const auto account_1 = &state->account_list->accounts[account_id_1];
+    const auto account_2 = &state->account_list->accounts[account_id_2];
+
+    printf("Account 1 balance: %llu\n", (let_i64_t) (account_1->debits - account_1->credits));
+    printf("Account 2 balance: %llu\n", (let_i64_t) (account_2->debits - account_2->credits));
+
+    printf("Created at: %llu\n", account_1->created_at);
+    printf("Updated at: %llu\n", account_1->updated_at);
+    printf("Transactions: %llu\n", account_1->transactions);
 
     let_state_free(state);
+    let_account_list_free(account_list);
+
     return 0;
 }
