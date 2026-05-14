@@ -1,4 +1,4 @@
-#include "network.h"
+#include "network/server.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -79,7 +79,7 @@ int main(void) {
         .port = 3169
     };
 
-    let_network_client_t client = {};
+    let_network_server_t client = {0};
 
     if (let_network_server_init(&server) != LET_NETWORK_ERROR_NONE) {
         return -1;

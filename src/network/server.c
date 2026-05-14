@@ -1,9 +1,9 @@
-#include "network.h"
+#include "network/server.h"
 
 #include <string.h>
 #include <unistd.h>
 
-let_network_error_t let_network_server_init(let_network_t *network_server) {
+let_network_server_error_t let_network_server_init(let_network_server_t *network_server) {
     network_server->handle = socket(AF_INET, SOCK_STREAM, 0);
     if (network_server->handle < 0) {
         return LET_NETWORK_ERROR_SOCKET_CREATE_FAILED;
@@ -23,14 +23,14 @@ let_network_error_t let_network_server_init(let_network_t *network_server) {
         return LET_NETWORK_ERROR_SOCKET_BIND_FAILED;
     }
 
-    if (listen(network_server->handle, LET_NETWORK_BACKLOG_DEFAULT) < 0)
+    if (listen(network_server->handle, LET_NETWORK_SERVER_BACKLOG_DEFAULT) < 0)
         return LET_NETWORK_ERROR_SOCKET_LISTEN_FAILED;
 
     return LET_NETWORK_ERROR_NONE;
 }
 
-let_network_error_t let_network_server_accept(const let_network_server_t *network_server,
-                                              let_network_client_t *network_client) {
+let_network_server_error_t let_network_server_accept(const let_network_server_t *network_server,
+                                                     let_network_server_t *network_client) {
     constexpr socklen_t client_address_length = sizeof(network_client->address);
     const auto client_handle = accept(network_server->handle,
                                       (struct sockaddr *) &network_client->address,
@@ -44,9 +44,9 @@ let_network_error_t let_network_server_accept(const let_network_server_t *networ
     return LET_NETWORK_ERROR_NONE;
 }
 
-let_network_error_t let_network_client_read(const let_network_client_t *network_client,
-                                            const let_pointer_t network_buffer,
-                                            const let_size_t network_buffer_length) {
+let_network_server_error_t let_network_client_read(const let_network_server_t *network_client,
+                                                   const let_pointer_t network_buffer,
+                                                   const let_size_t network_buffer_length) {
     const auto receive_result = recv(network_client->handle, network_buffer, network_buffer_length, 0);
     if (receive_result < 0) {
         return LET_NETWORK_ERROR_SOCKET_READ_FAILED;
@@ -55,9 +55,9 @@ let_network_error_t let_network_client_read(const let_network_client_t *network_
     return LET_NETWORK_ERROR_NONE;
 }
 
-let_network_error_t let_network_client_write(const let_network_client_t *network_client,
-                                             const let_pointer_t network_buffer,
-                                             const let_size_t network_buffer_length) {
+let_network_server_error_t let_network_client_write(const let_network_server_t *network_client,
+                                                    const let_pointer_t network_buffer,
+                                                    const let_size_t network_buffer_length) {
     const auto send_result = send(network_client->handle, network_buffer, network_buffer_length, 0);
     if (send_result < 0) {
         return LET_NETWORK_ERROR_SOCKET_WRITE_FAILED;
@@ -66,9 +66,9 @@ let_network_error_t let_network_client_write(const let_network_client_t *network
     return LET_NETWORK_ERROR_NONE;
 }
 
-void let_network_free(let_network_t *network) {
-    if (network->handle >= 0) {
-        close(network->handle);
-        network->handle = -1;
+void let_network_free(let_network_server_t *network_server) {
+    if (network_server->handle >= 0) {
+        close(network_server->handle);
+        network_server->handle = -1;
     }
 }
