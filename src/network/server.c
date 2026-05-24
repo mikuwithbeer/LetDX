@@ -1,7 +1,9 @@
+#include "network/parser.h"
 #include "network/server.h"
 
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 let_network_server_error_t let_network_server_init(let_network_server_t *network_server) {
     network_server->handle = socket(AF_INET, SOCK_STREAM, 0);
@@ -45,19 +47,55 @@ let_network_server_error_t let_network_server_accept(const let_network_server_t 
 }
 
 let_network_server_error_t let_network_client_read(const let_network_server_t *network_client,
-                                                   const let_pointer_t network_buffer,
-                                                   const let_size_t network_buffer_length) {
-    const auto receive_result = recv(network_client->handle, network_buffer, network_buffer_length, 0);
-    if (receive_result < 0) {
-        return LET_NETWORK_ERROR_SOCKET_READ_FAILED;
-    }
+                                                   let_network_protocol_request_t *request) {
+    auto network_parser = let_network_parser_new();
+    let_u8_t current_byte = 0;
 
-    return LET_NETWORK_ERROR_NONE;
+    while (true) {
+        const auto read_result = recv(network_client->handle, &current_byte, 1, 0);
+        if (read_result == 0) {
+            return LET_NETWORK_ERROR_SOCKET_CLOSED;
+        }
+
+        if (read_result < 0) {
+            return LET_NETWORK_ERROR_SOCKET_READ_FAILED;
+        }
+
+        const auto parser_result = let_network_parser_next(&network_parser, current_byte);
+        if (parser_result != LET_NETWORK_PARSER_ERROR_NONE) {
+            return LET_NETWORK_ERROR_SOCKET_PARSE_FAILED;
+        }
+
+        if (network_parser.state == LET_NETWORK_PARSER_STATE_DONE) {
+            memcpy(request, &network_parser.request, sizeof(let_network_protocol_request_t));
+            return LET_NETWORK_ERROR_NONE;
+        }
+    }
 }
 
 let_network_server_error_t let_network_client_write(const let_network_server_t *network_client,
-                                                    const let_pointer_t network_buffer,
-                                                    const let_size_t network_buffer_length) {
+                                                    const let_network_protocol_response_t response) {
+    let_size_t network_buffer_length = 0;
+    u_int8_t network_buffer[64] = {0};
+
+    switch (response.id) {
+        case LET_NETWORK_PROTOCOL_RESPONSE_ID_ERROR:
+            network_buffer_length = 4;
+            network_buffer[0] = 'E';
+            network_buffer[1] = 'R';
+            network_buffer[2] = 'R';
+            network_buffer[3] = '\n';
+            break;
+        case LET_NETWORK_PROTOCOL_RESPONSE_ID_OK:
+            network_buffer_length = 3;
+            network_buffer[0] = 'O';
+            network_buffer[1] = 'K';
+            network_buffer[2] = '\n';
+            break;
+        default:
+            break;
+    }
+
     const auto send_result = send(network_client->handle, network_buffer, network_buffer_length, 0);
     if (send_result < 0) {
         return LET_NETWORK_ERROR_SOCKET_WRITE_FAILED;

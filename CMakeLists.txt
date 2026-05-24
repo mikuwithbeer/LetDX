@@ -15,6 +15,8 @@ set(CMAKE_C_FLAGS_DEBUG "-g -O0 -DDEBUG")
 # --- Source Files ---
 set(SOURCES
     src/network/server.c
+    src/network/protocol.c
+    src/network/parser.c
     src/account.c
     src/guard.c
     src/main.c

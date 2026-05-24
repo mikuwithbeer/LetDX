@@ -1,9 +1,8 @@
 #include "network/server.h"
+#include "network/protocol.h"
 
 #include <stdio.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
+
 
 int main(void) {
     /*
@@ -89,22 +88,20 @@ int main(void) {
         return -1;
     }
 
-    int counter = 3;
     while (true) {
-        char buffer[1024] = {0};
-        if (let_network_client_read(&client, &buffer, 1024) != LET_NETWORK_ERROR_NONE) {
-            return -1;
-        }
+        let_network_protocol_request_t request;
+        let_network_protocol_response_t response;
 
-        printf("%s", buffer);
-
-        if (let_network_client_write(&client, buffer, strlen(buffer)) != LET_NETWORK_ERROR_NONE) {
-            return -1;
-        }
-
-        counter--;
-        if (counter == 0) {
+        const auto read_request = let_network_client_read(&client, &request);
+        if (read_request != LET_NETWORK_ERROR_NONE) {
+            printf("Failed to read request: %d\n", read_request);
             break;
+        }
+
+        response.id = LET_NETWORK_PROTOCOL_RESPONSE_ID_OK;
+        const auto write_response = let_network_client_write(&client, response);
+        if (write_response != LET_NETWORK_ERROR_NONE) {
+            printf("Failed to write response: %d\n", write_response);
         }
     }
 

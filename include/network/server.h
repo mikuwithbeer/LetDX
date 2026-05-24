@@ -2,6 +2,7 @@
 #define LET_NETWORK_SERVER_H
 
 #include "common.h"
+#include "protocol.h"
 
 #include <netinet/in.h>
 
@@ -15,6 +16,8 @@ typedef enum : let_u8_t {
     LET_NETWORK_ERROR_SOCKET_ACCEPT_FAILED,
     LET_NETWORK_ERROR_SOCKET_READ_FAILED,
     LET_NETWORK_ERROR_SOCKET_WRITE_FAILED,
+    LET_NETWORK_ERROR_SOCKET_CLOSED,
+    LET_NETWORK_ERROR_SOCKET_PARSE_FAILED,
 } let_network_server_error_t;
 
 typedef struct sockaddr_in let_network_server_address_t;
@@ -31,12 +34,10 @@ typedef struct {
                                                                    let_network_server_t *network_client);
 
 [[nodiscard]] let_network_server_error_t let_network_client_read(const let_network_server_t *network_client,
-                                                                 let_pointer_t network_buffer,
-                                                                 let_size_t network_buffer_length);
+                                                                 let_network_protocol_request_t *request);
 
 [[nodiscard]] let_network_server_error_t let_network_client_write(const let_network_server_t *network_client,
-                                                                  let_pointer_t network_buffer,
-                                                                  let_size_t network_buffer_length);
+                                                                  let_network_protocol_response_t response);
 
 void let_network_free(let_network_server_t *network_server);
 
