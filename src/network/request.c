@@ -33,7 +33,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                     output->id = LET_NETWORK_REQUEST_ID_VERSION;
                     break;
                 case '+':
-                    output->id= LET_NETWORK_REQUEST_ID_CREATE_ACCOUNT;
+                    output->id = LET_NETWORK_REQUEST_ID_CREATE_ACCOUNT;
                     break;
                 case '.':
                     output->id = LET_NETWORK_REQUEST_ID_CLOSE;
@@ -54,6 +54,13 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                 }
 
                 return LET_NETWORK_REQUEST_PARSER_ERROR_EXPECTED_NEW_LINE;
+            }
+
+            if (request_parser->request_argument_counter == 1 && byte == '\n') {
+                request_parser->request_argument_counter--;
+                request_parser->state = LET_NETWORK_REQUEST_PARSER_STATE_DONE;
+
+                break;
             }
 
             switch (output->id) {
@@ -104,6 +111,8 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                 default:
                     unreachable();
             }
+
+            break;
         }
         case LET_NETWORK_REQUEST_PARSER_STATE_DONE:
             break;
