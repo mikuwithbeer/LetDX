@@ -1,4 +1,3 @@
-#include "network/parser.h"
 #include "network/server.h"
 
 #include <string.h>
@@ -33,7 +32,7 @@ let_network_server_error_t let_network_server_init(let_network_server_t *network
 
 let_network_server_error_t let_network_server_accept(const let_network_server_t *network_server,
                                                      let_network_server_t *network_client) {
-    constexpr socklen_t client_address_length = sizeof(network_client->address);
+    const socklen_t client_address_length = sizeof(network_client->address);
     const auto client_handle = accept(network_server->handle,
                                       (struct sockaddr *) &network_client->address,
                                       &client_address_length);
@@ -47,8 +46,8 @@ let_network_server_error_t let_network_server_accept(const let_network_server_t 
 }
 
 let_network_server_error_t let_network_client_read(const let_network_server_t *network_client,
-                                                   let_network_protocol_request_t *request) {
-    auto network_parser = let_network_parser_new();
+                                                   let_network_request_t *request) {
+    auto network_parser = let_network_request_parser_new();
     let_u8_t current_byte = 0;
 
     while (true) {
@@ -61,32 +60,31 @@ let_network_server_error_t let_network_client_read(const let_network_server_t *n
             return LET_NETWORK_ERROR_SOCKET_READ_FAILED;
         }
 
-        const auto parser_result = let_network_parser_next(&network_parser, current_byte);
-        if (parser_result != LET_NETWORK_PARSER_ERROR_NONE) {
+        const auto parser_result = let_network_request_parser_next(&network_parser, current_byte, request);
+        if (parser_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
             return LET_NETWORK_ERROR_SOCKET_PARSE_FAILED;
         }
 
-        if (network_parser.state == LET_NETWORK_PARSER_STATE_DONE) {
-            memcpy(request, &network_parser.request, sizeof(let_network_protocol_request_t));
+        if (network_parser.state == LET_NETWORK_REQUEST_PARSER_STATE_DONE) {
             return LET_NETWORK_ERROR_NONE;
         }
     }
 }
 
 let_network_server_error_t let_network_client_write(const let_network_server_t *network_client,
-                                                    const let_network_protocol_response_t response) {
+                                                    const let_network_response_t *response) {
     let_size_t network_buffer_length = 0;
     u_int8_t network_buffer[64] = {0};
 
-    switch (response.id) {
-        case LET_NETWORK_PROTOCOL_RESPONSE_ID_ERROR:
+    switch (response->id) {
+        case LET_NETWORK_RESPONSE_ID_ERROR:
             network_buffer_length = 4;
             network_buffer[0] = 'E';
             network_buffer[1] = 'R';
             network_buffer[2] = 'R';
             network_buffer[3] = '\n';
             break;
-        case LET_NETWORK_PROTOCOL_RESPONSE_ID_OK:
+        case LET_NETWORK_RESPONSE_ID_OK:
             network_buffer_length = 3;
             network_buffer[0] = 'O';
             network_buffer[1] = 'K';

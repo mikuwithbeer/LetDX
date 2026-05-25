@@ -1,14 +1,14 @@
 #ifndef LET_NETWORK_SERVER_H
 #define LET_NETWORK_SERVER_H
 
-#include "common.h"
-#include "protocol.h"
+#include "network/request.h"
+#include "network/response.h"
 
 #include <netinet/in.h>
 
 constexpr int LET_NETWORK_SERVER_BACKLOG_DEFAULT = 1 << 2;
 
-typedef enum : let_u8_t {
+typedef enum [[nodiscard]] : let_u8_t {
     LET_NETWORK_ERROR_NONE,
     LET_NETWORK_ERROR_SOCKET_CREATE_FAILED,
     LET_NETWORK_ERROR_SOCKET_BIND_FAILED,
@@ -28,16 +28,16 @@ typedef struct {
     let_u16_t port;
 } let_network_server_t;
 
-[[nodiscard]] let_network_server_error_t let_network_server_init(let_network_server_t *network_server);
+let_network_server_error_t let_network_server_init(let_network_server_t *network_server);
 
-[[nodiscard]] let_network_server_error_t let_network_server_accept(const let_network_server_t *network_server,
-                                                                   let_network_server_t *network_client);
+let_network_server_error_t let_network_server_accept(const let_network_server_t *network_server,
+                                                     let_network_server_t *network_client);
 
-[[nodiscard]] let_network_server_error_t let_network_client_read(const let_network_server_t *network_client,
-                                                                 let_network_protocol_request_t *request);
+let_network_server_error_t let_network_client_read(const let_network_server_t *network_client,
+                                                   let_network_request_t *request);
 
-[[nodiscard]] let_network_server_error_t let_network_client_write(const let_network_server_t *network_client,
-                                                                  let_network_protocol_response_t response);
+let_network_server_error_t let_network_client_write(const let_network_server_t *network_client,
+                                                    const let_network_response_t *response);
 
 void let_network_free(let_network_server_t *network_server);
 
