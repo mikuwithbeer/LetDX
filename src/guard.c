@@ -28,8 +28,8 @@ let_guard_error_t let_guard_make_transfer(const let_guard_t *guard,
     const auto from_account = &guard->state->account_list->accounts[from_account_id];
     const auto to_account = &guard->state->account_list->accounts[to_account_id];
 
-    const auto from_account_balance = from_account->debits - from_account->credits;
-    if (amount > from_account_balance) {
+    if (from_account->debits < from_account->credits ||
+        from_account->debits - from_account->credits < amount) {
         return LET_GUARD_ERROR_INSUFFICIENT_FUNDS;
     }
 
