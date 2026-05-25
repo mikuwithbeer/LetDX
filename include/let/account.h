@@ -1,7 +1,7 @@
 #ifndef LET_ACCOUNT_H
 #define LET_ACCOUNT_H
 
-#include "common.h"
+#include "let/common.h"
 
 constexpr let_u64_t LET_ACCOUNT_CAPACITY_DEFAULT = 1 << 10;
 constexpr auto LET_ACCOUNT_MAXIMUM_TRANSACTIONS = LET_U64_MAX;

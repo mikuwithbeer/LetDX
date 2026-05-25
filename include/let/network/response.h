@@ -1,7 +1,7 @@
 #ifndef LET_NETWORK_RESPONSE_H
 #define LET_NETWORK_RESPONSE_H
 
-#include "common.h"
+#include "let/common.h"
 
 typedef enum : let_u8_t {
     LET_NETWORK_RESPONSE_ID_OK,

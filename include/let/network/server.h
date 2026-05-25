@@ -1,8 +1,8 @@
 #ifndef LET_NETWORK_SERVER_H
 #define LET_NETWORK_SERVER_H
 
-#include "network/request.h"
-#include "network/response.h"
+#include "let/network/request.h"
+#include "let/network/response.h"
 
 #include <netinet/in.h>
 
