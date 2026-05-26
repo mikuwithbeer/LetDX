@@ -5,7 +5,8 @@
 
 typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_ID_VERSION,
-    LET_NETWORK_REQUEST_ID_CREATE_ACCOUNT,
+    LET_NETWORK_REQUEST_ID_ADD_ACCOUNT,
+    LET_NETWORK_REQUEST_ID_MAKE_TRANSFER,
     LET_NETWORK_REQUEST_ID_CLOSE,
 } let_network_request_id_t;
 
@@ -29,6 +30,11 @@ typedef union {
         let_u128_t debits;
         let_u8_t flags;
     } create_account;
+    struct {
+        let_u64_t from_id;
+        let_u64_t to_id;
+        let_u128_t amount;
+    } make_transfer;
 } let_network_request_data_t;
 
 typedef struct {
@@ -54,6 +60,10 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
 let_network_request_parser_error_t let_network_request_parser_collect_u128(let_network_request_parser_t *request_parser,
                                                                            let_u8_t byte,
                                                                            let_u128_t *output);
+
+let_network_request_parser_error_t let_network_request_parser_collect_u64(let_network_request_parser_t *request_parser,
+                                                                           let_u8_t byte,
+                                                                           let_u64_t *output);
 
 let_network_request_parser_error_t let_network_request_parser_collect_u8(let_network_request_parser_t *request_parser,
                                                                          let_u8_t byte,

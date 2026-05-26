@@ -50,11 +50,8 @@ let_account_error_t let_account_list_get(const let_account_list_t *account_list,
 }
 
 void let_account_list_free(let_account_list_t *account_list) {
-    if (account_list->accounts != nullptr) {
-        free(account_list->accounts);
-    }
-
     if (account_list != nullptr) {
+        free(account_list->accounts);
         free(account_list);
     }
 }

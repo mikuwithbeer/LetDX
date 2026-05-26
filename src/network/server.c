@@ -19,20 +19,29 @@ let_network_server_error_t let_network_server_init(let_network_server_t *network
     network_server->address.sin_addr.s_addr = INADDR_ANY;
     network_server->address.sin_port = htons(network_server->port);
 
-    if (bind(network_server->handle, (struct sockaddr *) &network_server->address,
-             sizeof(network_server->address)) < 0) {
+    const auto bind_result = bind(
+        network_server->handle,
+        (struct sockaddr *) &network_server->address,
+        sizeof(network_server->address));
+
+    if (bind_result < 0) {
+        let_network_free(network_server);
         return LET_NETWORK_ERROR_SOCKET_BIND_FAILED;
     }
 
-    if (listen(network_server->handle, LET_NETWORK_SERVER_BACKLOG_DEFAULT) < 0)
+    const auto listen_result = listen(network_server->handle, LET_NETWORK_SERVER_BACKLOG_DEFAULT);
+
+    if (listen_result < 0) {
+        let_network_free(network_server);
         return LET_NETWORK_ERROR_SOCKET_LISTEN_FAILED;
+    }
 
     return LET_NETWORK_ERROR_NONE;
 }
 
 let_network_server_error_t let_network_server_accept(const let_network_server_t *network_server,
                                                      let_network_server_t *network_client) {
-    const socklen_t client_address_length = sizeof(network_client->address);
+    socklen_t client_address_length = sizeof(network_client->address);
     const auto client_handle = accept(network_server->handle,
                                       (struct sockaddr *) &network_client->address,
                                       &client_address_length);

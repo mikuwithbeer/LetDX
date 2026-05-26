@@ -9,11 +9,11 @@ let_network_request_t let_network_request_new(void) {
 uint8_t let_network_request_to_argument_count(const let_network_request_t *request) {
     switch (request->id) {
         case LET_NETWORK_REQUEST_ID_VERSION:
-            return 0;
-        case LET_NETWORK_REQUEST_ID_CREATE_ACCOUNT:
-            return 3;
         case LET_NETWORK_REQUEST_ID_CLOSE:
             return 0;
+        case LET_NETWORK_REQUEST_ID_ADD_ACCOUNT:
+        case LET_NETWORK_REQUEST_ID_MAKE_TRANSFER:
+            return 3;
     }
 
     unreachable();
@@ -33,7 +33,10 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                     output->id = LET_NETWORK_REQUEST_ID_VERSION;
                     break;
                 case '+':
-                    output->id = LET_NETWORK_REQUEST_ID_CREATE_ACCOUNT;
+                    output->id = LET_NETWORK_REQUEST_ID_ADD_ACCOUNT;
+                    break;
+                case '%':
+                    output->id = LET_NETWORK_REQUEST_ID_MAKE_TRANSFER;
                     break;
                 case '.':
                     output->id = LET_NETWORK_REQUEST_ID_CLOSE;
@@ -64,7 +67,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
             }
 
             switch (output->id) {
-                case LET_NETWORK_REQUEST_ID_CREATE_ACCOUNT: {
+                case LET_NETWORK_REQUEST_ID_ADD_ACCOUNT: {
                     switch (request_parser->request_argument_counter) {
                         case 3: {
                             const auto collect_result = let_network_request_parser_collect_u128(
@@ -95,6 +98,50 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                                 request_parser,
                                 byte,
                                 &output->data.create_account.flags);
+
+                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                                return collect_result;
+                            }
+
+                            break;
+                        }
+                        default:
+                            unreachable();
+                    }
+
+                    break;
+                }
+                case LET_NETWORK_REQUEST_ID_MAKE_TRANSFER: {
+                    switch (request_parser->request_argument_counter) {
+                        case 3: {
+                            const auto collect_result = let_network_request_parser_collect_u64(
+                                request_parser,
+                                byte,
+                                &output->data.make_transfer.from_id);
+
+                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                                return collect_result;
+                            }
+
+                            break;
+                        }
+                        case 2: {
+                            const auto collect_result = let_network_request_parser_collect_u64(
+                                request_parser,
+                                byte,
+                                &output->data.make_transfer.to_id);
+
+                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                                return collect_result;
+                            }
+
+                            break;
+                        }
+                        case 1: {
+                            const auto collect_result = let_network_request_parser_collect_u128(
+                                request_parser,
+                                byte,
+                                &output->data.make_transfer.amount);
 
                             if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
                                 return collect_result;
@@ -147,12 +194,35 @@ let_network_request_parser_error_t let_network_request_parser_collect_u128(let_n
     return LET_NETWORK_REQUEST_PARSER_ERROR_NONE;
 }
 
+
+let_network_request_parser_error_t let_network_request_parser_collect_u64(let_network_request_parser_t *request_parser,
+                                                                          const let_u8_t byte,
+                                                                          let_u64_t *output) {
+    let_u128_t current_output = *output;
+
+    const auto u128_result = let_network_request_parser_collect_u128(
+        request_parser,
+        byte,
+        &current_output);
+
+    if (u128_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+        return u128_result;
+    }
+
+    if (current_output > LET_U64_MAX) {
+        return LET_NETWORK_REQUEST_PARSER_ERROR_INTEGER_OVERFLOW;
+    }
+
+    *output = (let_u64_t) current_output;
+    return LET_NETWORK_REQUEST_PARSER_ERROR_NONE;
+}
+
 let_network_request_parser_error_t let_network_request_parser_collect_u8(let_network_request_parser_t *request_parser,
                                                                          const let_u8_t byte,
                                                                          let_u8_t *output) {
     let_u128_t current_output = *output;
 
-    let_network_request_parser_error_t u128_result = let_network_request_parser_collect_u128(
+    const auto u128_result = let_network_request_parser_collect_u128(
         request_parser,
         byte,
         &current_output);
