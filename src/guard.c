@@ -33,8 +33,8 @@ let_guard_error_t let_guard_make_transfer(const let_guard_t *guard,
         return LET_GUARD_ERROR_INSUFFICIENT_FUNDS;
     }
 
-    if (from_account->transactions == LET_ACCOUNT_MAXIMUM_TRANSACTIONS
-        || to_account->transactions == LET_ACCOUNT_MAXIMUM_TRANSACTIONS) {
+    if (from_account->transactions == LET_U64_MAX
+        || to_account->transactions == LET_U64_MAX) {
         return LET_GUARD_ERROR_MAXIMUM_TRANSACTIONS;
     }
 

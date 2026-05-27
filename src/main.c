@@ -1,11 +1,14 @@
 #include "let/network/server.h"
+#include "let/guard.h"
 
 #include <stdio.h>
 
 int main(void) {
-    /*
     const auto account_list = let_account_list_new();
     const auto state = let_state_new(account_list);
+    const auto guard = let_guard_new(state);
+
+    /*
 
     if (state == nullptr) {
         return -1;
@@ -88,7 +91,7 @@ int main(void) {
 
     while (true) {
         let_network_request_t request = let_network_request_new();
-        let_network_response_t response;
+        let_network_response_t response = {0};
 
         const auto read_request = let_network_client_read(&client, &request);
         if (read_request != LET_NETWORK_ERROR_NONE) {
@@ -96,7 +99,52 @@ int main(void) {
             break;
         }
 
-        response.id = LET_NETWORK_RESPONSE_ID_OK;
+        switch (request.id) {
+            case LET_NETWORK_REQUEST_ID_MAGIC:
+                response.id = LET_NETWORK_RESPONSE_ID_MAGIC;
+                break;
+            case LET_NETWORK_REQUEST_ID_ADD_ACCOUNT:
+                response.id = LET_NETWORK_RESPONSE_ID_ADD_ACCOUNT;
+
+                const auto add_account = let_account_new(
+                    request.data.create_account.credits,
+                    request.data.create_account.debits,
+                    request.data.create_account.flags);
+
+                let_u64_t account_id;
+
+                const auto add_account_result = let_state_add_account(state, add_account, &account_id);
+                if (add_account_result != LET_STATE_ERROR_NONE) {
+                    response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                } else {
+                    response.data.add_account = account_id;
+                }
+
+                break;
+            case LET_NETWORK_REQUEST_ID_MAKE_TRANSFER:
+                response.id = LET_NETWORK_RESPONSE_ID_OK;
+
+                const auto from_id = request.data.make_transfer.from_id;
+                const auto to_id = request.data.make_transfer.to_id;
+                const auto amount = request.data.make_transfer.amount;
+
+                const auto guard_result = let_guard_make_transfer(guard, from_id, to_id, amount);
+                if (guard_result != LET_GUARD_ERROR_NONE) {
+                    response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                    break;
+                }
+
+                const auto transfer_result = let_state_make_transfer(state, from_id, to_id, amount);
+                if (transfer_result != LET_STATE_ERROR_NONE) {
+                    response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                }
+
+                break;
+            case LET_NETWORK_REQUEST_ID_CLOSE:
+                response.id = LET_NETWORK_RESPONSE_ID_OK;
+                break;
+        }
+
         const auto write_response = let_network_client_write(&client, &response);
         if (write_response != LET_NETWORK_ERROR_NONE) {
             printf("Failed to write response: %d\n", write_response);
@@ -105,6 +153,10 @@ int main(void) {
 
     let_network_free(&client);
     let_network_free(&server);
+
+    let_guard_free(guard);
+    let_state_free(state);
+    let_account_list_free(account_list);
 
     return 0;
 }

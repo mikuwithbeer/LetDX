@@ -82,28 +82,10 @@ let_network_server_error_t let_network_client_read(const let_network_server_t *n
 
 let_network_server_error_t let_network_client_write(const let_network_server_t *network_client,
                                                     const let_network_response_t *response) {
-    let_size_t network_buffer_length = 0;
-    u_int8_t network_buffer[64] = {0};
+    u_int8_t response_buffer[64] = {0};
+    const auto response_length = let_network_response_to_bytes(response, response_buffer);
 
-    switch (response->id) {
-        case LET_NETWORK_RESPONSE_ID_ERROR:
-            network_buffer_length = 4;
-            network_buffer[0] = 'E';
-            network_buffer[1] = 'R';
-            network_buffer[2] = 'R';
-            network_buffer[3] = '\n';
-            break;
-        case LET_NETWORK_RESPONSE_ID_OK:
-            network_buffer_length = 3;
-            network_buffer[0] = 'O';
-            network_buffer[1] = 'K';
-            network_buffer[2] = '\n';
-            break;
-        default:
-            break;
-    }
-
-    const auto send_result = send(network_client->handle, network_buffer, network_buffer_length, 0);
+    const auto send_result = send(network_client->handle, response_buffer, response_length, 0);
     if (send_result < 0) {
         return LET_NETWORK_ERROR_SOCKET_WRITE_FAILED;
     }

@@ -8,7 +8,7 @@ let_network_request_t let_network_request_new(void) {
 
 uint8_t let_network_request_to_argument_count(const let_network_request_t *request) {
     switch (request->id) {
-        case LET_NETWORK_REQUEST_ID_VERSION:
+        case LET_NETWORK_REQUEST_ID_MAGIC:
         case LET_NETWORK_REQUEST_ID_CLOSE:
             return 0;
         case LET_NETWORK_REQUEST_ID_ADD_ACCOUNT:
@@ -29,8 +29,8 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
     switch (request_parser->state) {
         case LET_NETWORK_REQUEST_PARSER_STATE_COMMAND: {
             switch (byte) {
-                case '?':
-                    output->id = LET_NETWORK_REQUEST_ID_VERSION;
+                case '!':
+                    output->id = LET_NETWORK_REQUEST_ID_MAGIC;
                     break;
                 case '+':
                     output->id = LET_NETWORK_REQUEST_ID_ADD_ACCOUNT;

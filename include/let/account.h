@@ -4,7 +4,6 @@
 #include "let/common.h"
 
 constexpr let_u64_t LET_ACCOUNT_CAPACITY_DEFAULT = 1 << 10;
-constexpr auto LET_ACCOUNT_MAXIMUM_TRANSACTIONS = LET_U64_MAX;
 
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ACCOUNT_ERROR_NONE,
@@ -35,6 +34,10 @@ typedef struct {
 
     let_account_t *accounts;
 } let_account_list_t;
+
+[[nodiscard]] let_account_t let_account_new(let_u128_t credits,
+                                            let_u128_t debits,
+                                            let_account_flag_t flags);
 
 [[nodiscard]] let_account_list_t *let_account_list_new(void);
 

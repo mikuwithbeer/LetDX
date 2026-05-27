@@ -1,6 +1,24 @@
 #include "let/account.h"
 
 #include <stdlib.h>
+#include <time.h>
+
+let_account_t let_account_new(const let_u128_t credits,
+                              const let_u128_t debits,
+                              const let_account_flag_t flags) {
+    const auto time_now = (let_time_t) time(nullptr);
+
+    return (let_account_t){
+        .credits = credits,
+        .debits = debits,
+
+        .created_at = time_now,
+        .updated_at = time_now,
+
+        .transactions = 0,
+        .flags = flags
+    };
+}
 
 let_account_list_t *let_account_list_new(void) {
     let_account_list_t *account_list = malloc(sizeof(let_account_list_t));
