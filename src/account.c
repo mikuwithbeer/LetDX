@@ -40,7 +40,7 @@ let_account_list_t *let_account_list_new(void) {
 }
 
 let_error_t let_account_list_add(let_account_list_t *account_list,
-                                         const let_account_t account) {
+                                 const let_account_t account) {
     if (account_list->length >= account_list->capacity) {
         const auto new_capacity = account_list->capacity * 2;
         let_account_t *accounts = realloc(account_list->accounts, sizeof(let_account_t) * new_capacity);
@@ -57,8 +57,8 @@ let_error_t let_account_list_add(let_account_list_t *account_list,
 }
 
 let_error_t let_account_list_get(const let_account_list_t *account_list,
-                                         const let_u64_t account_id,
-                                         let_account_t *account) {
+                                 const let_u64_t account_id,
+                                 let_account_t *account) {
     if (account_id >= account_list->length) {
         return let_error_new(LET_ERROR_ID_ACCOUNT, LET_ERROR_ACCOUNT_NOT_FOUND);
     }

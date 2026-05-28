@@ -95,7 +95,7 @@ int main(void) {
 
         const auto read_request = let_network_client_read(&client, &request);
         if (read_request.id != LET_ERROR_ID_NONE) {
-            printf("Failed to read request: %d\n", read_request.code);
+            printf("Failed to read request: %d\n", read_request.error);
             break;
         }
 
@@ -116,6 +116,7 @@ int main(void) {
                 const auto add_account_result = let_state_add_account(state, add_account, &account_id);
                 if (add_account_result.id != LET_ERROR_ID_NONE) {
                     response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                    response.data.error = add_account_result;
                 } else {
                     response.data.add_account = account_id;
                 }
@@ -131,12 +132,14 @@ int main(void) {
                 const auto guard_result = let_guard_make_transfer(guard, from_id, to_id, amount);
                 if (guard_result.id != LET_ERROR_ID_NONE) {
                     response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                    response.data.error = guard_result;
                     break;
                 }
 
                 const auto transfer_result = let_state_make_transfer(state, from_id, to_id, amount);
                 if (transfer_result.id != LET_ERROR_ID_NONE) {
                     response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                    response.data.error = transfer_result;
                 }
 
                 break;
@@ -147,7 +150,7 @@ int main(void) {
 
         const auto write_response = let_network_client_write(&client, &response);
         if (write_response.id != LET_ERROR_ID_NONE) {
-            printf("Failed to write response: %d\n", write_response.code);
+            printf("Failed to write response: %d\n", write_response.error);
         }
     }
 

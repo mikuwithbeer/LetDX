@@ -15,20 +15,19 @@ let_size_t let_network_response_to_bytes(const let_network_response_t *response,
             output[written_bytes++] = LET_NETWORK_RESPONSE_MAGIC[0];
             output[written_bytes++] = LET_NETWORK_RESPONSE_MAGIC[1];
             output[written_bytes++] = LET_NETWORK_RESPONSE_MAGIC[2];
-            output[written_bytes++] = LET_NETWORK_RESPONSE_MAGIC[3];
             break;
         }
         case LET_NETWORK_RESPONSE_ID_ADD_ACCOUNT:
-            written_bytes = sprintf(output, "%llu", response->data.add_account);
+            written_bytes = sprintf(output, "AID %llu", response->data.add_account);
             break;
         case LET_NETWORK_RESPONSE_ID_OK:
             output[written_bytes++] = 'O';
             output[written_bytes++] = 'K';
+            output[written_bytes++] = '.';
             break;
         case LET_NETWORK_RESPONSE_ID_ERROR: {
-            output[written_bytes++] = 'E';
-            output[written_bytes++] = 'R';
-            output[written_bytes++] = 'R';
+            const auto error_code = let_error_code(response->data.error);
+            written_bytes = sprintf(output, "ERR %hu", error_code);
         }
     }
 
