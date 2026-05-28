@@ -16,6 +16,10 @@ let_error_t let_guard_make_transfer(const let_guard_t *guard,
                                     const let_u64_t from_account_id,
                                     const let_u64_t to_account_id,
                                     const let_u128_t amount) {
+    if (amount == 0) {
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_ZERO_BALANCE);
+    }
+
     if (from_account_id == to_account_id) {
         return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_SAME_ACCOUNT);
     }
