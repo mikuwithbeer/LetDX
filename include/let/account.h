@@ -2,14 +2,9 @@
 #define LET_ACCOUNT_H
 
 #include "let/common.h"
+#include "let/error.h"
 
 constexpr let_u64_t LET_ACCOUNT_CAPACITY_DEFAULT = 1 << 10;
-
-typedef enum [[nodiscard]] : let_u8_t {
-    LET_ACCOUNT_ERROR_NONE,
-    LET_ACCOUNT_ERROR_OUT_OF_MEMORY,
-    LET_ACCOUNT_ERROR_NOT_FOUND,
-} let_account_error_t;
 
 typedef enum : let_u8_t {
     LET_ACCOUNT_FLAG_NONE = 0,
@@ -41,12 +36,12 @@ typedef struct {
 
 [[nodiscard]] let_account_list_t *let_account_list_new(void);
 
-let_account_error_t let_account_list_add(let_account_list_t *account_list,
-                                         let_account_t account);
+let_error_t let_account_list_add(let_account_list_t *account_list,
+                                 let_account_t account);
 
-let_account_error_t let_account_list_get(const let_account_list_t *account_list,
-                                         let_u64_t account_id,
-                                         let_account_t *account);
+let_error_t let_account_list_get(const let_account_list_t *account_list,
+                                 let_u64_t account_id,
+                                 let_account_t *account);
 
 void let_account_list_free(let_account_list_t *account_list);
 

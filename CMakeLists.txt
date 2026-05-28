@@ -18,6 +18,7 @@ set(SOURCES
     src/network/response.c
     src/network/server.c
     src/account.c
+    src/error.c
     src/guard.c
     src/main.c
     src/state.c

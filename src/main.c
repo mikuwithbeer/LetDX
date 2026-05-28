@@ -81,11 +81,11 @@ int main(void) {
 
     let_network_server_t client = {0};
 
-    if (let_network_server_init(&server) != LET_NETWORK_ERROR_NONE) {
+    if (let_network_server_init(&server).id != LET_ERROR_ID_NONE) {
         return -1;
     }
 
-    if (let_network_server_accept(&server, &client) != LET_NETWORK_ERROR_NONE) {
+    if (let_network_server_accept(&server, &client).id != LET_ERROR_ID_NONE) {
         return -1;
     }
 
@@ -94,8 +94,8 @@ int main(void) {
         let_network_response_t response = {0};
 
         const auto read_request = let_network_client_read(&client, &request);
-        if (read_request != LET_NETWORK_ERROR_NONE) {
-            printf("Failed to read request: %d\n", read_request);
+        if (read_request.id != LET_ERROR_ID_NONE) {
+            printf("Failed to read request: %d\n", read_request.code);
             break;
         }
 
@@ -114,7 +114,7 @@ int main(void) {
                 let_u64_t account_id;
 
                 const auto add_account_result = let_state_add_account(state, add_account, &account_id);
-                if (add_account_result != LET_STATE_ERROR_NONE) {
+                if (add_account_result.id != LET_ERROR_ID_NONE) {
                     response.id = LET_NETWORK_RESPONSE_ID_ERROR;
                 } else {
                     response.data.add_account = account_id;
@@ -129,13 +129,13 @@ int main(void) {
                 const auto amount = request.data.make_transfer.amount;
 
                 const auto guard_result = let_guard_make_transfer(guard, from_id, to_id, amount);
-                if (guard_result != LET_GUARD_ERROR_NONE) {
+                if (guard_result.id != LET_ERROR_ID_NONE) {
                     response.id = LET_NETWORK_RESPONSE_ID_ERROR;
                     break;
                 }
 
                 const auto transfer_result = let_state_make_transfer(state, from_id, to_id, amount);
-                if (transfer_result != LET_STATE_ERROR_NONE) {
+                if (transfer_result.id != LET_ERROR_ID_NONE) {
                     response.id = LET_NETWORK_RESPONSE_ID_ERROR;
                 }
 
@@ -146,8 +146,8 @@ int main(void) {
         }
 
         const auto write_response = let_network_client_write(&client, &response);
-        if (write_response != LET_NETWORK_ERROR_NONE) {
-            printf("Failed to write response: %d\n", write_response);
+        if (write_response.id != LET_ERROR_ID_NONE) {
+            printf("Failed to write response: %d\n", write_response.code);
         }
     }
 

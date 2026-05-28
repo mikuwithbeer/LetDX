@@ -2,6 +2,7 @@
 #define LET_NETWORK_REQUEST_H
 
 #include "let/common.h"
+#include "let/error.h"
 
 typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_ID_MAGIC,
@@ -16,20 +17,13 @@ typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_PARSER_STATE_DONE,
 } let_network_request_parser_state_t;
 
-typedef enum [[nodiscard]] : let_u8_t {
-    LET_NETWORK_REQUEST_PARSER_ERROR_NONE,
-    LET_NETWORK_REQUEST_PARSER_ERROR_UNKNOWN_COMMAND,
-    LET_NETWORK_REQUEST_PARSER_ERROR_INVALID_INTEGER,
-    LET_NETWORK_REQUEST_PARSER_ERROR_INTEGER_OVERFLOW,
-    LET_NETWORK_REQUEST_PARSER_ERROR_EXPECTED_NEW_LINE,
-} let_network_request_parser_error_t;
-
 typedef union {
     struct {
         let_u128_t credits;
         let_u128_t debits;
         let_u8_t flags;
     } create_account;
+
     struct {
         let_u64_t from_id;
         let_u64_t to_id;
@@ -53,19 +47,19 @@ typedef struct {
 
 [[nodiscard]] let_network_request_parser_t let_network_request_parser_new(void);
 
-let_network_request_parser_error_t let_network_request_parser_next(let_network_request_parser_t *request_parser,
-                                                                   let_u8_t byte,
-                                                                   let_network_request_t *output);
+let_error_t let_network_request_parser_next(let_network_request_parser_t *request_parser,
+                                            let_u8_t byte,
+                                            let_network_request_t *output);
 
-let_network_request_parser_error_t let_network_request_parser_collect_u128(let_network_request_parser_t *request_parser,
-                                                                           let_u8_t byte,
-                                                                           let_u128_t *output);
+let_error_t let_network_request_parser_collect_u128(let_network_request_parser_t *request_parser,
+                                                    let_u8_t byte,
+                                                    let_u128_t *output);
 
-let_network_request_parser_error_t let_network_request_parser_collect_u64(let_network_request_parser_t *request_parser,
-                                                                           let_u8_t byte,
-                                                                           let_u64_t *output);
+let_error_t let_network_request_parser_collect_u64(let_network_request_parser_t *request_parser,
+                                                   let_u8_t byte,
+                                                   let_u64_t *output);
 
-let_network_request_parser_error_t let_network_request_parser_collect_u8(let_network_request_parser_t *request_parser,
-                                                                         let_u8_t byte,
-                                                                         let_u8_t *output);
+let_error_t let_network_request_parser_collect_u8(let_network_request_parser_t *request_parser,
+                                                  let_u8_t byte,
+                                                  let_u8_t *output);
 #endif //LET_NETWORK_REQUEST_H

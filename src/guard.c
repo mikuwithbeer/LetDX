@@ -12,17 +12,17 @@ let_guard_t *let_guard_new(let_state_t *state) {
     return guard;
 }
 
-let_guard_error_t let_guard_make_transfer(const let_guard_t *guard,
-                                          const let_u64_t from_account_id,
-                                          const let_u64_t to_account_id,
-                                          const let_u128_t amount) {
+let_error_t let_guard_make_transfer(const let_guard_t *guard,
+                                    const let_u64_t from_account_id,
+                                    const let_u64_t to_account_id,
+                                    const let_u128_t amount) {
     if (from_account_id == to_account_id) {
-        return LET_GUARD_ERROR_SAME_ACCOUNT;
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_SAME_ACCOUNT);
     }
 
     const auto account_count = guard->state->account_list->length;
     if (from_account_id >= account_count || to_account_id >= account_count) {
-        return LET_GUARD_ERROR_ACCOUNT_NOT_FOUND;
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_ACCOUNT_NOT_FOUND);
     }
 
     const auto from_account = &guard->state->account_list->accounts[from_account_id];
@@ -30,15 +30,15 @@ let_guard_error_t let_guard_make_transfer(const let_guard_t *guard,
 
     if (from_account->debits < from_account->credits ||
         from_account->debits - from_account->credits < amount) {
-        return LET_GUARD_ERROR_INSUFFICIENT_FUNDS;
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_INSUFFICIENT_BALANCE);
     }
 
     if (from_account->transactions == LET_U64_MAX
         || to_account->transactions == LET_U64_MAX) {
-        return LET_GUARD_ERROR_MAXIMUM_TRANSACTIONS;
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_TRANSACTION_OVERFLOW);
     }
 
-    return LET_GUARD_ERROR_NONE;
+    return let_error_none();
 }
 
 void let_guard_free(let_guard_t *guard) {

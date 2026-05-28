@@ -23,9 +23,9 @@ let_network_request_parser_t let_network_request_parser_new(void) {
     return (let_network_request_parser_t){0};
 }
 
-let_network_request_parser_error_t let_network_request_parser_next(let_network_request_parser_t *request_parser,
-                                                                   const let_u8_t byte,
-                                                                   let_network_request_t *output) {
+let_error_t let_network_request_parser_next(let_network_request_parser_t *request_parser,
+                                            const let_u8_t byte,
+                                            let_network_request_t *output) {
     switch (request_parser->state) {
         case LET_NETWORK_REQUEST_PARSER_STATE_COMMAND: {
             switch (byte) {
@@ -42,7 +42,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                     output->id = LET_NETWORK_REQUEST_ID_CLOSE;
                     break;
                 default:
-                    return LET_NETWORK_REQUEST_PARSER_ERROR_UNKNOWN_COMMAND;
+                    return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_UNKNOWN_COMMAND);
             }
 
             request_parser->request_argument_counter = let_network_request_to_argument_count(output);
@@ -56,13 +56,12 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                     break;
                 }
 
-                return LET_NETWORK_REQUEST_PARSER_ERROR_EXPECTED_NEW_LINE;
+                return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE);
             }
 
             if (request_parser->request_argument_counter == 1 && byte == '\n') {
                 request_parser->request_argument_counter--;
                 request_parser->state = LET_NETWORK_REQUEST_PARSER_STATE_DONE;
-
                 break;
             }
 
@@ -75,7 +74,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                                 byte,
                                 &output->data.create_account.credits);
 
-                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                            if (collect_result.id != LET_ERROR_ID_NONE) {
                                 return collect_result;
                             }
 
@@ -87,7 +86,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                                 byte,
                                 &output->data.create_account.debits);
 
-                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                            if (collect_result.id != LET_ERROR_ID_NONE) {
                                 return collect_result;
                             }
 
@@ -99,7 +98,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                                 byte,
                                 &output->data.create_account.flags);
 
-                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                            if (collect_result.id != LET_ERROR_ID_NONE) {
                                 return collect_result;
                             }
 
@@ -119,7 +118,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                                 byte,
                                 &output->data.make_transfer.from_id);
 
-                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                            if (collect_result.id != LET_ERROR_ID_NONE) {
                                 return collect_result;
                             }
 
@@ -131,7 +130,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                                 byte,
                                 &output->data.make_transfer.to_id);
 
-                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                            if (collect_result.id != LET_ERROR_ID_NONE) {
                                 return collect_result;
                             }
 
@@ -143,7 +142,7 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
                                 byte,
                                 &output->data.make_transfer.amount);
 
-                            if (collect_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+                            if (collect_result.id != LET_ERROR_ID_NONE) {
                                 return collect_result;
                             }
 
@@ -165,39 +164,39 @@ let_network_request_parser_error_t let_network_request_parser_next(let_network_r
             break;
     }
 
-    return LET_NETWORK_REQUEST_PARSER_ERROR_NONE;
+    return let_error_none();
 }
 
-let_network_request_parser_error_t let_network_request_parser_collect_u128(let_network_request_parser_t *request_parser,
-                                                                           const let_u8_t byte,
-                                                                           let_u128_t *output) {
+let_error_t let_network_request_parser_collect_u128(let_network_request_parser_t *request_parser,
+                                                    const let_u8_t byte,
+                                                    let_u128_t *output) {
     if (byte >= '0' && byte <= '9') {
         const let_u8_t digit = byte - '0';
 
         if (*output > LET_U128_MAX / 10) {
-            return LET_NETWORK_REQUEST_PARSER_ERROR_INTEGER_OVERFLOW;
+            return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_INTEGER_OVERFLOW);
         }
 
         *output *= 10;
 
         if (digit > LET_U128_MAX - *output) {
-            return LET_NETWORK_REQUEST_PARSER_ERROR_INTEGER_OVERFLOW;
+            return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_INTEGER_OVERFLOW);
         }
 
         *output += digit;
     } else if (byte == ' ') {
         request_parser->request_argument_counter--;
     } else {
-        return LET_NETWORK_REQUEST_PARSER_ERROR_INVALID_INTEGER;
+        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_INVALID_INTEGER);
     }
 
-    return LET_NETWORK_REQUEST_PARSER_ERROR_NONE;
+    return let_error_none();
 }
 
 
-let_network_request_parser_error_t let_network_request_parser_collect_u64(let_network_request_parser_t *request_parser,
-                                                                          const let_u8_t byte,
-                                                                          let_u64_t *output) {
+let_error_t let_network_request_parser_collect_u64(let_network_request_parser_t *request_parser,
+                                                   const let_u8_t byte,
+                                                   let_u64_t *output) {
     let_u128_t current_output = *output;
 
     const auto u128_result = let_network_request_parser_collect_u128(
@@ -205,21 +204,21 @@ let_network_request_parser_error_t let_network_request_parser_collect_u64(let_ne
         byte,
         &current_output);
 
-    if (u128_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+    if (u128_result.id != LET_ERROR_ID_NONE) {
         return u128_result;
     }
 
     if (current_output > LET_U64_MAX) {
-        return LET_NETWORK_REQUEST_PARSER_ERROR_INTEGER_OVERFLOW;
+        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_INTEGER_OVERFLOW);
     }
 
     *output = (let_u64_t) current_output;
-    return LET_NETWORK_REQUEST_PARSER_ERROR_NONE;
+    return let_error_none();
 }
 
-let_network_request_parser_error_t let_network_request_parser_collect_u8(let_network_request_parser_t *request_parser,
-                                                                         const let_u8_t byte,
-                                                                         let_u8_t *output) {
+let_error_t let_network_request_parser_collect_u8(let_network_request_parser_t *request_parser,
+                                                  const let_u8_t byte,
+                                                  let_u8_t *output) {
     let_u128_t current_output = *output;
 
     const auto u128_result = let_network_request_parser_collect_u128(
@@ -227,14 +226,14 @@ let_network_request_parser_error_t let_network_request_parser_collect_u8(let_net
         byte,
         &current_output);
 
-    if (u128_result != LET_NETWORK_REQUEST_PARSER_ERROR_NONE) {
+    if (u128_result.id != LET_ERROR_ID_NONE) {
         return u128_result;
     }
 
     if (current_output > LET_U8_MAX) {
-        return LET_NETWORK_REQUEST_PARSER_ERROR_INTEGER_OVERFLOW;
+        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_INTEGER_OVERFLOW);
     }
 
     *output = (let_u8_t) current_output;
-    return LET_NETWORK_REQUEST_PARSER_ERROR_NONE;
+    return let_error_none();
 }
