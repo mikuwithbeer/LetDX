@@ -8,6 +8,7 @@ typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_ID_MAGIC,
     LET_NETWORK_REQUEST_ID_ADD_ACCOUNT,
     LET_NETWORK_REQUEST_ID_MAKE_TRANSFER,
+    LET_NETWORK_REQUEST_ID_GET_BALANCE,
     LET_NETWORK_REQUEST_ID_CLOSE,
 } let_network_request_id_t;
 
@@ -19,8 +20,7 @@ typedef enum : let_u8_t {
 
 typedef union {
     struct {
-        let_u128_t credits;
-        let_u128_t debits;
+        let_u128_t balance;
         let_u8_t flags;
     } create_account;
 
@@ -29,6 +29,8 @@ typedef union {
         let_u64_t to_id;
         let_u128_t amount;
     } make_transfer;
+
+    let_u64_t get_balance;
 } let_network_request_data_t;
 
 typedef struct {

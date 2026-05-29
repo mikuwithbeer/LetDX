@@ -103,12 +103,12 @@ int main(void) {
             case LET_NETWORK_REQUEST_ID_MAGIC:
                 response.id = LET_NETWORK_RESPONSE_ID_MAGIC;
                 break;
-            case LET_NETWORK_REQUEST_ID_ADD_ACCOUNT:
+            case LET_NETWORK_REQUEST_ID_ADD_ACCOUNT: {
                 response.id = LET_NETWORK_RESPONSE_ID_ADD_ACCOUNT;
 
                 const auto add_account = let_account_new(
-                    request.data.create_account.credits,
-                    request.data.create_account.debits,
+                    0,
+                    request.data.create_account.balance,
                     request.data.create_account.flags);
 
                 let_u64_t account_id;
@@ -122,7 +122,8 @@ int main(void) {
                 }
 
                 break;
-            case LET_NETWORK_REQUEST_ID_MAKE_TRANSFER:
+            }
+            case LET_NETWORK_REQUEST_ID_MAKE_TRANSFER: {
                 response.id = LET_NETWORK_RESPONSE_ID_OK;
 
                 const auto from_id = request.data.make_transfer.from_id;
@@ -143,6 +144,23 @@ int main(void) {
                 }
 
                 break;
+            }
+            case LET_NETWORK_REQUEST_ID_GET_BALANCE: {
+                response.id = LET_NETWORK_RESPONSE_ID_GET_BALANCE;
+
+                const auto account_id = request.data.get_balance;
+                let_account_t account;
+
+                const auto account_result = let_account_list_get(account_list, account_id, &account);
+                if (account_result.id != LET_ERROR_ID_NONE) {
+                    response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                    response.data.error = account_result;
+                } else {
+                    response.data.get_balance = account.debits - account.credits;
+                }
+
+                break;
+            }
             case LET_NETWORK_REQUEST_ID_CLOSE:
                 response.id = LET_NETWORK_RESPONSE_ID_OK;
                 break;
