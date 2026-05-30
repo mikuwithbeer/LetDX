@@ -18,6 +18,8 @@ typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_GUARD_INSUFFICIENT_BALANCE,
     LET_ERROR_GUARD_TRANSACTION_OVERFLOW,
     LET_ERROR_GUARD_ZERO_BALANCE,
+    LET_ERROR_GUARD_ACCOUNT_CANNOT_SEND,
+    LET_ERROR_GUARD_ACCOUNT_CANNOT_RECEIVE,
 } let_error_guard_t;
 
 typedef enum [[nodiscard]] : let_u8_t {

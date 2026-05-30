@@ -32,6 +32,14 @@ let_error_t let_guard_make_transfer(const let_guard_t *guard,
     const auto from_account = &guard->state->account_list->accounts[from_account_id];
     const auto to_account = &guard->state->account_list->accounts[to_account_id];
 
+    if ((from_account->flags & LET_ACCOUNT_FLAG_CAN_SEND) == 0) {
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_ACCOUNT_CANNOT_SEND);
+    }
+
+    if ((to_account->flags & LET_ACCOUNT_FLAG_CAN_RECEIVE) == 0) {
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_ACCOUNT_CANNOT_RECEIVE);
+    }
+
     if (from_account->debits < from_account->credits ||
         from_account->debits - from_account->credits < amount) {
         return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_INSUFFICIENT_BALANCE);
