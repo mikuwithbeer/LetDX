@@ -25,14 +25,14 @@ let_error_t let_network_server_init(let_network_server_t *network_server) {
         sizeof(network_server->address));
 
     if (bind_result < 0) {
-        let_network_free(network_server);
+        let_network_close(network_server);
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_BIND_FAILED);
     }
 
     const auto listen_result = listen(network_server->handle, LET_NETWORK_SERVER_BACKLOG_DEFAULT);
 
     if (listen_result < 0) {
-        let_network_free(network_server);
+        let_network_close(network_server);
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_LISTEN_FAILED);
     }
 
@@ -93,7 +93,7 @@ let_error_t let_network_client_write(const let_network_server_t *network_client,
     return let_error_none();
 }
 
-void let_network_free(let_network_server_t *network_server) {
+void let_network_close(let_network_server_t *network_server) {
     if (network_server->handle >= 0) {
         close(network_server->handle);
         network_server->handle = -1;

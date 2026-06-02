@@ -1,3 +1,5 @@
+/*
+ *
 #include "let/network/server.h"
 #include "let/guard.h"
 
@@ -72,8 +74,6 @@ int main(void) {
 
     let_state_free(state);
     let_account_list_free(account_list);
-
-    */
 
     let_network_server_t server = {
         .port = 3169
@@ -172,12 +172,63 @@ int main(void) {
         }
     }
 
-    let_network_free(&client);
-    let_network_free(&server);
+    let_network_close(&client);
+    let_network_close(&server);
 
     let_guard_free(guard);
     let_state_free(state);
     let_account_list_free(account_list);
+
+    return 0;
+}
+
+*/
+
+
+#include <time.h>
+
+#include "let/account.h"
+#include "let/storage/wal.h"
+
+int main(void) {
+    let_storage_wal_t storage_wal = {0};
+    if (let_storage_wal_init(&storage_wal, "wal.db").id != LET_ERROR_ID_NONE) {
+        return -1;
+    }
+
+    const let_storage_wal_entry_t entry_1 = {
+        .header = {
+            .id = 0,
+            .timestamp = time(nullptr),
+            .type = LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT
+        },
+        .data = {
+            .add_account = {
+                .balance = 100,
+                .flags = LET_ACCOUNT_FLAG_CAN_SEND
+            }
+        }
+    };
+
+    const let_storage_wal_entry_t entry_2 = {
+        .header = {
+            .id = 1,
+            .timestamp = time(nullptr),
+            .type = LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER
+        },
+        .data = {
+            .make_transfer = {
+                .from_id = 0,
+                .to_id = 1,
+                .amount = 100
+            }
+        }
+    };
+
+    let_storage_wal_write(&storage_wal, &entry_1);
+    let_storage_wal_write(&storage_wal, &entry_2);
+
+    let_storage_wal_close(&storage_wal);
 
     return 0;
 }

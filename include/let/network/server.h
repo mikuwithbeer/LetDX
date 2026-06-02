@@ -27,6 +27,6 @@ let_error_t let_network_client_read(const let_network_server_t *network_client,
 let_error_t let_network_client_write(const let_network_server_t *network_client,
                                      const let_network_response_t *response);
 
-void let_network_free(let_network_server_t *network_server);
+void let_network_close(let_network_server_t *network_server);
 
 #endif //LET_NETWORK_SERVER_H

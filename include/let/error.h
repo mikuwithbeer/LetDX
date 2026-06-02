@@ -38,11 +38,23 @@ typedef enum [[nodiscard]] : let_u8_t {
 } let_error_network_t;
 
 typedef enum [[nodiscard]] : let_u8_t {
+    LET_ERROR_STORAGE_WAL_CREATE_FAILED = 1,
+    LET_ERROR_STORAGE_WAL_WRITE_FAILED,
+    LET_ERROR_STORAGE_WAL_READ_FAILED,
+    LET_ERROR_STORAGE_WAL_SYNC_FAILED,
+    LET_ERROR_STORAGE_WAL_SEEK_FAILED,
+    LET_ERROR_STORAGE_WAL_INVALID_MAGIC,
+    LET_ERROR_STORAGE_WAL_INVALID_VERSION,
+    LET_ERROR_STORAGE_WAL_NONCE_MISMATCH,
+} let_error_storage_t;
+
+typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_ID_NONE = 0,
     LET_ERROR_ID_ACCOUNT,
     LET_ERROR_ID_STATE,
     LET_ERROR_ID_GUARD,
     LET_ERROR_ID_NETWORK,
+    LET_ERROR_ID_STORAGE,
 } let_error_id_t;
 
 typedef struct [[nodiscard]] {
