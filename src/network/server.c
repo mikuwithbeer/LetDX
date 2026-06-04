@@ -4,7 +4,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-let_error_t let_network_server_init(let_network_server_t *network_server) {
+let_network_server_t let_network_server_empty(void) {
+    return (let_network_server_t){0};
+}
+
+let_error_t let_network_server_init(let_network_server_t *network_server, let_u16_t port) {
+    network_server->port = port;
     network_server->handle = socket(AF_INET, SOCK_STREAM, 0);
     if (network_server->handle < 0) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CREATE_FAILED);
@@ -25,14 +30,14 @@ let_error_t let_network_server_init(let_network_server_t *network_server) {
         sizeof(network_server->address));
 
     if (bind_result < 0) {
-        let_network_close(network_server);
+        close(network_server->handle);
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_BIND_FAILED);
     }
 
     const auto listen_result = listen(network_server->handle, LET_NETWORK_SERVER_BACKLOG_DEFAULT);
 
     if (listen_result < 0) {
-        let_network_close(network_server);
+        close(network_server->handle);
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_LISTEN_FAILED);
     }
 
@@ -56,7 +61,7 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
 
 let_error_t let_network_client_read(const let_network_server_t *network_client,
                                     let_network_request_t *request) {
-    auto network_parser = let_network_request_parser_new();
+    auto network_parser = let_network_request_parser_empty();
     let_u8_t current_byte = 0;
 
     while (true) {

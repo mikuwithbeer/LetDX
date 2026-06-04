@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-let_network_response_t let_network_response_new(void) {
+let_network_response_t let_network_response_empty(void) {
     return (let_network_response_t){0};
 }
 

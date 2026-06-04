@@ -25,7 +25,7 @@ typedef struct {
     let_network_response_data_t data;
 } let_network_response_t;
 
-[[nodiscard]] let_network_response_t let_network_response_new(void);
+[[nodiscard]] let_network_response_t let_network_response_empty(void);
 
 [[nodiscard]] let_size_t let_network_response_to_bytes(const let_network_response_t *response,
                                                        let_u8_t *output);

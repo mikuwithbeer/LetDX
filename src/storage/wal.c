@@ -1,14 +1,16 @@
 #include "let/storage/wal.h"
+#include "let/storage/crc.h"
 
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 #include <unistd.h>
 
-#include "let/storage/crc.h"
-
 let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
+                                 let_state_t *state,
                                  const char *path) {
     storage_wal->file = nullptr;
+    storage_wal->state = state;
     storage_wal->transactions = 0;
 
     auto file_descriptor = open(path, O_RDWR | O_CREAT | O_EXCL, 0644);
@@ -91,7 +93,7 @@ let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
     if (entry->header.id != storage_wal->transactions) {
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_NONCE_MISMATCH);
     }
-    
+
     const let_storage_wal_entry_safe_t safe_entry = {
         .entry = *entry,
         .checksum = let_storage_crc32c(entry, sizeof(let_storage_wal_entry_t))
@@ -116,4 +118,22 @@ void let_storage_wal_close(let_storage_wal_t *storage_wal) {
         fclose(storage_wal->file);
         storage_wal->file = nullptr;
     }
+}
+
+let_storage_wal_entry_t let_storage_wal_entry_new(const let_u64_t id,
+                                                  const let_storage_wal_entry_type_t type) {
+    const auto time_now = (let_time_t) time(nullptr);
+
+    return (let_storage_wal_entry_t){
+        .header = {
+            .id = id,
+            .timestamp = time_now,
+            .type = type
+        },
+        .data = {0}
+    };
+}
+
+let_storage_wal_t let_storage_wal_empty(void) {
+    return (let_storage_wal_t){0};
 }

@@ -1,25 +1,19 @@
 #ifndef LET_STORAGE_WAL_H
 #define LET_STORAGE_WAL_H
 
-#include "let/common.h"
-#include "let/error.h"
+#include "let/state.h"
 
 #include <stdio.h>
 
 constexpr let_u64_t LET_STORAGE_WAL_MAGIC = 0x4C'41'57'5F'5F'54'45'4C;
 constexpr let_u16_t LET_STORAGE_WAL_VERSION = 1;
 
-typedef struct {
-    FILE *file;
-    let_u64_t transactions;
-} let_storage_wal_t;
+#pragma pack(push, 1)
 
-typedef enum [[nodiscard]] : let_u8_t {
+typedef enum : let_u8_t {
     LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT = 1,
     LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER,
 } let_storage_wal_entry_type_t;
-
-#pragma pack(push, 1)
 
 typedef struct {
     let_u64_t id;
@@ -55,7 +49,19 @@ typedef struct {
 
 #pragma pack(pop)
 
+typedef struct {
+    FILE *file;
+    let_state_t *state;
+    let_u64_t transactions;
+} let_storage_wal_t;
+
+[[nodiscard]] let_storage_wal_entry_t let_storage_wal_entry_new(let_u64_t id,
+                                                                let_storage_wal_entry_type_t type);
+
+[[nodiscard]] let_storage_wal_t let_storage_wal_empty(void);
+
 let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
+                                 let_state_t *state,
                                  const char *path);
 
 let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,

@@ -1,16 +1,19 @@
 #include "let/state.h"
 
-#include <stdlib.h>
 #include <time.h>
 
-let_state_t *let_state_new(let_account_list_t *account_list) {
-    let_state_t *state = malloc(sizeof(let_state_t));
-    if (state == nullptr) {
-        return nullptr;
+let_state_t let_state_empty(void) {
+    return (let_state_t){0};
+}
+
+let_error_t let_state_init(let_state_t *state,
+                           let_account_list_t *account_list) {
+    if (account_list == nullptr) {
+        return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_INVALID_ACCOUNT_LIST);
     }
 
     state->account_list = account_list;
-    return state;
+    return let_error_none();
 }
 
 let_error_t let_state_add_account(const let_state_t *state,
@@ -48,8 +51,3 @@ let_error_t let_state_make_transfer(const let_state_t *state,
     return let_error_none();
 }
 
-void let_state_free(let_state_t *state) {
-    if (state != nullptr) {
-        free(state);
-    }
-}

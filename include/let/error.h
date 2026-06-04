@@ -10,6 +10,7 @@ typedef enum [[nodiscard]] : let_u8_t {
 
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_STATE_OUT_OF_MEMORY = 1,
+    LET_ERROR_STATE_INVALID_ACCOUNT_LIST,
 } let_error_state_t;
 
 typedef enum [[nodiscard]] : let_u8_t {
@@ -20,6 +21,7 @@ typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_GUARD_ZERO_BALANCE,
     LET_ERROR_GUARD_ACCOUNT_CANNOT_SEND,
     LET_ERROR_GUARD_ACCOUNT_CANNOT_RECEIVE,
+    LET_ERROR_GUARD_INVALID_STATE,
 } let_error_guard_t;
 
 typedef enum [[nodiscard]] : let_u8_t {

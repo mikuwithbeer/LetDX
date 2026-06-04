@@ -16,7 +16,10 @@ typedef struct {
     let_u16_t port;
 } let_network_server_t;
 
-let_error_t let_network_server_init(let_network_server_t *network_server);
+[[nodiscard]] let_network_server_t let_network_server_empty(void);
+
+let_error_t let_network_server_init(let_network_server_t *network_server,
+                                    let_u16_t port);
 
 let_error_t let_network_server_accept(const let_network_server_t *network_server,
                                       let_network_server_t *network_client);

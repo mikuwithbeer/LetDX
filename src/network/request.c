@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-let_network_request_t let_network_request_new(void) {
+let_network_request_t let_network_request_empty(void) {
     return (let_network_request_t){0};
 }
 
@@ -22,7 +22,7 @@ uint8_t let_network_request_to_argument_count(const let_network_request_t *reque
     unreachable();
 }
 
-let_network_request_parser_t let_network_request_parser_new(void) {
+let_network_request_parser_t let_network_request_parser_empty(void) {
     return (let_network_request_parser_t){0};
 }
 

@@ -196,34 +196,19 @@ int main(void) {
         return -1;
     }
 
-    const let_storage_wal_entry_t entry_1 = {
-        .header = {
-            .id = 0,
-            .timestamp = time(nullptr),
-            .type = LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT
-        },
-        .data = {
-            .add_account = {
-                .balance = 100,
-                .flags = LET_ACCOUNT_FLAG_CAN_SEND
-            }
-        }
+    let_storage_wal_entry_t entry_1 = let_storage_wal_entry_new(0, LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
+    let_storage_wal_entry_t entry_2 = let_storage_wal_entry_new(1, LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER);
+
+    entry_1.data.add_account = (let_storage_wal_entry_add_account_t){
+        .balance = 13371337,
+        .flags = 0
+    };
+    entry_2.data.make_transfer = (let_storage_wal_entry_make_transfer_t){
+        .from_id = 1,
+        .to_id = 2,
+        .amount = 100
     };
 
-    const let_storage_wal_entry_t entry_2 = {
-        .header = {
-            .id = 1,
-            .timestamp = time(nullptr),
-            .type = LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER
-        },
-        .data = {
-            .make_transfer = {
-                .from_id = 0,
-                .to_id = 1,
-                .amount = 100
-            }
-        }
-    };
 
     let_storage_wal_write(&storage_wal, &entry_1);
     let_storage_wal_write(&storage_wal, &entry_2);

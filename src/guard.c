@@ -1,15 +1,17 @@
 #include "let/guard.h"
 
-#include <stdlib.h>
+let_guard_t let_guard_empty(void) {
+    return (let_guard_t){0};
+}
 
-let_guard_t *let_guard_new(let_state_t *state) {
-    let_guard_t *guard = malloc(sizeof(let_guard_t));
-    if (guard == nullptr) {
-        return nullptr;
+let_error_t let_guard_init(let_guard_t *guard,
+                           let_state_t *state) {
+    if (state == nullptr) {
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_INVALID_STATE);
     }
 
     guard->state = state;
-    return guard;
+    return let_error_none();
 }
 
 let_error_t let_guard_make_transfer(const let_guard_t *guard,
@@ -51,10 +53,4 @@ let_error_t let_guard_make_transfer(const let_guard_t *guard,
     }
 
     return let_error_none();
-}
-
-void let_guard_free(let_guard_t *guard) {
-    if (guard != nullptr) {
-        free(guard);
-    }
 }

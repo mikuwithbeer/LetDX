@@ -7,7 +7,10 @@ typedef struct {
     let_account_list_t *account_list;
 } let_state_t;
 
-[[nodiscard]] let_state_t *let_state_new(let_account_list_t *account_list);
+[[nodiscard]] let_state_t let_state_empty(void);
+
+let_error_t let_state_init(let_state_t *state,
+                           let_account_list_t *account_list);
 
 let_error_t let_state_add_account(const let_state_t *state,
                                   let_account_t account,
@@ -17,7 +20,5 @@ let_error_t let_state_make_transfer(const let_state_t *state,
                                     let_u64_t from_account_id,
                                     let_u64_t to_account_id,
                                     let_u128_t amount);
-
-void let_state_free(let_state_t *state);
 
 #endif //LET_STATE_H

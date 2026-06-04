@@ -43,11 +43,11 @@ typedef struct {
     let_network_request_parser_state_t state;
 } let_network_request_parser_t;
 
-[[nodiscard]] let_network_request_t let_network_request_new(void);
+[[nodiscard]] let_network_request_t let_network_request_empty(void);
 
 [[nodiscard]] uint8_t let_network_request_to_argument_count(const let_network_request_t *request);
 
-[[nodiscard]] let_network_request_parser_t let_network_request_parser_new(void);
+[[nodiscard]] let_network_request_parser_t let_network_request_parser_empty(void);
 
 let_error_t let_network_request_parser_next(let_network_request_parser_t *request_parser,
                                             let_u8_t byte,
