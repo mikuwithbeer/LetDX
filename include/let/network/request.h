@@ -5,12 +5,12 @@
 #include "let/error.h"
 
 typedef enum : let_u8_t {
-    LET_NETWORK_REQUEST_ID_MAGIC,
-    LET_NETWORK_REQUEST_ID_ADD_ACCOUNT,
-    LET_NETWORK_REQUEST_ID_MAKE_TRANSFER,
-    LET_NETWORK_REQUEST_ID_GET_BALANCE,
-    LET_NETWORK_REQUEST_ID_CLOSE,
-} let_network_request_id_t;
+    LET_NETWORK_REQUEST_TYPE_MAGIC,
+    LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT,
+    LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER,
+    LET_NETWORK_REQUEST_TYPE_GET_BALANCE,
+    LET_NETWORK_REQUEST_TYPE_CLOSE,
+} let_network_request_type_t;
 
 typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_PARSER_STATE_COMMAND,
@@ -20,11 +20,13 @@ typedef enum : let_u8_t {
 
 typedef union {
     struct {
+        let_u64_t wal_id;
         let_u128_t balance;
         let_u8_t flags;
     } create_account;
 
     struct {
+        let_u64_t wal_id;
         let_u64_t from_id;
         let_u64_t to_id;
         let_u128_t amount;
@@ -34,8 +36,8 @@ typedef union {
 } let_network_request_data_t;
 
 typedef struct {
-    let_network_request_id_t id;
     let_network_request_data_t data;
+    let_network_request_type_t type;
 } let_network_request_t;
 
 typedef struct {

@@ -7,16 +7,16 @@ let_network_request_t let_network_request_empty(void) {
 }
 
 uint8_t let_network_request_to_argument_count(const let_network_request_t *request) {
-    switch (request->id) {
-        case LET_NETWORK_REQUEST_ID_MAGIC:
-        case LET_NETWORK_REQUEST_ID_CLOSE:
+    switch (request->type) {
+        case LET_NETWORK_REQUEST_TYPE_MAGIC:
+        case LET_NETWORK_REQUEST_TYPE_CLOSE:
             return 0;
-        case LET_NETWORK_REQUEST_ID_GET_BALANCE:
+        case LET_NETWORK_REQUEST_TYPE_GET_BALANCE:
             return 1;
-        case LET_NETWORK_REQUEST_ID_ADD_ACCOUNT:
-            return 2;
-        case LET_NETWORK_REQUEST_ID_MAKE_TRANSFER:
+        case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT:
             return 3;
+        case LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER:
+            return 4;
     }
 
     unreachable();
@@ -33,19 +33,19 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
         case LET_NETWORK_REQUEST_PARSER_STATE_COMMAND: {
             switch (byte) {
                 case '!':
-                    output->id = LET_NETWORK_REQUEST_ID_MAGIC;
+                    output->type = LET_NETWORK_REQUEST_TYPE_MAGIC;
                     break;
                 case '+':
-                    output->id = LET_NETWORK_REQUEST_ID_ADD_ACCOUNT;
+                    output->type = LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT;
                     break;
                 case '%':
-                    output->id = LET_NETWORK_REQUEST_ID_MAKE_TRANSFER;
+                    output->type = LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER;
                     break;
                 case '?':
-                    output->id = LET_NETWORK_REQUEST_ID_GET_BALANCE;
+                    output->type = LET_NETWORK_REQUEST_TYPE_GET_BALANCE;
                     break;
                 case '.':
-                    output->id = LET_NETWORK_REQUEST_ID_CLOSE;
+                    output->type = LET_NETWORK_REQUEST_TYPE_CLOSE;
                     break;
                 default:
                     return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_UNKNOWN_COMMAND);
@@ -71,9 +71,21 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                 break;
             }
 
-            switch (output->id) {
-                case LET_NETWORK_REQUEST_ID_ADD_ACCOUNT: {
+            switch (output->type) {
+                case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
                     switch (request_parser->request_argument_counter) {
+                        case 3: {
+                            const auto collect_result = let_network_request_parser_collect_u64(
+                                request_parser,
+                                byte,
+                                &output->data.create_account.wal_id);
+
+                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                                return collect_result;
+                            }
+
+                            break;
+                        }
                         case 2: {
                             const auto collect_result = let_network_request_parser_collect_u128(
                                 request_parser,
@@ -104,8 +116,20 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
 
                     break;
                 }
-                case LET_NETWORK_REQUEST_ID_MAKE_TRANSFER: {
+                case LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER: {
                     switch (request_parser->request_argument_counter) {
+                        case 4: {
+                            const auto collect_result = let_network_request_parser_collect_u64(
+                                request_parser,
+                                byte,
+                                &output->data.make_transfer.wal_id);
+
+                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                                return collect_result;
+                            }
+
+                            break;
+                        }
                         case 3: {
                             const auto collect_result = let_network_request_parser_collect_u64(
                                 request_parser,
@@ -148,7 +172,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
 
                     break;
                 }
-                case LET_NETWORK_REQUEST_ID_GET_BALANCE: {
+                case LET_NETWORK_REQUEST_TYPE_GET_BALANCE: {
                     switch (request_parser->request_argument_counter) {
                         case 1: {
                             const auto collect_result = let_network_request_parser_collect_u64(
