@@ -185,27 +185,33 @@ int main(void) {
 */
 
 
-#include <time.h>
-
-#include "let/account.h"
 #include "let/storage/wal.h"
 
 int main(void) {
-    let_storage_wal_t storage_wal = {0};
-    if (let_storage_wal_init(&storage_wal, "wal.db").id != LET_ERROR_ID_NONE) {
+    const auto account_list = let_account_list_new();
+
+    auto state = let_state_empty();
+    let_state_init(&state, account_list);
+
+    auto storage_wal = let_storage_wal_empty();
+    if (let_storage_wal_init(&storage_wal, &state, "wal.db").id != LET_ERROR_ID_NONE) {
         return -1;
     }
 
-    let_storage_wal_entry_t entry_1 = let_storage_wal_entry_new(0, LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
-    let_storage_wal_entry_t entry_2 = let_storage_wal_entry_new(1, LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER);
+    const auto replay_result = let_storage_wal_replay(&storage_wal);
+
+    let_storage_wal_entry_t entry_1 = let_storage_wal_entry_new(storage_wal.transactions, LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
+    let_storage_wal_entry_t entry_2 = let_storage_wal_entry_new(storage_wal.transactions + 1, LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER);
 
     entry_1.data.add_account = (let_storage_wal_entry_add_account_t){
-        .balance = 13371337,
+        .balance = 10,
         .flags = 0
     };
+
+
     entry_2.data.make_transfer = (let_storage_wal_entry_make_transfer_t){
-        .from_id = 1,
-        .to_id = 2,
+        .from_id = 0,
+        .to_id = 1,
         .amount = 100
     };
 
@@ -214,6 +220,8 @@ int main(void) {
     let_storage_wal_write(&storage_wal, &entry_2);
 
     let_storage_wal_close(&storage_wal);
+
+    let_account_list_free(account_list);
 
     return 0;
 }

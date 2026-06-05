@@ -5,8 +5,11 @@
 
 #include <stdio.h>
 
-constexpr let_u64_t LET_STORAGE_WAL_MAGIC = 0x4C'41'57'5F'5F'54'45'4C;
-constexpr let_u16_t LET_STORAGE_WAL_VERSION = 1;
+constexpr let_u64_t LET_STORAGE_WAL_HEADER_MAGIC = 0x4C'41'57'5F'5F'54'45'4C;
+constexpr let_u16_t LET_STORAGE_WAL_HEADER_VERSION = 1;
+
+constexpr let_size_t LET_STORAGE_WAL_HEADER_LENGTH = sizeof(LET_STORAGE_WAL_HEADER_MAGIC)
+                                                     + sizeof(LET_STORAGE_WAL_HEADER_VERSION);
 
 #pragma pack(push, 1)
 
@@ -63,6 +66,8 @@ typedef struct {
 let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                                  let_state_t *state,
                                  const char *path);
+
+let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal);
 
 let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
                                   const let_storage_wal_entry_t *entry);

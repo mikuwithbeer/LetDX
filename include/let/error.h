@@ -48,6 +48,7 @@ typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_STORAGE_WAL_INVALID_MAGIC,
     LET_ERROR_STORAGE_WAL_INVALID_VERSION,
     LET_ERROR_STORAGE_WAL_NONCE_MISMATCH,
+    LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH
 } let_error_storage_t;
 
 typedef enum [[nodiscard]] : let_u8_t {

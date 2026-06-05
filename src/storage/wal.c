@@ -11,7 +11,6 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                                  const char *path) {
     storage_wal->file = nullptr;
     storage_wal->state = state;
-    storage_wal->transactions = 0;
 
     auto file_descriptor = open(path, O_RDWR | O_CREAT | O_EXCL, 0644);
     if (file_descriptor >= 0) {
@@ -21,13 +20,15 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CREATE_FAILED);
         }
 
-        auto write_result = fwrite(&LET_STORAGE_WAL_MAGIC, sizeof(LET_STORAGE_WAL_MAGIC), 1, storage_wal->file);
+        auto write_result = fwrite(&LET_STORAGE_WAL_HEADER_MAGIC, sizeof(LET_STORAGE_WAL_HEADER_MAGIC), 1,
+                                   storage_wal->file);
         if (write_result != 1) {
             fclose(storage_wal->file);
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
         }
 
-        write_result = fwrite(&LET_STORAGE_WAL_VERSION, sizeof(LET_STORAGE_WAL_VERSION), 1, storage_wal->file);
+        write_result = fwrite(&LET_STORAGE_WAL_HEADER_VERSION, sizeof(LET_STORAGE_WAL_HEADER_VERSION), 1,
+                              storage_wal->file);
         if (write_result != 1) {
             fclose(storage_wal->file);
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
@@ -50,8 +51,8 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CREATE_FAILED);
         }
 
-        typeof_unqual(LET_STORAGE_WAL_MAGIC) wal_magic = 0;
-        typeof_unqual(LET_STORAGE_WAL_VERSION) wal_version = 0;
+        typeof_unqual(LET_STORAGE_WAL_HEADER_MAGIC) wal_magic = 0;
+        typeof_unqual(LET_STORAGE_WAL_HEADER_VERSION) wal_version = 0;
 
         auto read_result = fread(&wal_magic, sizeof(wal_magic), 1, storage_wal->file);
         if (read_result != 1) {
@@ -65,12 +66,12 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
         }
 
-        if (wal_magic != LET_STORAGE_WAL_MAGIC) {
+        if (wal_magic != LET_STORAGE_WAL_HEADER_MAGIC) {
             fclose(storage_wal->file);
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_MAGIC);
         }
 
-        if (wal_version != LET_STORAGE_WAL_VERSION) {
+        if (wal_version != LET_STORAGE_WAL_HEADER_VERSION) {
             fclose(storage_wal->file);
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_VERSION);
         }
@@ -87,6 +88,62 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
     return let_error_none();
 }
 
+let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
+    auto seek_result = fseek(storage_wal->file, LET_STORAGE_WAL_HEADER_LENGTH, SEEK_SET);
+    if (seek_result != 0) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SEEK_FAILED);
+    }
+
+    storage_wal->transactions = 0;
+
+    let_storage_wal_entry_safe_t safe_entry;
+    while (fread(&safe_entry, sizeof(safe_entry), 1, storage_wal->file) == 1) {
+        const auto crc_result = let_storage_crc32c(&safe_entry.entry, sizeof(let_storage_wal_entry_t));
+        if (crc_result != safe_entry.checksum) {
+            return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH);
+        }
+
+        switch (safe_entry.entry.header.type) {
+            case LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT: {
+                const auto add_account = safe_entry.entry.data.add_account;
+                const auto account = let_account_new(0, add_account.balance, add_account.flags);
+
+                let_u64_t account_id;
+                const auto account_result = let_state_add_account(storage_wal->state, account, &account_id);
+                if (account_result.id != LET_ERROR_ID_NONE) {
+                    return account_result;
+                }
+
+                break;
+            }
+            case LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER: {
+                const auto make_transfer = safe_entry.entry.data.make_transfer;
+
+                const auto transfer_result = let_state_make_transfer(
+                    storage_wal->state,
+                    make_transfer.from_id,
+                    make_transfer.to_id,
+                    make_transfer.amount);
+                if (transfer_result.id != LET_ERROR_ID_NONE) {
+                    return transfer_result;
+                }
+
+                break;
+            }
+        }
+
+        storage_wal->transactions++;
+    }
+
+    clearerr(storage_wal->file);
+
+    seek_result = fseek(storage_wal->file, 0, SEEK_END);
+    if (seek_result != 0) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SEEK_FAILED);
+    }
+
+    return let_error_none();
+}
 
 let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
                                   const let_storage_wal_entry_t *entry) {
