@@ -34,10 +34,10 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
         }
 
-        const auto sync_result = fsync(fileno(storage_wal->file));
-        if (sync_result != 0) {
+        const auto sync_result = let_storage_wal_flush(storage_wal);
+        if (sync_result.id != LET_ERROR_ID_NONE) {
             fclose(storage_wal->file);
-            return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SYNC_FAILED);
+            return sync_result;
         }
     } else if (errno == EEXIST) {
         file_descriptor = open(path, O_RDWR);
@@ -161,12 +161,29 @@ let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
     }
 
-    const auto sync_result = fsync(fileno(storage_wal->file));
-    if (sync_result != 0) {
-        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SYNC_FAILED);
+    const auto sync_result = let_storage_wal_flush(storage_wal);
+    if (sync_result.id != LET_ERROR_ID_NONE) {
+        return sync_result;
     }
 
     storage_wal->transactions++;
+    return let_error_none();
+}
+
+let_error_t let_storage_wal_flush(const let_storage_wal_t *storage_wal) {
+    const auto file_descriptor = fileno(storage_wal->file);
+    auto sync_success = false;
+
+#if defined(__APPLE__) && defined(__MACH__)
+    sync_success = fcntl(file_descriptor, F_BARRIERFSYNC) == 0;
+#else
+    sync_success = fsync(file_descriptor) == 0;
+#endif
+
+    if (!sync_success) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SYNC_FAILED);
+    }
+
     return let_error_none();
 }
 

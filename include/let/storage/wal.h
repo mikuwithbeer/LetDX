@@ -72,6 +72,8 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal);
 let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
                                   const let_storage_wal_entry_t *entry);
 
+let_error_t let_storage_wal_flush(const let_storage_wal_t *storage_wal);
+
 void let_storage_wal_close(let_storage_wal_t *storage_wal);
 
 #endif //LET_STORAGE_WAL_H
