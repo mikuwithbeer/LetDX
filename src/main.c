@@ -66,19 +66,6 @@ int main(void) {
             case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
                 network_response.id = LET_NETWORK_RESPONSE_ID_ADD_ACCOUNT;
 
-                const auto add_account = let_account_new(
-                    0,
-                    network_request.data.create_account.balance,
-                    network_request.data.create_account.flags);
-
-                let_u64_t account_id;
-                global_result = let_state_add_account(&state, add_account, &account_id);
-                if (global_result.id != LET_ERROR_ID_NONE) {
-                    network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                    network_response.data.error = global_result;
-                    break;
-                }
-
                 auto storage_wal_entry = let_storage_wal_entry_new(
                     network_request.data.create_account.wal_id,
                     LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
@@ -89,6 +76,19 @@ int main(void) {
                 };
 
                 global_result = let_storage_wal_write(&storage_wal, &storage_wal_entry);
+                if (global_result.id != LET_ERROR_ID_NONE) {
+                    network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                    network_response.data.error = global_result;
+                    break;
+                }
+
+                const auto add_account = let_account_new(
+                    0,
+                    network_request.data.create_account.balance,
+                    network_request.data.create_account.flags);
+
+                let_u64_t account_id;
+                global_result = let_state_add_account(&state, add_account, &account_id);
                 if (global_result.id != LET_ERROR_ID_NONE) {
                     network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
                     network_response.data.error = global_result;
@@ -112,13 +112,6 @@ int main(void) {
                     break;
                 }
 
-                global_result = let_state_make_transfer(&state, from_id, to_id, amount);
-                if (global_result.id != LET_ERROR_ID_NONE) {
-                    network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                    network_response.data.error = global_result;
-                    break;
-                }
-
                 auto storage_wal_entry = let_storage_wal_entry_new(
                     network_request.data.make_transfer.wal_id,
                     LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER);
@@ -130,6 +123,13 @@ int main(void) {
                 };
 
                 global_result = let_storage_wal_write(&storage_wal, &storage_wal_entry);
+                if (global_result.id != LET_ERROR_ID_NONE) {
+                    network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                    network_response.data.error = global_result;
+                    break;
+                }
+
+                global_result = let_state_make_transfer(&state, from_id, to_id, amount);
                 if (global_result.id != LET_ERROR_ID_NONE) {
                     network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
                     network_response.data.error = global_result;
