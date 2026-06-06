@@ -173,6 +173,11 @@ int main(void) {
         printf("Error Code: %d", let_error_code(global_result));
     }
 
+    global_result = let_storage_wal_sync(&storage_wal);
+    if (global_result.id != LET_ERROR_ID_NONE) {
+        printf("Error Code: %d", let_error_code(global_result));
+    }
+
     let_network_close(&network_client);
     let_network_close(&network_server);
 
