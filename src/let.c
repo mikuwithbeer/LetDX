@@ -187,22 +187,28 @@ void let_cleanup(void) {
 }
 
 int main(void) {
-    signal(SIGTERM, let_close);
-    signal(SIGINT, let_close);
+    int success = EXIT_SUCCESS;
+
+    struct sigaction signal_action = {};
+    signal_action.sa_handler = let_close;
+
+    sigaction(SIGTERM, &signal_action, nullptr);
+    sigaction(SIGINT, &signal_action, nullptr);
 
     let_init();
     if (let.error.id != LET_ERROR_ID_NONE) {
         printf("init error: %d\n", let_error_code(let.error));
-        return 1;
+        success = EXIT_FAILURE;
+        goto cleanup;
     }
 
     let_run();
-    let_cleanup();
-
     if (let.error.id != LET_ERROR_ID_NONE) {
         printf("runtime error: %d\n", let_error_code(let.error));
-        return 1;
+        success = EXIT_FAILURE;
     }
 
-    return 0;
+cleanup:
+    let_cleanup();
+    return success;
 }

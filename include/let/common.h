@@ -1,7 +1,7 @@
 #ifndef LET_COMMON_H
 #define LET_COMMON_H
 
-#include <stdint.h>
+#include <stdlib.h>
 
 typedef int8_t let_i8_t;
 typedef int16_t let_i16_t;

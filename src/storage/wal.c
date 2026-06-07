@@ -218,5 +218,5 @@ let_storage_wal_entry_t let_storage_wal_entry_new(const let_u64_t id,
 }
 
 let_storage_wal_t let_storage_wal_empty(void) {
-    return (let_storage_wal_t){0};
+    return (let_storage_wal_t){};
 }

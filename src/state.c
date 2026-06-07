@@ -3,7 +3,7 @@
 #include <time.h>
 
 let_state_t let_state_empty(void) {
-    return (let_state_t){0};
+    return (let_state_t){};
 }
 
 let_error_t let_state_init(let_state_t *state,

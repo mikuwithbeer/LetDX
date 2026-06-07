@@ -1,7 +1,7 @@
 #include "let/guard.h"
 
 let_guard_t let_guard_empty(void) {
-    return (let_guard_t){0};
+    return (let_guard_t){};
 }
 
 let_error_t let_guard_init(let_guard_t *guard,

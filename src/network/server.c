@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 let_network_server_t let_network_server_empty(void) {
-    return (let_network_server_t){0};
+    return (let_network_server_t){};
 }
 
 let_error_t let_network_server_init(let_network_server_t *network_server, let_u16_t port) {

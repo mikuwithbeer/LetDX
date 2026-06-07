@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 let_network_request_t let_network_request_empty(void) {
-    return (let_network_request_t){0};
+    return (let_network_request_t){};
 }
 
 uint8_t let_network_request_to_argument_count(const let_network_request_t *request) {
