@@ -9,6 +9,7 @@ typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT,
     LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER,
     LET_NETWORK_REQUEST_TYPE_GET_BALANCE,
+    LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES,
     LET_NETWORK_REQUEST_TYPE_CLOSE,
 } let_network_request_type_t;
 
@@ -36,8 +37,8 @@ typedef union {
 } let_network_request_data_t;
 
 typedef struct {
-    let_network_request_data_t data;
     let_network_request_type_t type;
+    let_network_request_data_t data;
 } let_network_request_t;
 
 typedef struct {

@@ -6,7 +6,7 @@
 
 #include <netinet/in.h>
 
-constexpr int LET_NETWORK_SERVER_BACKLOG_DEFAULT = 1 << 2;
+constexpr auto LET_NETWORK_SERVER_BACKLOG_DEFAULT = 1 << 2;
 
 typedef struct sockaddr_in let_network_server_address_t;
 

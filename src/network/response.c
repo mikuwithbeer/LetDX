@@ -16,10 +16,11 @@ let_size_t let_network_response_to_bytes(const let_network_response_t *response,
             output[written_bytes++] = LET_NETWORK_RESPONSE_MAGIC[2];
             break;
         }
-        case LET_NETWORK_RESPONSE_ID_ADD_ACCOUNT:
+        case LET_NETWORK_RESPONSE_ID_ADD_ACCOUNT: {
             written_bytes = (let_size_t) sprintf((char *)output, "AID %llX", response->data.add_account);
             break;
-        case LET_NETWORK_RESPONSE_ID_GET_BALANCE:
+        }
+        case LET_NETWORK_RESPONSE_ID_GET_BALANCE: {
             const auto balance_high = (let_u64_t) (response->data.get_balance >> 64);
             const auto balance_low = (let_u64_t) response->data.get_balance;
 
@@ -30,14 +31,22 @@ let_size_t let_network_response_to_bytes(const let_network_response_t *response,
             }
 
             break;
-        case LET_NETWORK_RESPONSE_ID_OK:
+        }
+        case LET_NETWORK_RESPONSE_ID_COUNT_ENTRIES: {
+            written_bytes = (let_size_t) sprintf((char *)output, "SEC %llX", response->data.count_entries);
+            break;
+        }
+        case LET_NETWORK_RESPONSE_ID_OK: {
             output[written_bytes++] = 'O';
             output[written_bytes++] = 'K';
             output[written_bytes++] = 'E';
             break;
+        }
         case LET_NETWORK_RESPONSE_ID_ERROR: {
             const auto error_code = let_error_code(response->data.error);
             written_bytes = (let_size_t) sprintf((char *)output, "ERR %hX", error_code);
+
+            break;
         }
     }
 

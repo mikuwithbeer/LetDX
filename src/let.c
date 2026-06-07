@@ -5,21 +5,18 @@ let_t let = {};
 void let_init(void) {
     let.account_list = let_account_list_new();
     let.state = let_state_empty();
-
     let.error = let_state_init(&let.state, let.account_list);
     if (let_error_exists(let.error)) {
         return;
     }
 
     let.guard = let_guard_empty();
-
     let.error = let_guard_init(&let.guard, &let.state);
     if (let_error_exists(let.error)) {
         return;
     }
 
     let.storage_wal = let_storage_wal_empty();
-
     let.error = let_storage_wal_init(&let.storage_wal, &let.state, "let__wal");
     if (let_error_exists(let.error)) {
         return;
@@ -32,7 +29,6 @@ void let_init(void) {
 
     let.network_server = let_network_server_empty();
     let.network_client = let_network_server_empty();
-
     let.error = let_network_server_init(&let.network_server, 8081);
     if (let_error_exists(let.error)) {
         return;
@@ -67,13 +63,16 @@ void let_run(void) {
                 case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
                     network_response.id = LET_NETWORK_RESPONSE_ID_ADD_ACCOUNT;
 
+                    const auto balance = network_request.data.create_account.balance;
+                    const auto flags = network_request.data.create_account.flags;
+
                     auto storage_wal_entry = let_storage_wal_entry_new(
                         network_request.data.create_account.wal_id,
                         LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
 
                     storage_wal_entry.data.add_account = (let_storage_wal_entry_add_account_t){
-                        .balance = network_request.data.create_account.balance,
-                        .flags = network_request.data.create_account.flags
+                        .balance = balance,
+                        .flags = flags
                     };
 
                     runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
@@ -81,10 +80,7 @@ void let_run(void) {
                         break;
                     }
 
-                    const auto add_account = let_account_new(
-                        0,
-                        network_request.data.create_account.balance,
-                        network_request.data.create_account.flags);
+                    const auto add_account = let_account_new(0, balance, flags);
 
                     let_u64_t account_id;
                     runtime_error = let_state_add_account(&let.state, add_account, &account_id);
@@ -128,15 +124,23 @@ void let_run(void) {
                 case LET_NETWORK_REQUEST_TYPE_GET_BALANCE: {
                     network_response.id = LET_NETWORK_RESPONSE_ID_GET_BALANCE;
 
+                    let_account_t account;
                     const auto account_id = network_request.data.get_balance;
 
-                    let_account_t account;
                     runtime_error = let_account_list_get(let.account_list, account_id, &account);
                     if (let_error_exists(runtime_error)) {
                         break;
                     }
 
-                    network_response.data.get_balance = account.debits - account.credits;
+                    const auto calculated_balance = account.debits - account.credits;
+                    network_response.data.get_balance = calculated_balance;
+                    break;
+                }
+                case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES: {
+                    network_response.id = LET_NETWORK_RESPONSE_ID_COUNT_ENTRIES;
+
+                    const auto transaction_count = let.storage_wal.transactions;
+                    network_response.data.count_entries = transaction_count;
                     break;
                 }
                 case LET_NETWORK_REQUEST_TYPE_CLOSE: {

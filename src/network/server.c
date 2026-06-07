@@ -8,7 +8,8 @@ let_network_server_t let_network_server_empty(void) {
     return (let_network_server_t){};
 }
 
-let_error_t let_network_server_init(let_network_server_t *network_server, let_u16_t port) {
+let_error_t let_network_server_init(let_network_server_t *network_server,
+                                    const let_u16_t port) {
     network_server->port = port;
     network_server->handle = socket(AF_INET, SOCK_STREAM, 0);
     if (network_server->handle < 0) {

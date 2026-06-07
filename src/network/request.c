@@ -10,6 +10,7 @@ uint8_t let_network_request_to_argument_count(const let_network_request_t *reque
     switch (request->type) {
         case LET_NETWORK_REQUEST_TYPE_MAGIC:
         case LET_NETWORK_REQUEST_TYPE_CLOSE:
+        case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES:
             return 0;
         case LET_NETWORK_REQUEST_TYPE_GET_BALANCE:
             return 1;
@@ -32,7 +33,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
     switch (request_parser->state) {
         case LET_NETWORK_REQUEST_PARSER_STATE_COMMAND: {
             switch (byte) {
-                case '!':
+                case ';':
                     output->type = LET_NETWORK_REQUEST_TYPE_MAGIC;
                     break;
                 case '+':
@@ -43,6 +44,9 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                     break;
                 case '?':
                     output->type = LET_NETWORK_REQUEST_TYPE_GET_BALANCE;
+                    break;
+                case '#':
+                    output->type = LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES;
                     break;
                 case '.':
                     output->type = LET_NETWORK_REQUEST_TYPE_CLOSE;
