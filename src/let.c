@@ -58,7 +58,7 @@ void let_run(void) {
                 break;
             }
 
-            let_error_t runtime_error;
+            let_error_t runtime_error = let_error_none();
             switch (network_request.type) {
                 case LET_NETWORK_REQUEST_TYPE_MAGIC: {
                     network_response.id = LET_NETWORK_RESPONSE_ID_MAGIC;
@@ -78,8 +78,6 @@ void let_run(void) {
 
                     runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
                     if (runtime_error.id != LET_ERROR_ID_NONE) {
-                        network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = runtime_error;
                         break;
                     }
 
@@ -91,12 +89,10 @@ void let_run(void) {
                     let_u64_t account_id;
                     runtime_error = let_state_add_account(&let.state, add_account, &account_id);
                     if (runtime_error.id != LET_ERROR_ID_NONE) {
-                        network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = runtime_error;
-                    } else {
-                        network_response.data.add_account = account_id;
+                        break;
                     }
 
+                    network_response.data.add_account = account_id;
                     break;
                 }
                 case LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER: {
@@ -108,8 +104,6 @@ void let_run(void) {
 
                     runtime_error = let_guard_make_transfer(&let.guard, from_id, to_id, amount);
                     if (runtime_error.id != LET_ERROR_ID_NONE) {
-                        network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = runtime_error;
                         break;
                     }
 
@@ -125,17 +119,10 @@ void let_run(void) {
 
                     runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
                     if (runtime_error.id != LET_ERROR_ID_NONE) {
-                        network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = runtime_error;
                         break;
                     }
 
                     runtime_error = let_state_make_transfer(&let.state, from_id, to_id, amount);
-                    if (runtime_error.id != LET_ERROR_ID_NONE) {
-                        network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = runtime_error;
-                    }
-
                     break;
                 }
                 case LET_NETWORK_REQUEST_TYPE_GET_BALANCE: {
@@ -146,18 +133,21 @@ void let_run(void) {
                     let_account_t account;
                     runtime_error = let_account_list_get(let.account_list, account_id, &account);
                     if (runtime_error.id != LET_ERROR_ID_NONE) {
-                        network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = runtime_error;
-                    } else {
-                        network_response.data.get_balance = account.debits - account.credits;
+                        break;
                     }
 
+                    network_response.data.get_balance = account.debits - account.credits;
                     break;
                 }
                 case LET_NETWORK_REQUEST_TYPE_CLOSE: {
                     network_response.id = LET_NETWORK_RESPONSE_ID_OK;
                     break;
                 }
+            }
+
+            if (runtime_error.id != LET_ERROR_ID_NONE) {
+                network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
+                network_response.data.error = runtime_error;
             }
 
             let.error = let_network_client_write(&let.network_client, &network_response);
@@ -181,6 +171,8 @@ void let_close(const int signal) {
 }
 
 void let_cleanup(void) {
+    let.error = let_storage_wal_sync(&let.storage_wal);
+
     let_network_close(&let.network_server);
     let_storage_wal_close(&let.storage_wal);
     let_account_list_free(let.account_list);
@@ -210,5 +202,10 @@ int main(void) {
 
 cleanup:
     let_cleanup();
+    if (let.error.id != LET_ERROR_ID_NONE) {
+        printf("cleanup error: %d\n", let_error_code(let.error));
+        success = EXIT_FAILURE;
+    }
+
     return success;
 }

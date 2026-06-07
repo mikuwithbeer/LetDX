@@ -71,6 +71,6 @@ constexpr let_u32_t LET_STORAGE_CRC_TABLE_CRC32C[1 << 8] = {
 };
 
 [[nodiscard]] let_u32_t let_storage_crc32c(const void *bytes,
-                                          let_size_t length);
+                                           let_size_t length);
 
 #endif //LET_STORAGE_CRC_H
