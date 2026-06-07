@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <stdckdint.h>
 
 let_account_t let_account_new(const let_u128_t credits,
                               const let_u128_t debits,
@@ -42,7 +43,11 @@ let_account_list_t *let_account_list_new(void) {
 let_error_t let_account_list_add(let_account_list_t *account_list,
                                  const let_account_t account) {
     if (account_list->length >= account_list->capacity) {
-        const auto new_capacity = account_list->capacity * 2;
+        let_u64_t new_capacity;
+        if (ckd_mul(&new_capacity, account_list->capacity, 2)) {
+            return let_error_new(LET_ERROR_ID_ACCOUNT, LET_ERROR_ACCOUNT_CAPACITY_OVERFLOW);
+        }
+
         let_account_t *accounts = realloc(account_list->accounts, sizeof(let_account_t) * new_capacity);
         if (accounts == nullptr) {
             return let_error_new(LET_ERROR_ID_ACCOUNT, LET_ERROR_ACCOUNT_OUT_OF_MEMORY);

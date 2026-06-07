@@ -6,6 +6,7 @@
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_ACCOUNT_OUT_OF_MEMORY = 1,
     LET_ERROR_ACCOUNT_NOT_FOUND,
+    LET_ERROR_ACCOUNT_CAPACITY_OVERFLOW,
 } let_error_account_t;
 
 typedef enum [[nodiscard]] : let_u8_t {
