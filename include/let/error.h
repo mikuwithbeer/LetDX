@@ -74,4 +74,8 @@ let_error_t let_error_none(void);
 
 let_error_code_t let_error_code(let_error_t error);
 
+[[nodiscard, maybe_unused]] static inline bool let_error_exists(const let_error_t error) {
+    return error.id != LET_ERROR_ID_NONE;
+}
+
 #endif //LET_ERROR_H

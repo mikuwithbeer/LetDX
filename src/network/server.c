@@ -31,6 +31,7 @@ let_error_t let_network_server_init(let_network_server_t *network_server, let_u1
 
     if (bind_result < 0) {
         close(network_server->handle);
+        network_server->handle = -1;
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_BIND_FAILED);
     }
 
@@ -38,6 +39,7 @@ let_error_t let_network_server_init(let_network_server_t *network_server, let_u1
 
     if (listen_result < 0) {
         close(network_server->handle);
+        network_server->handle = -1;
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_LISTEN_FAILED);
     }
 
@@ -75,7 +77,7 @@ let_error_t let_network_client_read(const let_network_server_t *network_client,
         }
 
         const auto request_result = let_network_request_parser_next(&network_parser, current_byte, request);
-        if (request_result.id != LET_ERROR_ID_NONE) {
+        if (let_error_exists(request_result)) {
             return request_result;
         }
 

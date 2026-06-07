@@ -22,7 +22,7 @@ let_error_t let_state_add_account(const let_state_t *state,
     const auto current_length = state->account_list->length;
     const auto account_result = let_account_list_add(state->account_list, account);
 
-    if (account_result.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(account_result)) {
         return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_OUT_OF_MEMORY);
     }
 

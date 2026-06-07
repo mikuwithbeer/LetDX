@@ -34,7 +34,7 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
         }
 
         const auto sync_result = let_storage_wal_sync(storage_wal);
-        if (sync_result.id != LET_ERROR_ID_NONE) {
+        if (let_error_exists(sync_result)) {
             fclose(storage_wal->file);
             return sync_result;
         }
@@ -109,7 +109,7 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
 
                 let_u64_t account_id;
                 const auto account_result = let_state_add_account(storage_wal->state, account, &account_id);
-                if (account_result.id != LET_ERROR_ID_NONE) {
+                if (let_error_exists(account_result)) {
                     return account_result;
                 }
 
@@ -123,7 +123,7 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
                     make_transfer.from_id,
                     make_transfer.to_id,
                     make_transfer.amount);
-                if (transfer_result.id != LET_ERROR_ID_NONE) {
+                if (let_error_exists(transfer_result)) {
                     return transfer_result;
                 }
 
@@ -158,7 +158,7 @@ let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
     storage_wal->batch_buffer[storage_wal->batch_count++] = safe_entry;
     if (storage_wal->batch_count == LET_STORAGE_WAL_BATCH_SIZE) {
         const auto sync_result = let_storage_wal_sync(storage_wal);
-        if (sync_result.id != LET_ERROR_ID_NONE) {
+        if (let_error_exists(sync_result)) {
             return sync_result;
         }
     }

@@ -23,7 +23,7 @@ uint8_t let_network_request_to_argument_count(const let_network_request_t *reque
 }
 
 let_network_request_parser_t let_network_request_parser_empty(void) {
-    return (let_network_request_parser_t){0};
+    return (let_network_request_parser_t){};
 }
 
 let_error_t let_network_request_parser_next(let_network_request_parser_t *request_parser,
@@ -80,7 +80,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                                 byte,
                                 &output->data.create_account.wal_id);
 
-                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                            if (let_error_exists(collect_result)) {
                                 return collect_result;
                             }
 
@@ -92,7 +92,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                                 byte,
                                 &output->data.create_account.balance);
 
-                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                            if (let_error_exists(collect_result)) {
                                 return collect_result;
                             }
 
@@ -104,7 +104,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                                 byte,
                                 &output->data.create_account.flags);
 
-                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                            if (let_error_exists(collect_result)) {
                                 return collect_result;
                             }
 
@@ -124,7 +124,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                                 byte,
                                 &output->data.make_transfer.wal_id);
 
-                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                            if (let_error_exists(collect_result)) {
                                 return collect_result;
                             }
 
@@ -136,7 +136,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                                 byte,
                                 &output->data.make_transfer.from_id);
 
-                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                            if (let_error_exists(collect_result)) {
                                 return collect_result;
                             }
 
@@ -148,7 +148,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                                 byte,
                                 &output->data.make_transfer.to_id);
 
-                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                            if (let_error_exists(collect_result)) {
                                 return collect_result;
                             }
 
@@ -160,7 +160,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                                 byte,
                                 &output->data.make_transfer.amount);
 
-                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                            if (let_error_exists(collect_result)) {
                                 return collect_result;
                             }
 
@@ -180,7 +180,7 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                                 byte,
                                 &output->data.get_balance);
 
-                            if (collect_result.id != LET_ERROR_ID_NONE) {
+                            if (let_error_exists(collect_result)) {
                                 return collect_result;
                             }
 
@@ -237,13 +237,12 @@ let_error_t let_network_request_parser_collect_u64(let_network_request_parser_t 
                                                    const let_u8_t byte,
                                                    let_u64_t *output) {
     let_u128_t current_output = *output;
-
     const auto u128_result = let_network_request_parser_collect_u128(
         request_parser,
         byte,
         &current_output);
 
-    if (u128_result.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(u128_result)) {
         return u128_result;
     }
 
@@ -259,13 +258,12 @@ let_error_t let_network_request_parser_collect_u8(let_network_request_parser_t *
                                                   const let_u8_t byte,
                                                   let_u8_t *output) {
     let_u128_t current_output = *output;
-
     const auto u128_result = let_network_request_parser_collect_u128(
         request_parser,
         byte,
         &current_output);
 
-    if (u128_result.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(u128_result)) {
         return u128_result;
     }
 

@@ -7,26 +7,26 @@ void let_init(void) {
     let.state = let_state_empty();
 
     let.error = let_state_init(&let.state, let.account_list);
-    if (let.error.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(let.error)) {
         return;
     }
 
     let.guard = let_guard_empty();
 
     let.error = let_guard_init(&let.guard, &let.state);
-    if (let.error.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(let.error)) {
         return;
     }
 
     let.storage_wal = let_storage_wal_empty();
 
     let.error = let_storage_wal_init(&let.storage_wal, &let.state, "let__wal");
-    if (let.error.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(let.error)) {
         return;
     }
 
     let.error = let_storage_wal_replay(&let.storage_wal);
-    if (let.error.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(let.error)) {
         return;
     }
 
@@ -34,7 +34,7 @@ void let_init(void) {
     let.network_client = let_network_server_empty();
 
     let.error = let_network_server_init(&let.network_server, 8081);
-    if (let.error.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(let.error)) {
         return;
     }
 
@@ -44,7 +44,7 @@ void let_init(void) {
 void let_run(void) {
     while (let.running) {
         let.error = let_network_server_accept(&let.network_server, &let.network_client);
-        if (let.error.id != LET_ERROR_ID_NONE) {
+        if (let_error_exists(let.error)) {
             break;
         }
 
@@ -53,7 +53,7 @@ void let_run(void) {
             auto network_response = let_network_response_empty();
 
             let.error = let_network_client_read(&let.network_client, &network_request);
-            if (let.error.id != LET_ERROR_ID_NONE) {
+            if (let_error_exists(let.error)) {
                 printf("read error: %d\n", let_error_code(let.error));
                 break;
             }
@@ -77,7 +77,7 @@ void let_run(void) {
                     };
 
                     runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
-                    if (runtime_error.id != LET_ERROR_ID_NONE) {
+                    if (let_error_exists(runtime_error)) {
                         break;
                     }
 
@@ -88,7 +88,7 @@ void let_run(void) {
 
                     let_u64_t account_id;
                     runtime_error = let_state_add_account(&let.state, add_account, &account_id);
-                    if (runtime_error.id != LET_ERROR_ID_NONE) {
+                    if (let_error_exists(runtime_error)) {
                         break;
                     }
 
@@ -103,7 +103,7 @@ void let_run(void) {
                     const auto amount = network_request.data.make_transfer.amount;
 
                     runtime_error = let_guard_make_transfer(&let.guard, from_id, to_id, amount);
-                    if (runtime_error.id != LET_ERROR_ID_NONE) {
+                    if (let_error_exists(runtime_error)) {
                         break;
                     }
 
@@ -118,7 +118,7 @@ void let_run(void) {
                     };
 
                     runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
-                    if (runtime_error.id != LET_ERROR_ID_NONE) {
+                    if (let_error_exists(runtime_error)) {
                         break;
                     }
 
@@ -132,7 +132,7 @@ void let_run(void) {
 
                     let_account_t account;
                     runtime_error = let_account_list_get(let.account_list, account_id, &account);
-                    if (runtime_error.id != LET_ERROR_ID_NONE) {
+                    if (let_error_exists(runtime_error)) {
                         break;
                     }
 
@@ -145,13 +145,13 @@ void let_run(void) {
                 }
             }
 
-            if (runtime_error.id != LET_ERROR_ID_NONE) {
+            if (let_error_exists(runtime_error)) {
                 network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
                 network_response.data.error = runtime_error;
             }
 
             let.error = let_network_client_write(&let.network_client, &network_response);
-            if (let.error.id != LET_ERROR_ID_NONE) {
+            if (let_error_exists(let.error)) {
                 printf("write error: %d\n", let_error_code(let.error));
                 break;
             }
@@ -188,21 +188,21 @@ int main(void) {
     sigaction(SIGINT, &signal_action, nullptr);
 
     let_init();
-    if (let.error.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(let.error)) {
         printf("init error: %d\n", let_error_code(let.error));
         success = EXIT_FAILURE;
         goto cleanup;
     }
 
     let_run();
-    if (let.error.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(let.error)) {
         printf("runtime error: %d\n", let_error_code(let.error));
         success = EXIT_FAILURE;
     }
 
 cleanup:
     let_cleanup();
-    if (let.error.id != LET_ERROR_ID_NONE) {
+    if (let_error_exists(let.error)) {
         printf("cleanup error: %d\n", let_error_code(let.error));
         success = EXIT_FAILURE;
     }
