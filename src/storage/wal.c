@@ -9,7 +9,6 @@
 let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                                  let_state_t *state,
                                  const char *path) {
-    storage_wal->file = nullptr;
     storage_wal->state = state;
 
     auto file_descriptor = open(path, O_RDWR | O_CREAT | O_EXCL, 0644);

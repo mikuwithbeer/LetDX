@@ -1,74 +1,64 @@
-#include "let/network/server.h"
-#include "let/storage/wal.h"
-#include "let/guard.h"
+#include "let/let.h"
 
-#include <signal.h>
+let_t let = {};
 
-volatile sig_atomic_t keep_running = true;
+void let_init(void) {
+    let.account_list = let_account_list_new();
+    let.state = let_state_empty();
 
-void on_shutdown(int _) {
-    keep_running = false;
+    let.error = let_state_init(&let.state, let.account_list);
+    if (let.error.id != LET_ERROR_ID_NONE) {
+        return;
+    }
+
+    let.guard = let_guard_empty();
+
+    let.error = let_guard_init(&let.guard, &let.state);
+    if (let.error.id != LET_ERROR_ID_NONE) {
+        return;
+    }
+
+    let.storage_wal = let_storage_wal_empty();
+
+    let.error = let_storage_wal_init(&let.storage_wal, &let.state, "let__wal");
+    if (let.error.id != LET_ERROR_ID_NONE) {
+        return;
+    }
+
+    let.error = let_storage_wal_replay(&let.storage_wal);
+    if (let.error.id != LET_ERROR_ID_NONE) {
+        return;
+    }
+
+    let.network_server = let_network_server_empty();
+    let.network_client = let_network_server_empty();
+
+    let.error = let_network_server_init(&let.network_server, 8081);
+    if (let.error.id != LET_ERROR_ID_NONE) {
+        return;
+    }
+
+    let.running = true;
 }
 
-int main(void) {
-    signal(SIGTERM, on_shutdown);
-    signal(SIGINT, on_shutdown);
-
-    const auto account_list = let_account_list_new();
-    auto state = let_state_empty();
-
-    auto global_result = let_state_init(&state, account_list);
-    if (global_result.id != LET_ERROR_ID_NONE) {
-        let_account_list_free(account_list);
-        return -1;
-    }
-
-    auto guard = let_guard_empty();
-
-    global_result = let_guard_init(&guard, &state);
-    if (global_result.id != LET_ERROR_ID_NONE) {
-        let_account_list_free(account_list);
-        return -1;
-    }
-
-    auto storage_wal = let_storage_wal_empty();
-
-    global_result = let_storage_wal_init(&storage_wal, &state, "let__wal");
-    if (global_result.id != LET_ERROR_ID_NONE) {
-        let_account_list_free(account_list);
-        return -1;
-    }
-
-    global_result = let_storage_wal_replay(&storage_wal);
-    if (global_result.id != LET_ERROR_ID_NONE) {
-        let_account_list_free(account_list);
-        return -1;
-    }
-
-    auto network_server = let_network_server_empty();
-    auto network_client = let_network_server_empty();
-
-    global_result = let_network_server_init(&network_server, 3169);
-    if (global_result.id != LET_ERROR_ID_NONE) {
-        let_account_list_free(account_list);
-        return -1;
-    }
-
-    while (keep_running) {
-        global_result = let_network_server_accept(&network_server, &network_client);
-        if (global_result.id != LET_ERROR_ID_NONE) {
+void let_run(void) {
+    while (let.running) {
+        let.error = let_network_server_accept(&let.network_server, &let.network_client);
+        if (let.error.id != LET_ERROR_ID_NONE) {
             break;
         }
 
-        while (keep_running) {
+        while (let.running) {
             auto network_request = let_network_request_empty();
             auto network_response = let_network_response_empty();
 
-            global_result = let_network_client_read(&network_client, &network_request);
-            if (global_result.id != LET_ERROR_ID_NONE) {
+            let.error = let_network_client_read(&let.network_client, &network_request);
+            if (let.error.id != LET_ERROR_ID_NONE) {
+                printf("read error: %d\n", let_error_code(let.error));
                 break;
             }
 
+            let_error_t runtime_error;
             switch (network_request.type) {
                 case LET_NETWORK_REQUEST_TYPE_MAGIC: {
                     network_response.id = LET_NETWORK_RESPONSE_ID_MAGIC;
@@ -86,10 +76,10 @@ int main(void) {
                         .flags = network_request.data.create_account.flags
                     };
 
-                    global_result = let_storage_wal_write(&storage_wal, &storage_wal_entry);
-                    if (global_result.id != LET_ERROR_ID_NONE) {
+                    runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
+                    if (runtime_error.id != LET_ERROR_ID_NONE) {
                         network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = global_result;
+                        network_response.data.error = runtime_error;
                         break;
                     }
 
@@ -99,10 +89,10 @@ int main(void) {
                         network_request.data.create_account.flags);
 
                     let_u64_t account_id;
-                    global_result = let_state_add_account(&state, add_account, &account_id);
-                    if (global_result.id != LET_ERROR_ID_NONE) {
+                    runtime_error = let_state_add_account(&let.state, add_account, &account_id);
+                    if (runtime_error.id != LET_ERROR_ID_NONE) {
                         network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = global_result;
+                        network_response.data.error = runtime_error;
                     } else {
                         network_response.data.add_account = account_id;
                     }
@@ -116,10 +106,10 @@ int main(void) {
                     const auto to_id = network_request.data.make_transfer.to_id;
                     const auto amount = network_request.data.make_transfer.amount;
 
-                    global_result = let_guard_make_transfer(&guard, from_id, to_id, amount);
-                    if (global_result.id != LET_ERROR_ID_NONE) {
+                    runtime_error = let_guard_make_transfer(&let.guard, from_id, to_id, amount);
+                    if (runtime_error.id != LET_ERROR_ID_NONE) {
                         network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = global_result;
+                        network_response.data.error = runtime_error;
                         break;
                     }
 
@@ -133,17 +123,17 @@ int main(void) {
                         .amount = amount
                     };
 
-                    global_result = let_storage_wal_write(&storage_wal, &storage_wal_entry);
-                    if (global_result.id != LET_ERROR_ID_NONE) {
+                    runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
+                    if (runtime_error.id != LET_ERROR_ID_NONE) {
                         network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = global_result;
+                        network_response.data.error = runtime_error;
                         break;
                     }
 
-                    global_result = let_state_make_transfer(&state, from_id, to_id, amount);
-                    if (global_result.id != LET_ERROR_ID_NONE) {
+                    runtime_error = let_state_make_transfer(&let.state, from_id, to_id, amount);
+                    if (runtime_error.id != LET_ERROR_ID_NONE) {
                         network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = global_result;
+                        network_response.data.error = runtime_error;
                     }
 
                     break;
@@ -154,10 +144,10 @@ int main(void) {
                     const auto account_id = network_request.data.get_balance;
 
                     let_account_t account;
-                    global_result = let_account_list_get(account_list, account_id, &account);
-                    if (global_result.id != LET_ERROR_ID_NONE) {
+                    runtime_error = let_account_list_get(let.account_list, account_id, &account);
+                    if (runtime_error.id != LET_ERROR_ID_NONE) {
                         network_response.id = LET_NETWORK_RESPONSE_ID_ERROR;
-                        network_response.data.error = global_result;
+                        network_response.data.error = runtime_error;
                     } else {
                         network_response.data.get_balance = account.debits - account.credits;
                     }
@@ -170,8 +160,9 @@ int main(void) {
                 }
             }
 
-            global_result = let_network_client_write(&network_client, &network_response);
-            if (global_result.id != LET_ERROR_ID_NONE) {
+            let.error = let_network_client_write(&let.network_client, &network_response);
+            if (let.error.id != LET_ERROR_ID_NONE) {
+                printf("write error: %d\n", let_error_code(let.error));
                 break;
             }
 
@@ -180,23 +171,38 @@ int main(void) {
             }
         }
 
-        let_network_close(&network_client);
+        let_network_close(&let.network_client);
+    }
+}
+
+void let_close(const int signal) {
+    (void) signal;
+    let.running = false;
+}
+
+void let_cleanup(void) {
+    let_network_close(&let.network_server);
+    let_storage_wal_close(&let.storage_wal);
+    let_account_list_free(let.account_list);
+}
+
+int main(void) {
+    signal(SIGTERM, let_close);
+    signal(SIGINT, let_close);
+
+    let_init();
+    if (let.error.id != LET_ERROR_ID_NONE) {
+        printf("init error: %d\n", let_error_code(let.error));
+        return 1;
     }
 
-    if (global_result.id != LET_ERROR_ID_NONE) {
-        printf("Error Code: %d", let_error_code(global_result));
+    let_run();
+    let_cleanup();
+
+    if (let.error.id != LET_ERROR_ID_NONE) {
+        printf("runtime error: %d\n", let_error_code(let.error));
+        return 1;
     }
-
-    global_result = let_storage_wal_sync(&storage_wal);
-    if (global_result.id != LET_ERROR_ID_NONE) {
-        printf("Error Code: %d", let_error_code(global_result));
-    }
-
-    let_network_close(&network_server);
-
-    let_storage_wal_close(&storage_wal);
-
-    let_account_list_free(account_list);
 
     return 0;
 }

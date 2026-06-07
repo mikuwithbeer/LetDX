@@ -22,7 +22,7 @@ set(SOURCES
     src/account.c
     src/error.c
     src/guard.c
-    src/main.c
+    src/let.c
     src/state.c
 )
 
