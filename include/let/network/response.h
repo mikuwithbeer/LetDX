@@ -7,13 +7,13 @@
 constexpr let_u8_t LET_NETWORK_RESPONSE_MAGIC[3] = {0x4C, 0x45, 0x54};
 
 typedef enum : let_u8_t {
-    LET_NETWORK_RESPONSE_ID_MAGIC,
-    LET_NETWORK_RESPONSE_ID_ADD_ACCOUNT,
-    LET_NETWORK_RESPONSE_ID_GET_BALANCE,
-    LET_NETWORK_RESPONSE_ID_COUNT_ENTRIES,
-    LET_NETWORK_RESPONSE_ID_OK,
-    LET_NETWORK_RESPONSE_ID_ERROR,
-} let_network_response_id_t;
+    LET_NETWORK_RESPONSE_TYPE_MAGIC,
+    LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT,
+    LET_NETWORK_RESPONSE_TYPE_GET_BALANCE,
+    LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES,
+    LET_NETWORK_RESPONSE_TYPE_OK,
+    LET_NETWORK_RESPONSE_TYPE_ERROR,
+} let_network_response_type_t;
 
 typedef union {
     let_u128_t get_balance;
@@ -24,7 +24,7 @@ typedef union {
 } let_network_response_data_t;
 
 typedef struct {
-    let_network_response_id_t id;
+    let_network_response_type_t type;
     let_network_response_data_t data;
 } let_network_response_t;
 
