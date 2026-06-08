@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/errno.h>
 
 let_network_server_t let_network_server_empty(void) {
     return (let_network_server_t){};
@@ -91,12 +92,26 @@ let_error_t let_network_client_read(const let_network_server_t *network_client,
 
 let_error_t let_network_client_write(const let_network_server_t *network_client,
                                      const let_network_response_t *response) {
-    u_int8_t response_buffer[64] = {0};
+    u_int8_t response_buffer[LET_NETWORK_RESPONSE_SIZE_MAX] = {};
     const auto response_length = let_network_response_to_bytes(response, response_buffer);
 
-    const auto send_result = send(network_client->handle, response_buffer, response_length, 0);
-    if (send_result < 0) {
-        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_FAILED);
+
+    for (size_t written_bytes = 0; written_bytes < response_length;) {
+        const auto send_result = send(
+            network_client->handle,
+            response_buffer + written_bytes,
+            response_length - written_bytes,
+            MSG_NOSIGNAL);
+
+        if (send_result < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_FAILED);
+        }
+
+        written_bytes += (size_t) send_result;
     }
 
     return let_error_none();
