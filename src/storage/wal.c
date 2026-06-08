@@ -23,6 +23,7 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                                    storage_wal->file);
         if (write_result != 1) {
             fclose(storage_wal->file);
+            storage_wal->file = nullptr;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
         }
 
@@ -30,12 +31,14 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                               storage_wal->file);
         if (write_result != 1) {
             fclose(storage_wal->file);
+            storage_wal->file = nullptr;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
         }
 
         const auto sync_result = let_storage_wal_sync(storage_wal);
         if (let_error_exists(sync_result)) {
             fclose(storage_wal->file);
+            storage_wal->file = nullptr;
             return sync_result;
         }
     } else if (errno == EEXIST) {
@@ -56,22 +59,26 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
         auto read_result = fread(&wal_magic, sizeof(wal_magic), 1, storage_wal->file);
         if (read_result != 1) {
             fclose(storage_wal->file);
+            storage_wal->file = nullptr;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
         }
 
         read_result = fread(&wal_version, sizeof(wal_version), 1, storage_wal->file);
         if (read_result != 1) {
             fclose(storage_wal->file);
+            storage_wal->file = nullptr;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
         }
 
         if (wal_magic != LET_STORAGE_WAL_HEADER_MAGIC) {
             fclose(storage_wal->file);
+            storage_wal->file = nullptr;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_MAGIC);
         }
 
         if (wal_version != LET_STORAGE_WAL_HEADER_VERSION) {
             fclose(storage_wal->file);
+            storage_wal->file = nullptr;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_VERSION);
         }
     } else {
@@ -81,6 +88,7 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
     const auto seek_result = fseek(storage_wal->file, 0, SEEK_END);
     if (seek_result != 0) {
         fclose(storage_wal->file);
+        storage_wal->file = nullptr;
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SEEK_FAILED);
     }
 
