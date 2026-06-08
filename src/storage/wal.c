@@ -164,6 +164,10 @@ let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_NONCE_MISMATCH);
     }
 
+    if (storage_wal->batch_count >= LET_STORAGE_WAL_BATCH_SIZE) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_BATCH_OVERFLOW);
+    }
+
     const auto safe_entry = (let_storage_wal_entry_safe_t){
         .entry = *entry,
         .checksum = let_storage_crc32c(entry, sizeof(let_storage_wal_entry_t))
@@ -227,7 +231,7 @@ let_storage_wal_entry_t let_storage_wal_entry_new(const let_u64_t id,
             .timestamp = time_now,
             .type = type
         },
-        .data = {0}
+        .data = {}
     };
 }
 
