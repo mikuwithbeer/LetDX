@@ -6,7 +6,11 @@
 #include <errno.h>
 
 let_network_server_t let_network_server_empty(void) {
-    return (let_network_server_t){};
+    return (let_network_server_t){
+        .address = {},
+        .handle = -1,
+        .port = 0
+    };
 }
 
 let_error_t let_network_server_init(let_network_server_t *network_server,
