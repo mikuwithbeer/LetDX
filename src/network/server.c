@@ -9,7 +9,8 @@ let_network_server_t let_network_server_empty(void) {
 }
 
 let_error_t let_network_server_init(let_network_server_t *network_server,
-                                    const let_u16_t port) {
+                                    const let_u16_t port,
+                                    const let_u16_t backlog) {
     network_server->port = port;
     network_server->handle = socket(AF_INET, SOCK_STREAM, 0);
     if (network_server->handle < 0) {
@@ -36,7 +37,7 @@ let_error_t let_network_server_init(let_network_server_t *network_server,
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_BIND_FAILED);
     }
 
-    const auto listen_result = listen(network_server->handle, LET_NETWORK_SERVER_BACKLOG_DEFAULT);
+    const auto listen_result = listen(network_server->handle, backlog);
 
     if (listen_result < 0) {
         close(network_server->handle);

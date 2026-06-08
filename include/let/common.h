@@ -3,6 +3,13 @@
 
 #include <stdlib.h>
 
+#define LET_MEMORY_COPY(destination, literal) \
+        do { \
+            constexpr auto literal_size = sizeof(literal) - 1; \
+            memcpy(destination, literal, literal_size); \
+            destination += literal_size; \
+        } while(0)
+
 typedef int8_t let_i8_t;
 typedef int16_t let_i16_t;
 typedef int32_t let_i32_t;

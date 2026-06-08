@@ -20,9 +20,11 @@ set(SOURCES
     src/storage/crc.c
     src/storage/wal.c
     src/account.c
+    src/cli.c
     src/error.c
     src/guard.c
     src/let.c
+    src/main.c
     src/state.c
 )
 

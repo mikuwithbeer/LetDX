@@ -4,6 +4,7 @@
 #include "let/network/server.h"
 #include "let/storage/wal.h"
 #include "let/guard.h"
+#include "let/cli.h"
 
 #include <signal.h>
 
@@ -23,7 +24,7 @@ typedef struct {
 
 extern let_t let;
 
-void let_init(void);
+void let_init(const let_cli_t *cli);
 
 void let_run(void);
 

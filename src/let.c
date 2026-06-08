@@ -1,8 +1,9 @@
 #include "let/let.h"
+#include "let/cli.h"
 
 let_t let = {};
 
-void let_init(void) {
+void let_init(const let_cli_t *cli) {
     let.account_list = let_account_list_new();
     let.state = let_state_empty();
     let.error = let_state_init(&let.state, let.account_list);
@@ -17,7 +18,7 @@ void let_init(void) {
     }
 
     let.storage_wal = let_storage_wal_empty();
-    let.error = let_storage_wal_init(&let.storage_wal, &let.state, "let__wal");
+    let.error = let_storage_wal_init(&let.storage_wal, &let.state, cli->storage_file);
     if (let_error_exists(let.error)) {
         return;
     }
@@ -29,7 +30,7 @@ void let_init(void) {
 
     let.network_server = let_network_server_empty();
     let.network_client = let_network_server_empty();
-    let.error = let_network_server_init(&let.network_server, 8081);
+    let.error = let_network_server_init(&let.network_server, cli->port, cli->backlog);
     if (let_error_exists(let.error)) {
         return;
     }
@@ -50,7 +51,6 @@ void let_run(void) {
 
             let.error = let_network_client_read(&let.network_client, &network_request);
             if (let_error_exists(let.error)) {
-                printf("read error: %d\n", let_error_code(let.error));
                 break;
             }
 
@@ -184,7 +184,6 @@ void let_run(void) {
 
             let.error = let_network_client_write(&let.network_client, &network_response);
             if (let_error_exists(let.error)) {
-                printf("write error: %d\n", let_error_code(let.error));
                 break;
             }
 
@@ -203,41 +202,12 @@ void let_close(const int signal) {
 }
 
 void let_cleanup(void) {
-    let.error = let_storage_wal_sync(&let.storage_wal);
-
     let_network_close(&let.network_server);
-    let_storage_wal_close(&let.storage_wal);
+
+    if (let.storage_wal.file != nullptr) {
+        let.error = let_storage_wal_sync(&let.storage_wal);
+        let_storage_wal_close(&let.storage_wal);
+    }
+
     let_account_list_free(let.account_list);
-}
-
-int main(void) {
-    int success = EXIT_SUCCESS;
-
-    struct sigaction signal_action = {};
-    signal_action.sa_handler = let_close;
-
-    sigaction(SIGTERM, &signal_action, nullptr);
-    sigaction(SIGINT, &signal_action, nullptr);
-
-    let_init();
-    if (let_error_exists(let.error)) {
-        printf("init error: %d\n", let_error_code(let.error));
-        success = EXIT_FAILURE;
-        goto cleanup;
-    }
-
-    let_run();
-    if (let_error_exists(let.error)) {
-        printf("runtime error: %d\n", let_error_code(let.error));
-        success = EXIT_FAILURE;
-    }
-
-cleanup:
-    let_cleanup();
-    if (let_error_exists(let.error)) {
-        printf("cleanup error: %d\n", let_error_code(let.error));
-        success = EXIT_FAILURE;
-    }
-
-    return success;
 }

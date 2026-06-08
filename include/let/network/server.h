@@ -6,8 +6,6 @@
 
 #include <netinet/in.h>
 
-constexpr auto LET_NETWORK_SERVER_BACKLOG_DEFAULT = 1 << 2;
-
 typedef struct sockaddr_in let_network_server_address_t;
 
 typedef struct {
@@ -19,7 +17,8 @@ typedef struct {
 [[nodiscard]] let_network_server_t let_network_server_empty(void);
 
 let_error_t let_network_server_init(let_network_server_t *network_server,
-                                    let_u16_t port);
+                                    let_u16_t port,
+                                    let_u16_t backlog);
 
 let_error_t let_network_server_accept(const let_network_server_t *network_server,
                                       let_network_server_t *network_client);
