@@ -21,4 +21,8 @@ let_error_t let_state_make_transfer(const let_state_t *state,
                                     let_u64_t to_account_id,
                                     let_u128_t amount);
 
+let_error_t let_state_update_account(const let_state_t *state,
+                                     let_u64_t account_id,
+                                     let_account_flag_t flags);
+
 #endif //LET_STATE_H

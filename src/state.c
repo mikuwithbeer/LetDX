@@ -51,3 +51,8 @@ let_error_t let_state_make_transfer(const let_state_t *state,
     return let_error_none();
 }
 
+let_error_t let_state_update_account(const let_state_t *state,
+                                     const let_u64_t account_id,
+                                     const let_account_flag_t flags) {
+    return let_account_list_update(state->account_list, account_id, flags);
+}

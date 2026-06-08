@@ -54,3 +54,13 @@ let_error_t let_guard_make_transfer(const let_guard_t *guard,
 
     return let_error_none();
 }
+
+let_error_t let_guard_update_account(const let_guard_t *guard,
+                                     const let_u64_t account_id) {
+    const auto account_count = guard->state->account_list->length;
+    if (account_id >= account_count) {
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_ACCOUNT_NOT_FOUND);
+    }
+
+    return let_error_none();
+}

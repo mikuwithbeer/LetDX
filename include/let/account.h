@@ -43,6 +43,10 @@ let_error_t let_account_list_get(const let_account_list_t *account_list,
                                  let_u64_t account_id,
                                  let_account_t *account);
 
+let_error_t let_account_list_update(const let_account_list_t *account_list,
+                                    let_u64_t account_id,
+                                    let_account_flag_t flags);
+
 void let_account_list_free(let_account_list_t *account_list);
 
 #endif //LET_ACCOUNT_H

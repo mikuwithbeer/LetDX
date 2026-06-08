@@ -72,6 +72,13 @@ let_error_t let_account_list_get(const let_account_list_t *account_list,
     return let_error_none();
 }
 
+let_error_t let_account_list_update(const let_account_list_t *account_list,
+                                    const let_u64_t account_id,
+                                    const let_account_flag_t flags) {
+    account_list->accounts[account_id].flags = flags;
+    return let_error_none();
+}
+
 void let_account_list_free(let_account_list_t *account_list) {
     if (account_list != nullptr) {
         free(account_list->accounts);

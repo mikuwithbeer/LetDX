@@ -15,6 +15,7 @@ uint8_t let_network_request_to_argument_count(const let_network_request_t *reque
         case LET_NETWORK_REQUEST_TYPE_GET_BALANCE:
             return 1;
         case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT:
+        case LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT:
             return 3;
         case LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER:
             return 4;
@@ -47,6 +48,9 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                     break;
                 case '#':
                     output->type = LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES;
+                    break;
+                case '=':
+                    output->type = LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT;
                     break;
                 case '.':
                     output->type = LET_NETWORK_REQUEST_TYPE_CLOSE;
@@ -191,6 +195,50 @@ let_error_t let_network_request_parser_next(let_network_request_parser_t *reques
                             break;
                         }
 
+                        default:
+                            unreachable();
+                    }
+
+                    break;
+                }
+                case LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT: {
+                    switch (request_parser->request_argument_counter) {
+                        case 3: {
+                            const auto collect_result = let_network_request_parser_collect_u64(
+                                request_parser,
+                                byte,
+                                &output->data.update_account.wal_id);
+
+                            if (let_error_exists(collect_result)) {
+                                return collect_result;
+                            }
+
+                            break;
+                        }
+                        case 2: {
+                            const auto collect_result = let_network_request_parser_collect_u64(
+                                request_parser,
+                                byte,
+                                &output->data.update_account.account_id);
+
+                            if (let_error_exists(collect_result)) {
+                                return collect_result;
+                            }
+
+                            break;
+                        }
+                        case 1: {
+                            const auto collect_result = let_network_request_parser_collect_u8(
+                                request_parser,
+                                byte,
+                                &output->data.update_account.flags);
+
+                            if (let_error_exists(collect_result)) {
+                                return collect_result;
+                            }
+
+                            break;
+                        }
                         default:
                             unreachable();
                     }

@@ -109,6 +109,7 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
 
                 let_u64_t account_id;
                 const auto account_result = let_state_add_account(storage_wal->state, account, &account_id);
+
                 if (let_error_exists(account_result)) {
                     return account_result;
                 }
@@ -117,14 +118,27 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
             }
             case LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER: {
                 const auto make_transfer = safe_entry.entry.data.make_transfer;
-
                 const auto transfer_result = let_state_make_transfer(
                     storage_wal->state,
                     make_transfer.from_id,
                     make_transfer.to_id,
                     make_transfer.amount);
+
                 if (let_error_exists(transfer_result)) {
                     return transfer_result;
+                }
+
+                break;
+            }
+            case LET_STORAGE_WAL_ENTRY_TYPE_UPDATE_ACCOUNT: {
+                const auto update_account = safe_entry.entry.data.update_account;
+                const auto account_result = let_state_update_account(
+                    storage_wal->state,
+                    update_account.account_id,
+                    update_account.flags);
+
+                if (let_error_exists(account_result)) {
+                    return account_result;
                 }
 
                 break;

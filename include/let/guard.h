@@ -17,4 +17,7 @@ let_error_t let_guard_make_transfer(const let_guard_t *guard,
                                     let_u64_t to_account_id,
                                     let_u128_t amount);
 
+let_error_t let_guard_update_account(const let_guard_t *guard,
+                                     let_u64_t account_id);
+
 #endif //LET_GUARD_H

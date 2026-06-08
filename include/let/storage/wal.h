@@ -18,6 +18,7 @@ constexpr let_u16_t LET_STORAGE_WAL_BATCH_SIZE = 1 << 6;
 typedef enum : let_u8_t {
     LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT = 1,
     LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER,
+    LET_STORAGE_WAL_ENTRY_TYPE_UPDATE_ACCOUNT,
 } let_storage_wal_entry_type_t;
 
 typedef struct {
@@ -37,9 +38,15 @@ typedef struct {
     let_u128_t amount;
 } let_storage_wal_entry_make_transfer_t;
 
+typedef struct {
+    let_u64_t account_id;
+    let_u8_t flags;
+} let_storage_wal_entry_update_account_t;
+
 typedef union {
     let_storage_wal_entry_add_account_t add_account;
     let_storage_wal_entry_make_transfer_t make_transfer;
+    let_storage_wal_entry_update_account_t update_account;
 } let_storage_wal_entry_data_t;
 
 typedef struct {
