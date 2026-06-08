@@ -34,6 +34,7 @@ let_error_t let_cli_parse(let_cli_t *cli,
     int option;
 
     while ((option = getopt_long(argc, argv, "hvp:b:f:", long_options, nullptr)) != -1) {
+        errno = 0;
         switch (option) {
             case 'h': {
                 cli->help = true;
