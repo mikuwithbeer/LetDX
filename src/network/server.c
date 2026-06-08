@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/errno.h>
+#include <errno.h>
 
 let_network_server_t let_network_server_empty(void) {
     return (let_network_server_t){};
@@ -79,9 +79,9 @@ let_error_t let_network_client_read(const let_network_server_t *network_client,
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_READ_FAILED);
         }
 
-        const auto request_result = let_network_request_parser_next(&network_parser, current_byte, request);
-        if (let_error_exists(request_result)) {
-            return request_result;
+        const auto parser_result = let_network_request_parser_next(&network_parser, current_byte, request);
+        if (let_error_exists(parser_result)) {
+            return parser_result;
         }
 
         if (network_parser.state == LET_NETWORK_REQUEST_PARSER_STATE_DONE) {

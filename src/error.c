@@ -1,7 +1,11 @@
 #include "let/error.h"
 
-#include <stdio.h>
-#include <string.h>
+let_error_t let_error_none(void) {
+    return (let_error_t){
+        .id = LET_ERROR_ID_NONE,
+        .error = 0
+    };
+}
 
 let_error_t let_error_new(const let_error_id_t id,
                           const let_u8_t code) {
@@ -11,11 +15,188 @@ let_error_t let_error_new(const let_error_id_t id,
     };
 }
 
-let_error_t let_error_none(void) {
-    return (let_error_t){
-        .id = LET_ERROR_ID_NONE,
-        .error = 0
+let_error_report_t let_error_report(const let_error_t error) {
+    let_error_report_t error_report = {
+        .action = LET_ERROR_ACTION_IGNORE,
+        .message = "No error"
     };
+
+    switch (error.id) {
+        case LET_ERROR_ID_NONE:
+            break;
+        case LET_ERROR_ID_ACCOUNT: {
+            switch ((let_error_account_t) error.error) {
+                case LET_ERROR_ACCOUNT_OUT_OF_MEMORY:
+                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.message = "Account subsystem ran out of memory";
+                    break;
+                case LET_ERROR_ACCOUNT_NOT_FOUND:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Account not found";
+                    break;
+                case LET_ERROR_ACCOUNT_CAPACITY_OVERFLOW:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Account subsystem capacity overflow";
+                    break;
+            }
+
+            break;
+        }
+        case LET_ERROR_ID_STATE: {
+            error_report.action = LET_ERROR_ACTION_FATAL;
+            switch ((let_error_state_t) error.error) {
+                case LET_ERROR_STATE_OUT_OF_MEMORY:
+                    error_report.message = "State subsystem ran out of memory";
+                    break;
+                case LET_ERROR_STATE_INVALID_ACCOUNT_LIST:
+                    error_report.message = "Corrupted account list given for the state subsystem";
+                    break;
+            }
+
+            break;
+        }
+        case LET_ERROR_ID_GUARD: {
+            error_report.action = LET_ERROR_ACTION_REJECT;
+            switch ((let_error_guard_t) error.error) {
+                case LET_ERROR_GUARD_SAME_ACCOUNT:
+                    error_report.message = "Same account given for the guard subsystem";
+                    break;
+                case LET_ERROR_GUARD_ACCOUNT_NOT_FOUND:
+                    error_report.message = "Account not found";
+                    break;
+                case LET_ERROR_GUARD_INSUFFICIENT_BALANCE:
+                    error_report.message = "Insufficient balance";
+                    break;
+                case LET_ERROR_GUARD_TRANSACTION_OVERFLOW:
+                    error_report.message = "Transaction overflow";
+                    break;
+                case LET_ERROR_GUARD_ZERO_BALANCE:
+                    error_report.message = "Cannot send due to zero balance";
+                    break;
+                case LET_ERROR_GUARD_ACCOUNT_CANNOT_SEND:
+                    error_report.message = "Account cannot send";
+                    break;
+                case LET_ERROR_GUARD_ACCOUNT_CANNOT_RECEIVE:
+                    error_report.message = "Account cannot receive";
+                    break;
+                case LET_ERROR_GUARD_INVALID_STATE:
+                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.message = "Corrupted state given for the guard subsystem";
+                    break;
+            }
+
+            break;
+        }
+        case LET_ERROR_ID_NETWORK: {
+            switch ((let_error_network_t) error.error) {
+                case LET_ERROR_NETWORK_SERVER_CREATE_FAILED:
+                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.message = "Network server creation failed";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_BIND_FAILED:
+                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.message = "Network server binding failed";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_LISTEN_FAILED:
+                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.message = "Network server listening failed";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_ACCEPT_FAILED:
+                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.message = "Network server accept failed";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_READ_FAILED:
+                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.message = "Network server read failed";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_WRITE_FAILED:
+                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.message = "Network server write failed";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_CLOSED:
+                    error_report.action = LET_ERROR_ACTION_IGNORE;
+                    error_report.message = "Network server closed";
+                    break;
+                case LET_ERROR_NETWORK_REQUEST_UNKNOWN_COMMAND:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Unknown network request command";
+                    break;
+                case LET_ERROR_NETWORK_REQUEST_INVALID_INTEGER:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Invalid network request integer";
+                    break;
+                case LET_ERROR_NETWORK_REQUEST_INTEGER_OVERFLOW:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Network request integer overflow";
+                    break;
+                case LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Expected new line after network request";
+                    break;
+            }
+
+            break;
+        }
+        case LET_ERROR_ID_STORAGE: {
+            error_report.action = LET_ERROR_ACTION_FATAL;
+            switch ((let_error_storage_t) error.error) {
+                case LET_ERROR_STORAGE_WAL_CREATE_FAILED:
+                    error_report.message = "Storage creation failed";
+                    break;
+                case LET_ERROR_STORAGE_WAL_WRITE_FAILED:
+                    error_report.message = "Storage write failed";
+                    break;
+                case LET_ERROR_STORAGE_WAL_READ_FAILED:
+                    error_report.message = "Storage read failed";
+                    break;
+                case LET_ERROR_STORAGE_WAL_SYNC_FAILED:
+                    error_report.message = "Storage sync failed";
+                    break;
+                case LET_ERROR_STORAGE_WAL_SEEK_FAILED:
+                    error_report.message = "Storage seek failed";
+                    break;
+                case LET_ERROR_STORAGE_WAL_INVALID_MAGIC:
+                    error_report.message = "Storage received invalid magic";
+                    break;
+                case LET_ERROR_STORAGE_WAL_INVALID_VERSION:
+                    error_report.message = "Storage received invalid version";
+                    break;
+                case LET_ERROR_STORAGE_WAL_NONCE_MISMATCH:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Storage received nonce mismatch";
+                    break;
+                case LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH:
+                    error_report.message = "Storage received checksum mismatch";
+                    break;
+                case LET_ERROR_STORAGE_WAL_BATCH_OVERFLOW:
+                    error_report.message = "Storage batch size limit exceeded";
+                    break;
+            }
+
+            break;
+        }
+        case LET_ERROR_ID_CLI: {
+            error_report.action = LET_ERROR_ACTION_FATAL;
+            switch ((let_error_cli_t) error.error) {
+                case LET_ERROR_CLI_INVALID_OPTION:
+                    error_report.message = "Invalid CLI option given";
+                    break;
+                case LET_ERROR_CLI_INVALID_PORT:
+                    error_report.message = "Invalid port number given";
+                    break;
+                case LET_ERROR_CLI_INVALID_BACKLOG:
+                    error_report.message = "Invalid backlog size given";
+                    break;
+                case LET_ERROR_CLI_INVALID_FILE:
+                    error_report.message = "Invalid file path given";
+                    break;
+            }
+
+            break;
+        }
+    }
+
+    return error_report;
 }
 
 let_error_code_t let_error_code(const let_error_t error) {
@@ -28,171 +209,4 @@ let_error_code_t let_error_code(const let_error_t error) {
     code += error.error;
 
     return code;
-}
-
-let_size_t let_error_message(const let_error_t error,
-                             char *buffer) {
-    const char *start = buffer;
-
-    switch (error.id) {
-        case LET_ERROR_ID_NONE:
-            return 0;
-        case LET_ERROR_ID_ACCOUNT:
-            LET_MEMORY_COPY(buffer, "account: ");
-
-            switch ((let_error_account_t) error.error) {
-                case LET_ERROR_ACCOUNT_OUT_OF_MEMORY:
-                    LET_MEMORY_COPY(buffer, "out of memory");
-                    break;
-                case LET_ERROR_ACCOUNT_NOT_FOUND:
-                    LET_MEMORY_COPY(buffer, "account not found");
-                    break;
-                case LET_ERROR_ACCOUNT_CAPACITY_OVERFLOW:
-                    LET_MEMORY_COPY(buffer, "capacity overflow");
-                    break;
-            }
-
-            break;
-        case LET_ERROR_ID_STATE:
-            LET_MEMORY_COPY(buffer, "state: ");
-
-            switch ((let_error_state_t) error.error) {
-                case LET_ERROR_STATE_OUT_OF_MEMORY:
-                    LET_MEMORY_COPY(buffer, "out of memory");
-                    break;
-                case LET_ERROR_STATE_INVALID_ACCOUNT_LIST:
-                    LET_MEMORY_COPY(buffer, "invalid account list");
-                    break;
-            }
-
-            break;
-        case LET_ERROR_ID_GUARD:
-            LET_MEMORY_COPY(buffer, "guard: ");
-
-            switch ((let_error_guard_t) error.error) {
-                case LET_ERROR_GUARD_SAME_ACCOUNT:
-                    LET_MEMORY_COPY(buffer, "same account");
-                    break;
-                case LET_ERROR_GUARD_ACCOUNT_NOT_FOUND:
-                    LET_MEMORY_COPY(buffer, "account not found");
-                    break;
-                case LET_ERROR_GUARD_INSUFFICIENT_BALANCE:
-                    LET_MEMORY_COPY(buffer, "insufficient balance");
-                    break;
-                case LET_ERROR_GUARD_TRANSACTION_OVERFLOW:
-                    LET_MEMORY_COPY(buffer, "transaction overflow");
-                    break;
-                case LET_ERROR_GUARD_ZERO_BALANCE:
-                    LET_MEMORY_COPY(buffer, "zero balance");
-                    break;
-                case LET_ERROR_GUARD_ACCOUNT_CANNOT_SEND:
-                    LET_MEMORY_COPY(buffer, "account cannot send");
-                    break;
-                case LET_ERROR_GUARD_ACCOUNT_CANNOT_RECEIVE:
-                    LET_MEMORY_COPY(buffer, "account cannot receive");
-                    break;
-                case LET_ERROR_GUARD_INVALID_STATE:
-                    LET_MEMORY_COPY(buffer, "invalid state");
-                    break;
-            }
-
-            break;
-        case LET_ERROR_ID_NETWORK:
-            LET_MEMORY_COPY(buffer, "network: ");
-
-            switch ((let_error_network_t) error.error) {
-                case LET_ERROR_NETWORK_SERVER_CREATE_FAILED:
-                    LET_MEMORY_COPY(buffer, "server create failed");
-                    break;
-                case LET_ERROR_NETWORK_SERVER_BIND_FAILED:
-                    LET_MEMORY_COPY(buffer, "server bind failed");
-                    break;
-                case LET_ERROR_NETWORK_SERVER_LISTEN_FAILED:
-                    LET_MEMORY_COPY(buffer, "server listen failed");
-                    break;
-                case LET_ERROR_NETWORK_SERVER_ACCEPT_FAILED:
-                    LET_MEMORY_COPY(buffer, "server accept failed");
-                    break;
-                case LET_ERROR_NETWORK_SERVER_READ_FAILED:
-                    LET_MEMORY_COPY(buffer, "server read failed");
-                    break;
-                case LET_ERROR_NETWORK_SERVER_WRITE_FAILED:
-                    LET_MEMORY_COPY(buffer, "server write failed");
-                    break;
-                case LET_ERROR_NETWORK_SERVER_CLOSED:
-                    LET_MEMORY_COPY(buffer, "server closed");
-                    break;
-
-                case LET_ERROR_NETWORK_REQUEST_UNKNOWN_COMMAND:
-                    LET_MEMORY_COPY(buffer, "request unknown command");
-                    break;
-                case LET_ERROR_NETWORK_REQUEST_INVALID_INTEGER:
-                    LET_MEMORY_COPY(buffer, "request invalid integer");
-                    break;
-                case LET_ERROR_NETWORK_REQUEST_INTEGER_OVERFLOW:
-                    LET_MEMORY_COPY(buffer, "request integer overflow");
-                    break;
-                case LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE:
-                    LET_MEMORY_COPY(buffer, "request expected new line");
-                    break;
-            }
-
-            break;
-        case LET_ERROR_ID_STORAGE:
-            LET_MEMORY_COPY(buffer, "storage: ");
-
-            switch ((let_error_storage_t) error.error) {
-                case LET_ERROR_STORAGE_WAL_CREATE_FAILED:
-                    LET_MEMORY_COPY(buffer, "wal create failed");
-                    break;
-                case LET_ERROR_STORAGE_WAL_WRITE_FAILED:
-                    LET_MEMORY_COPY(buffer, "wal write failed");
-                    break;
-                case LET_ERROR_STORAGE_WAL_READ_FAILED:
-                    LET_MEMORY_COPY(buffer, "wal read failed");
-                    break;
-                case LET_ERROR_STORAGE_WAL_SYNC_FAILED:
-                    LET_MEMORY_COPY(buffer, "wal sync failed");
-                    break;
-                case LET_ERROR_STORAGE_WAL_SEEK_FAILED:
-                    LET_MEMORY_COPY(buffer, "wal seek failed");
-                    break;
-                case LET_ERROR_STORAGE_WAL_INVALID_MAGIC:
-                    LET_MEMORY_COPY(buffer, "wal invalid magic");
-                    break;
-                case LET_ERROR_STORAGE_WAL_INVALID_VERSION:
-                    LET_MEMORY_COPY(buffer, "wal invalid version");
-                    break;
-                case LET_ERROR_STORAGE_WAL_NONCE_MISMATCH:
-                    LET_MEMORY_COPY(buffer, "wal nonce mismatch");
-                    break;
-                case LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH:
-                    LET_MEMORY_COPY(buffer, "wal checksum mismatch");
-                    break;
-            }
-
-            break;
-        case LET_ERROR_ID_CLI:
-            LET_MEMORY_COPY(buffer, "cli: ");
-
-            switch ((let_error_cli_t) error.error) {
-                case LET_ERROR_CLI_INVALID_OPTION:
-                    LET_MEMORY_COPY(buffer, "invalid option");
-                    break;
-                case LET_ERROR_CLI_INVALID_PORT:
-                    LET_MEMORY_COPY(buffer, "invalid port");
-                    break;
-                case LET_ERROR_CLI_INVALID_BACKLOG:
-                    LET_MEMORY_COPY(buffer, "invalid backlog");
-                    break;
-                case LET_ERROR_CLI_INVALID_FILE:
-                    LET_MEMORY_COPY(buffer, "invalid file");
-                    break;
-            }
-
-            break;
-    }
-
-    *buffer = '\0';
-    return (let_size_t) (buffer - start);
 }

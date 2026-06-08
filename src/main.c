@@ -4,7 +4,6 @@
 int main(const int argc,
          char **argv) {
     auto success = EXIT_SUCCESS;
-    char message[64] = {};
 
     struct sigaction signal_action = {};
     signal_action.sa_handler = let_close;
@@ -16,8 +15,8 @@ int main(const int argc,
     const auto cli_result = let_cli_parse(&cli, argc, argv);
 
     if (let_error_exists(cli_result)) {
-        let_error_message(cli_result, message);
-        printf("[cli] %s\n", message);
+        const auto error_report = let_error_report(cli_result);
+        puts(error_report.message);
 
         success = EXIT_FAILURE;
         goto exit;
@@ -35,8 +34,8 @@ int main(const int argc,
 
     let_init(&cli);
     if (let_error_exists(let.error)) {
-        let_error_message(let.error, message);
-        printf("[init] %s\n", message);
+        const auto error_report = let_error_report(let.error);
+        puts(error_report.message);
 
         success = EXIT_FAILURE;
         goto cleanup;
@@ -44,8 +43,8 @@ int main(const int argc,
 
     let_run();
     if (let_error_exists(let.error)) {
-        let_error_message(let.error, message);
-        printf("[run] %s\n", message);
+        const auto error_report = let_error_report(let.error);
+        puts(error_report.message);
 
         success = EXIT_FAILURE;
         goto cleanup;
@@ -54,8 +53,8 @@ int main(const int argc,
 cleanup:
     let_cleanup();
     if (let_error_exists(let.error)) {
-        let_error_message(let.error, message);
-        printf("[cleanup] %s\n", message);
+        const auto error_report = let_error_report(let.error);
+        puts(error_report.message);
 
         success = EXIT_FAILURE;
     }

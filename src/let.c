@@ -3,6 +3,9 @@
 
 let_t let = {};
 
+static let_error_t let_request(const let_network_request_t *network_request,
+                               let_network_response_t *network_response);
+
 void let_init(const let_cli_t *cli) {
     let.account_list = let_account_list_new();
     let.state = let_state_empty();
@@ -54,132 +57,22 @@ void let_run(void) {
                 break;
             }
 
-            let_error_t runtime_error = let_error_none();
-            switch (network_request.type) {
-                case LET_NETWORK_REQUEST_TYPE_MAGIC: {
-                    network_response.type = LET_NETWORK_RESPONSE_TYPE_MAGIC;
-                    break;
-                }
-                case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
-                    network_response.type = LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT;
+            let.error = let_request(&network_request, &network_response);
 
-                    const auto balance = network_request.data.create_account.balance;
-                    const auto flags = network_request.data.create_account.flags;
-
-                    auto storage_wal_entry = let_storage_wal_entry_new(
-                        network_request.data.create_account.wal_id,
-                        LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
-
-                    storage_wal_entry.data.add_account = (let_storage_wal_entry_add_account_t){
-                        .balance = balance,
-                        .flags = flags
-                    };
-
-                    runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
-                    if (let_error_exists(runtime_error)) {
+            if (let_error_exists(let.error)) {
+                const auto error_report = let_error_report(let.error);
+                switch (error_report.action) {
+                    case LET_ERROR_ACTION_FATAL:
+                        let.running = false;
+                        continue;
+                    case LET_ERROR_ACTION_IGNORE:
+                        let.error = let_error_none();
                         break;
-                    }
-
-                    const auto add_account = let_account_new(0, balance, flags);
-
-                    let_u64_t account_id;
-                    runtime_error = let_state_add_account(&let.state, add_account, &account_id);
-                    if (let_error_exists(runtime_error)) {
+                    case LET_ERROR_ACTION_REJECT:
+                        network_response.type = LET_NETWORK_RESPONSE_TYPE_ERROR;
+                        network_response.data.error = let.error;
                         break;
-                    }
-
-                    network_response.data.add_account = account_id;
-                    break;
                 }
-                case LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER: {
-                    network_response.type = LET_NETWORK_RESPONSE_TYPE_OK;
-
-                    const auto from_id = network_request.data.make_transfer.from_id;
-                    const auto to_id = network_request.data.make_transfer.to_id;
-                    const auto amount = network_request.data.make_transfer.amount;
-
-                    runtime_error = let_guard_make_transfer(&let.guard, from_id, to_id, amount);
-                    if (let_error_exists(runtime_error)) {
-                        break;
-                    }
-
-                    auto storage_wal_entry = let_storage_wal_entry_new(
-                        network_request.data.make_transfer.wal_id,
-                        LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER);
-
-                    storage_wal_entry.data.make_transfer = (let_storage_wal_entry_make_transfer_t){
-                        .from_id = from_id,
-                        .to_id = to_id,
-                        .amount = amount
-                    };
-
-                    runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
-                    if (let_error_exists(runtime_error)) {
-                        break;
-                    }
-
-                    runtime_error = let_state_make_transfer(&let.state, from_id, to_id, amount);
-                    break;
-                }
-                case LET_NETWORK_REQUEST_TYPE_GET_BALANCE: {
-                    network_response.type = LET_NETWORK_RESPONSE_TYPE_GET_BALANCE;
-
-                    let_account_t account;
-                    const auto account_id = network_request.data.get_balance;
-
-                    runtime_error = let_account_list_get(let.account_list, account_id, &account);
-                    if (let_error_exists(runtime_error)) {
-                        break;
-                    }
-
-                    const auto calculated_balance = account.debits - account.credits;
-                    network_response.data.get_balance = calculated_balance;
-                    break;
-                }
-                case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES: {
-                    network_response.type = LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES;
-
-                    const auto transaction_count = let.storage_wal.transactions;
-                    network_response.data.count_entries = transaction_count;
-                    break;
-                }
-                case LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT: {
-                    network_response.type = LET_NETWORK_RESPONSE_TYPE_OK;
-
-                    const auto account_id = network_request.data.update_account.account_id;
-                    const auto flags = network_request.data.update_account.flags;
-
-                    runtime_error = let_guard_update_account(&let.guard, account_id);
-                    if (let_error_exists(runtime_error)) {
-                        break;
-                    }
-
-                    auto storage_wal_entry = let_storage_wal_entry_new(
-                        network_request.data.make_transfer.wal_id,
-                        LET_STORAGE_WAL_ENTRY_TYPE_UPDATE_ACCOUNT);
-
-                    storage_wal_entry.data.update_account = (let_storage_wal_entry_update_account_t){
-                        .account_id = account_id,
-                        .flags = flags
-                    };
-
-                    runtime_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
-                    if (let_error_exists(runtime_error)) {
-                        break;
-                    }
-
-                    runtime_error = let_state_update_account(&let.state, account_id, flags);
-                    break;
-                }
-                case LET_NETWORK_REQUEST_TYPE_CLOSE: {
-                    network_response.type = LET_NETWORK_RESPONSE_TYPE_OK;
-                    break;
-                }
-            }
-
-            if (let_error_exists(runtime_error)) {
-                network_response.type = LET_NETWORK_RESPONSE_TYPE_ERROR;
-                network_response.data.error = runtime_error;
             }
 
             let.error = let_network_client_write(&let.network_client, &network_response);
@@ -210,4 +103,133 @@ void let_cleanup(void) {
     }
 
     let_account_list_free(let.account_list);
+}
+
+static let_error_t let_request(const let_network_request_t *network_request,
+                               let_network_response_t *network_response) {
+    let_error_t request_error = let_error_none();
+
+    switch (network_request->type) {
+        case LET_NETWORK_REQUEST_TYPE_MAGIC: {
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_MAGIC;
+            break;
+        }
+        case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT;
+
+            const auto balance = network_request->data.create_account.balance;
+            const auto flags = network_request->data.create_account.flags;
+
+            auto storage_wal_entry = let_storage_wal_entry_new(
+                network_request->data.create_account.wal_id,
+                LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
+
+            storage_wal_entry.data.add_account = (let_storage_wal_entry_add_account_t){
+                .balance = balance,
+                .flags = flags
+            };
+
+            request_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
+            if (let_error_exists(request_error)) {
+                break;
+            }
+
+            const auto add_account = let_account_new(0, balance, flags);
+
+            let_u64_t account_id;
+            request_error = let_state_add_account(&let.state, add_account, &account_id);
+            if (let_error_exists(request_error)) {
+                break;
+            }
+
+            network_response->data.add_account = account_id;
+            break;
+        }
+        case LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER: {
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_OK;
+
+            const auto from_id = network_request->data.make_transfer.from_id;
+            const auto to_id = network_request->data.make_transfer.to_id;
+            const auto amount = network_request->data.make_transfer.amount;
+
+            request_error = let_guard_make_transfer(&let.guard, from_id, to_id, amount);
+            if (let_error_exists(request_error)) {
+                break;
+            }
+
+            auto storage_wal_entry = let_storage_wal_entry_new(
+                network_request->data.make_transfer.wal_id,
+                LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER);
+
+            storage_wal_entry.data.make_transfer = (let_storage_wal_entry_make_transfer_t){
+                .from_id = from_id,
+                .to_id = to_id,
+                .amount = amount
+            };
+
+            request_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
+            if (let_error_exists(request_error)) {
+                break;
+            }
+
+            request_error = let_state_make_transfer(&let.state, from_id, to_id, amount);
+            break;
+        }
+        case LET_NETWORK_REQUEST_TYPE_GET_BALANCE: {
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_GET_BALANCE;
+
+            let_account_t account;
+            const auto account_id = network_request->data.get_balance;
+
+            request_error = let_account_list_get(let.account_list, account_id, &account);
+            if (let_error_exists(request_error)) {
+                break;
+            }
+
+            const auto calculated_balance = account.debits - account.credits;
+            network_response->data.get_balance = calculated_balance;
+            break;
+        }
+        case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES: {
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES;
+
+            const auto transaction_count = let.storage_wal.transactions;
+            network_response->data.count_entries = transaction_count;
+            break;
+        }
+        case LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT: {
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_OK;
+
+            const auto account_id = network_request->data.update_account.account_id;
+            const auto flags = network_request->data.update_account.flags;
+
+            request_error = let_guard_update_account(&let.guard, account_id);
+            if (let_error_exists(request_error)) {
+                break;
+            }
+
+            auto storage_wal_entry = let_storage_wal_entry_new(
+                network_request->data.update_account.wal_id,
+                LET_STORAGE_WAL_ENTRY_TYPE_UPDATE_ACCOUNT);
+
+            storage_wal_entry.data.update_account = (let_storage_wal_entry_update_account_t){
+                .account_id = account_id,
+                .flags = flags
+            };
+
+            request_error = let_storage_wal_write(&let.storage_wal, &storage_wal_entry);
+            if (let_error_exists(request_error)) {
+                break;
+            }
+
+            request_error = let_state_update_account(&let.state, account_id, flags);
+            break;
+        }
+        case LET_NETWORK_REQUEST_TYPE_CLOSE: {
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_OK;
+            break;
+        }
+    }
+
+    return request_error;
 }
