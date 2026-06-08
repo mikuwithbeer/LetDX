@@ -53,12 +53,20 @@ typedef enum [[nodiscard]] : let_u8_t {
 } let_error_storage_t;
 
 typedef enum [[nodiscard]] : let_u8_t {
+    LET_ERROR_CLI_INVALID_OPTION = 1,
+    LET_ERROR_CLI_INVALID_PORT,
+    LET_ERROR_CLI_INVALID_BACKLOG,
+    LET_ERROR_CLI_INVALID_FILE,
+} let_error_cli_t;
+
+typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_ID_NONE = 0,
     LET_ERROR_ID_ACCOUNT,
     LET_ERROR_ID_STATE,
     LET_ERROR_ID_GUARD,
     LET_ERROR_ID_NETWORK,
     LET_ERROR_ID_STORAGE,
+    LET_ERROR_ID_CLI,
 } let_error_id_t;
 
 typedef struct [[nodiscard]] {
@@ -74,6 +82,9 @@ let_error_t let_error_new(let_error_id_t id,
 let_error_t let_error_none(void);
 
 let_error_code_t let_error_code(let_error_t error);
+
+let_size_t let_error_message(let_error_t error,
+                             char *buffer);
 
 [[nodiscard, maybe_unused]] static inline bool let_error_exists(const let_error_t error) {
     return error.id != LET_ERROR_ID_NONE;
