@@ -1,40 +1,10 @@
 cmake_minimum_required(VERSION 4.3)
 
-project(LetDB
-    VERSION 0.0.0
-    LANGUAGES C)
+project(LetDX)
 
-# --- Standards and Features ---
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
-
-# --- Build Configuration ---
-set(CMAKE_C_FLAGS_DEBUG "-g -O0 -DDEBUG")
-
-# --- Source Files ---
-set(SOURCES
-    src/network/request.c
-    src/network/response.c
-    src/network/server.c
-    src/storage/crc.c
-    src/storage/wal.c
-    src/account.c
-    src/cli.c
-    src/error.c
-    src/guard.c
-    src/let.c
-    src/main.c
-    src/state.c
-)
-
-add_executable(LetDB ${SOURCES})
-
-# --- Include Directories ---
-target_include_directories(LetDB PRIVATE include)
-
-# --- Compilation Options ---
-target_compile_options(LetDB PRIVATE
+# --- Global Compilation Options ---
+add_library(CompilationOpts INTERFACE)
+target_compile_options(CompilationOpts INTERFACE
     -Wall
     -Wextra
     -Wpedantic
@@ -45,3 +15,11 @@ target_compile_options(LetDB PRIVATE
     -Werror=implicit-function-declaration
     -Wformat=2
 )
+
+# --- Debug Flags ---
+target_compile_definitions(CompilationOpts INTERFACE
+    $<$<CONFIG:Debug>:DEBUG>
+)
+
+# --- Child Directories ---
+add_subdirectory(LetDB)
