@@ -135,6 +135,8 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
                 }
                 break;
             }
+            default:
+                return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_ENTRY_TYPE);
         }
     }
 

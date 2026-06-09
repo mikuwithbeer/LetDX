@@ -60,14 +60,13 @@ typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_STORAGE_WAL_INVALID_VERSION,
     LET_ERROR_STORAGE_WAL_NONCE_MISMATCH,
     LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH,
-    LET_ERROR_STORAGE_WAL_BATCH_OVERFLOW,
+    LET_ERROR_STORAGE_WAL_INVALID_ENTRY_TYPE,
 } let_error_storage_t;
 
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_CLI_INVALID_OPTION = 1,
     LET_ERROR_CLI_INVALID_PORT,
     LET_ERROR_CLI_INVALID_BACKLOG,
-    LET_ERROR_CLI_INVALID_FILE,
 } let_error_cli_t;
 
 typedef enum : let_u8_t {

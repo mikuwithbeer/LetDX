@@ -168,8 +168,8 @@ let_error_report_t let_error_report(const let_error_t error) {
                 case LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH:
                     error_report.message = "Storage received checksum mismatch";
                     break;
-                case LET_ERROR_STORAGE_WAL_BATCH_OVERFLOW:
-                    error_report.message = "Storage batch size limit exceeded";
+                case LET_ERROR_STORAGE_WAL_INVALID_ENTRY_TYPE:
+                    error_report.message = "Storage received invalid entry type";
                     break;
             }
 
@@ -186,9 +186,6 @@ let_error_report_t let_error_report(const let_error_t error) {
                     break;
                 case LET_ERROR_CLI_INVALID_BACKLOG:
                     error_report.message = "Invalid backlog size given";
-                    break;
-                case LET_ERROR_CLI_INVALID_FILE:
-                    error_report.message = "Invalid file path given";
                     break;
             }
 
