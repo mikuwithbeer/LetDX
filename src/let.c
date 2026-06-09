@@ -97,7 +97,7 @@ void let_close(const int signal) {
 void let_cleanup(void) {
     let_network_close(&let.network_server);
 
-    if (let.storage_wal.file != nullptr) {
+    if (let.storage_wal.descriptor != -1) {
         let.error = let_storage_wal_sync(&let.storage_wal);
         let_storage_wal_close(&let.storage_wal);
     }
