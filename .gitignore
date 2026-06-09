@@ -10,10 +10,6 @@ cmake_install.cmake
 Makefile
 *.cmake
 
-# Compiled executables
-LetDB
-LetDB.exe
-
 # C/C++ compiled objects
 *.o
 *.obj
@@ -23,10 +19,9 @@ LetDB.exe
 *.dll
 *.lib
 
-# JetBrains IDEs
+# IDEs
 .idea/
-*.iml
-*.iws
+.vscode/
 
 # OS specific
 .DS_Store
