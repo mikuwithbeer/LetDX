@@ -19,6 +19,10 @@ Makefile
 *.dll
 *.lib
 
+# Zig build artifacts
+zig-out/
+.zig-cache/
+
 # IDEs
 .idea/
 .vscode/

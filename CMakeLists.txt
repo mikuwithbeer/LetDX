@@ -23,3 +23,4 @@ target_compile_definitions(CompilationOpts INTERFACE
 
 # --- Child Directories ---
 add_subdirectory(LetDB)
+add_subdirectory(LetDD)
