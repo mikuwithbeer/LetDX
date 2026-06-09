@@ -1,23 +1,21 @@
-> this is a work in progress, but it may not actually happen.
+## LetDX
 
-### Project Layout
+> [!WARNING]
+> This project is currently under active development.
+> Features and APIs are subject to change.
 
-- LetDB: database server, core engine
-- LetDD: database driver, utilizing `LetDB` under the hood
+---
 
-### Status
+### Layout
 
-this project is still under active development
+* **`LetDB`**: The core database server and storage engine.
+* **`LetDD`**: The public-facing database driver. It acts as a secure exposure layer.
 
-### Goals
+### License
 
-- reliable account and transfer handling
-- powerful storage with write-ahead logging
-- small codebase, without any dependencies in the core engine
-- prioritize durability over performance
-- frequent use of the latest c features is deliberate
+LetDX utilize a dual-licensing model:
 
-### Notes
-
-- public exposure should happen through `LetDD`, not `LetDB`
-- licensing might change
+| Component | License                                                                                                          |
+|-----------|------------------------------------------------------------------------------------------------------------------|
+| **LetDB** | [BSD 3-Clause License](https://interoperable-europe.ec.europa.eu/licence/bsd-3-clause-new-or-revised-license)    |
+| **LetDD** | [European Union Public License 1.2](https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12) |
