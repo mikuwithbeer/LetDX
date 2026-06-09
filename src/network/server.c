@@ -60,7 +60,7 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
                                       (struct sockaddr *) &network_client->address,
                                       &client_address_length);
 
-    if (client_handle < 0) {
+    if (client_handle < 0 && errno != EINTR) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_ACCEPT_FAILED);
     }
 
@@ -80,6 +80,10 @@ let_error_t let_network_client_read(const let_network_server_t *network_client,
         }
 
         if (read_result < 0) {
+            if (errno == EINTR) {
+                return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CLOSED);
+            }
+
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_READ_FAILED);
         }
 
@@ -96,7 +100,7 @@ let_error_t let_network_client_read(const let_network_server_t *network_client,
 
 let_error_t let_network_client_write(const let_network_server_t *network_client,
                                      const let_network_response_t *response) {
-    u_int8_t response_buffer[LET_NETWORK_RESPONSE_SIZE_MAX] = {};
+    let_u8_t response_buffer[LET_NETWORK_RESPONSE_SIZE_MAX] = {};
     const auto response_length = let_network_response_to_bytes(response, response_buffer);
 
 
