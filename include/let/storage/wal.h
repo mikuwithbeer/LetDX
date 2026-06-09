@@ -3,15 +3,11 @@
 
 #include "let/state.h"
 
-#include <stdio.h>
-
 constexpr let_u64_t LET_STORAGE_WAL_HEADER_MAGIC = 0x4C'41'57'5F'5F'54'45'4C;
 constexpr let_u16_t LET_STORAGE_WAL_HEADER_VERSION = 1;
 
 constexpr let_size_t LET_STORAGE_WAL_HEADER_LENGTH = sizeof(LET_STORAGE_WAL_HEADER_MAGIC)
                                                      + sizeof(LET_STORAGE_WAL_HEADER_VERSION);
-
-constexpr let_u16_t LET_STORAGE_WAL_BATCH_SIZE = 1 << 2;
 
 #pragma pack(push, 1)
 
@@ -65,9 +61,6 @@ typedef struct {
     let_state_t *state;
     let_u64_t transactions;
     let_i32_t descriptor;
-
-    let_storage_wal_entry_safe_t batch_buffer[LET_STORAGE_WAL_BATCH_SIZE];
-    typeof_unqual(LET_STORAGE_WAL_BATCH_SIZE) batch_count;
 } let_storage_wal_t;
 
 [[nodiscard]] let_storage_wal_entry_t let_storage_wal_entry_new(let_u64_t id,
@@ -84,7 +77,7 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal);
 let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
                                   const let_storage_wal_entry_t *entry);
 
-let_error_t let_storage_wal_sync(let_storage_wal_t *storage_wal);
+let_error_t let_storage_wal_sync(const let_storage_wal_t *storage_wal);
 
 void let_storage_wal_close(let_storage_wal_t *storage_wal);
 

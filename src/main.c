@@ -1,6 +1,8 @@
 #include "let/let.h"
 #include "let/cli.h"
 
+#include <stdio.h>
+
 int main(const int argc,
          char **argv) {
     auto success = EXIT_SUCCESS;

@@ -28,13 +28,6 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
             storage_wal->descriptor = -1;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
         }
-
-        const auto sync_result = let_storage_wal_sync(storage_wal);
-        if (let_error_exists(sync_result)) {
-            close(storage_wal->descriptor);
-            storage_wal->descriptor = -1;
-            return sync_result;
-        }
     } else if (errno == EEXIST) {
         descriptor = open(path, O_RDWR);
         if (descriptor < 0) {
@@ -140,7 +133,6 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
                 if (let_error_exists(account_result)) {
                     return account_result;
                 }
-
                 break;
             }
         }
@@ -168,49 +160,26 @@ let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_NONCE_MISMATCH);
     }
 
-    if (storage_wal->batch_count >= LET_STORAGE_WAL_BATCH_SIZE) {
-        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_BATCH_OVERFLOW);
-    }
-
     const auto safe_entry = (let_storage_wal_entry_safe_t){
         .entry = *entry,
         .checksum = let_storage_crc32c(entry, sizeof(let_storage_wal_entry_t))
     };
 
-    storage_wal->batch_buffer[storage_wal->batch_count++] = safe_entry;
-    if (storage_wal->batch_count == LET_STORAGE_WAL_BATCH_SIZE) {
-        const auto sync_result = let_storage_wal_sync(storage_wal);
-        if (let_error_exists(sync_result)) {
-            return sync_result;
-        }
+    const auto write_result = write(storage_wal->descriptor, &safe_entry, sizeof(safe_entry));
+    if (write_result != sizeof(safe_entry)) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
+    }
+
+    const auto sync_result = let_storage_wal_sync(storage_wal);
+    if (let_error_exists(sync_result)) {
+        return sync_result;
     }
 
     storage_wal->transactions++;
     return let_error_none();
 }
 
-let_error_t let_storage_wal_sync(let_storage_wal_t *storage_wal) {
-    if (storage_wal->batch_count != 0) {
-        auto buffer_pointer = (const char *) storage_wal->batch_buffer;
-
-        let_size_t bytes_to_write = storage_wal->batch_count * sizeof(let_storage_wal_entry_safe_t);
-        while (bytes_to_write > 0) {
-            const auto bytes_written = write(storage_wal->descriptor, buffer_pointer, bytes_to_write);
-            if (bytes_written < 0) {
-                if (errno == EINTR) {
-                    continue;
-                }
-
-                return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
-            }
-
-            buffer_pointer += bytes_written;
-            bytes_to_write -= (let_size_t) bytes_written;
-        }
-
-        storage_wal->batch_count = 0;
-    }
-
+let_error_t let_storage_wal_sync(const let_storage_wal_t *storage_wal) {
 #if defined(__APPLE__) && defined(__MACH__)
     const bool sync_success = fcntl(storage_wal->descriptor, F_BARRIERFSYNC) == 0;
 #else
