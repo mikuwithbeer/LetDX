@@ -1,27 +1,22 @@
-project(LetDD)
+project(LetDD LANGUAGES NONE)
 
-# --- Source and Output ---
-set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
-set(SRC_FILE "${SRC_PATH}/main.zig")
-set(OUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
+find_program(GO_EXECUTABLE go REQUIRED)
 
-# --- Compiler Options ---
-set(ZIG zig)
-set(ZIG_FLAGS -O Debug)
+set(GO_BINARY_NAME ${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX})
+set(GO_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/${GO_BINARY_NAME}")
 
-# --- Watch Files ---
-file(GLOB_RECURSE ZIG_SOURCES
-    CONFIGURE_DEPENDS
-    ${SRC_PATH}/*.zig
+set(GO_SOURCE_FILE
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.go
+    ${CMAKE_CURRENT_SOURCE_DIR}/go.mod
 )
 
-# --- Build Command ---
 add_custom_command(
-    OUTPUT ${OUT_FILE}
-    COMMAND ${ZIG} build-exe ${SRC_FILE} ${ZIG_FLAGS} -femit-bin=${OUT_FILE}
-    DEPENDS ${SRC_FILE}
+    OUTPUT "${GO_OUTPUT_PATH}"
+    COMMAND ${CMAKE_COMMAND} -E env GO111MODULE=on 
+            ${GO_EXECUTABLE} build -o ${GO_OUTPUT_PATH} .
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    DEPENDS ${GO_SOURCE_FILE}
     VERBATIM
 )
 
-# --- Add Target ---
-add_custom_target(${PROJECT_NAME} ALL DEPENDS ${OUT_FILE})
+add_custom_target(LetDD ALL DEPENDS "${GO_OUTPUT_PATH}")
