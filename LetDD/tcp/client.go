@@ -2,101 +2,101 @@ package tcp
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
-	"io"
 	"net"
 )
 
 type Client struct {
-	connection net.Conn
-	running    bool
+	connection   net.Conn
+	transactions uint64
 
-	Input  chan Request
-	Output chan Response
-	Errors chan error
+	reader *bufio.Reader
+	writer *bufio.Writer
 }
 
 func NewClient(port uint16) (*Client, error) {
-	adress := fmt.Sprintf("localhost:%d", port)
-	connection, err := net.Dial("tcp", adress)
+	address := fmt.Sprintf("localhost:%d", port)
+	connection, err := net.Dial("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		connection: connection,
-		running:    false,
+		connection:   connection,
+		transactions: 0,
 
-		Input:  make(chan Request),
-		Output: make(chan Response),
-		Errors: make(chan error),
+		reader: bufio.NewReader(connection),
+		writer: bufio.NewWriter(connection),
+	}
+
+	response, err := client.Communicate(CountEntriesRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Kind() == CountEntriesResponseKind {
+		client.transactions = response.(CountEntriesResponse).Count
+	} else {
+		return nil, fmt.Errorf("unexpected response: %s", response.Kind())
 	}
 
 	return client, nil
 }
 
-func (c *Client) Start() {
-	c.running = true
-
-	go c.readConnection()
-	go c.writeConnection()
+func (c *Client) WalID() uint64 {
+	return c.transactions
 }
 
-func (c *Client) Send(request Request) {
-	c.Input <- request
-}
-
-func (c *Client) Receive() Response {
-	return <-c.Output
-}
-
-func (c *Client) Close() {
-	c.connection.Close()
-	c.running = false
-
-	close(c.Input)
-	close(c.Output)
-	close(c.Errors)
-}
-
-func (c *Client) readConnection() {
-	reader := bufio.NewReader(c.connection)
-
-	for c.running {
-		response, err := reader.ReadBytes('\n')
-		if err != nil {
-			if errors.Is(err, net.ErrClosed) || err == io.EOF {
-				c.running = false
-				return
-			}
-
-			c.Errors <- err
-		} else {
-			parsedResponse, err := ParseResponse(response)
-			if err != nil {
-				c.Errors <- err
-			} else {
-				c.Output <- parsedResponse
-			}
-		}
+func (c *Client) Communicate(request Request) (Response, error) {
+	updateTransactions := false
+	switch request.(type) {
+	case AddAccountRequest, MakeTransferRequest, UpdateAccountRequest:
+		updateTransactions = true
 	}
+
+	if err := c.sendRequest(request); err != nil {
+		return nil, err
+	}
+
+	response, err := c.receiveResponse()
+	if err != nil {
+		return nil, err
+	}
+
+	if updateTransactions && response.Kind() != ErrorResponseKind {
+		c.transactions++
+	}
+
+	return response, nil
 }
 
-func (c *Client) writeConnection() {
-	writer := bufio.NewWriter(c.connection)
-
-	for request := range c.Input {
-		if !c.running {
-			return
-		}
-
-		encoded := request.Encode()
-		_, err := writer.Write(encoded)
-		if err != nil {
-			c.Errors <- err
-		}
-
-		writer.Flush()
+func (c *Client) Close() error {
+	if c.connection == nil {
+		return nil
 	}
+
+	return c.connection.Close()
+}
+
+func (c *Client) sendRequest(request Request) error {
+	_, err := c.writer.Write(request.Encode())
+	if err != nil {
+		return err
+	}
+
+	return c.writer.Flush()
+}
+
+func (c *Client) receiveResponse() (Response, error) {
+	data, err := c.reader.ReadBytes('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := ParseResponse(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }

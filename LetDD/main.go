@@ -16,59 +16,72 @@ func main() {
 
 	defer client.Close()
 
-	client.Start()
-	fmt.Println("client started")
+	response, err := client.Communicate(tcp.MagicRequest{})
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
 
-	go func() {
-		for {
-			response := client.Receive()
-			fmt.Printf("response: %#v\n", response)
-		}
-	}()
-
-	go func() {
-		for err := range client.Errors {
-			fmt.Printf("error: %s", err)
-		}
-	}()
-
-	client.Send(tcp.MagicRequest{})
+	fmt.Printf("response: %#v\n", response)
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.CountEntriesRequest{})
-	time.Sleep(500 * time.Millisecond)
-
-	client.Send(tcp.AddAccountRequest{
-		WalID:   0,
+	response, err = client.Communicate(tcp.AddAccountRequest{
+		WalID:   client.WalID(),
 		Balance: 1000,
 		Flags:   1,
 	})
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	fmt.Printf("response: %#v\n", response)
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.AddAccountRequest{
-		WalID:   1,
+	response, err = client.Communicate(tcp.AddAccountRequest{
+		WalID:   client.WalID(),
 		Balance: 1000,
 		Flags:   2,
 	})
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	fmt.Printf("response: %#v\n", response)
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.MakeTransferRequest{
-		WalID:  2,
+	response, err = client.Communicate(tcp.MakeTransferRequest{
+		WalID:  client.WalID(),
 		FromID: 0,
 		ToID:   1,
-		Amount: 500,
+		Amount: 10,
 	})
-	time.Sleep(500 * time.Millisecond)
-	client.Send(tcp.GetBalanceRequest{
-		AccountID: 0,
-	})
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	fmt.Printf("response: %#v\n", response)
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.GetBalanceRequest{
-		AccountID: 1,
-	})
+	response, err = client.Communicate(tcp.GetBalanceRequest{AccountID: 0})
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	fmt.Printf("response: %#v\n", response)
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.CloseRequest{})
+	response, err = client.Communicate(tcp.GetBalanceRequest{AccountID: 1})
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	fmt.Printf("response: %#v\n", response)
 	time.Sleep(500 * time.Millisecond)
 }
