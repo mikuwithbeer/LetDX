@@ -8,7 +8,10 @@ int main(const int argc,
     auto success = EXIT_SUCCESS;
 
     struct sigaction signal_action = {};
+    sigemptyset(&signal_action.sa_mask);
+
     signal_action.sa_handler = let_close;
+    signal_action.sa_flags = 0;
 
     sigaction(SIGTERM, &signal_action, nullptr);
     sigaction(SIGINT, &signal_action, nullptr);

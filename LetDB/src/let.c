@@ -89,8 +89,7 @@ void let_run(void) {
     }
 }
 
-void let_close(const int signal) {
-    (void) signal;
+void let_close([[maybe_unused]] const int signal) {
     let.running = false;
 }
 
