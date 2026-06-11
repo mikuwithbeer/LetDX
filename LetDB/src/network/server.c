@@ -60,7 +60,11 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
                                       (struct sockaddr *) &network_client->address,
                                       &client_address_length);
 
-    if (client_handle < 0 && errno != EINTR) {
+    if (client_handle < 0) {
+        if (errno == EINTR) {
+            return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CLOSED);
+        }
+
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_ACCEPT_FAILED);
     }
 
@@ -109,11 +113,15 @@ let_error_t let_network_client_write(const let_network_server_t *network_client,
             network_client->handle,
             response_buffer + written_bytes,
             response_length - written_bytes,
-            MSG_NOSIGNAL);
+            0);
 
         if (send_result < 0) {
             if (errno == EINTR) {
-                continue;
+                return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CLOSED);
+            }
+
+            if (errno == EPIPE || errno == ECONNRESET) {
+                return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_FAILED);
             }
 
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_FAILED);
