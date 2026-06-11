@@ -44,15 +44,15 @@ func (Magic) Encode() []byte {
 }
 
 func (c AddAccount) Encode() []byte {
-	return []byte(fmt.Sprintf("+%d %d %d\n", c.WalID, c.Balance, c.Flags))
+	return fmt.Appendf(nil, "+%d %d %d\n", c.WalID, c.Balance, c.Flags)
 }
 
 func (c MakeTransfer) Encode() []byte {
-	return []byte(fmt.Sprintf("%%%d %d %d %d\n", c.WalID, c.FromID, c.ToID, c.Amount))
+	return fmt.Appendf(nil, "%%%d %d %d %d\n", c.WalID, c.FromID, c.ToID, c.Amount)
 }
 
 func (c GetBalance) Encode() []byte {
-	return []byte(fmt.Sprintf("?%d\n", c.AccountID))
+	return fmt.Appendf(nil, "?%d\n", c.AccountID)
 }
 
 func (CountEntries) Encode() []byte {
@@ -60,7 +60,7 @@ func (CountEntries) Encode() []byte {
 }
 
 func (c UpdateAccount) Encode() []byte {
-	return []byte(fmt.Sprintf("=%d %d %d\n", c.WalID, c.AccountID, c.Flags))
+	return fmt.Appendf(nil, "=%d %d %d\n", c.WalID, c.AccountID, c.Flags)
 }
 
 func (Close) Encode() []byte {
