@@ -13,12 +13,12 @@ func TestRequestEncoding(t *testing.T) {
 	}{
 		{
 			name:     "Magic",
-			request:  Magic{},
+			request:  MagicRequest{},
 			expected: []byte(";\n"),
 		},
 		{
 			name: "AddAccount",
-			request: AddAccount{
+			request: AddAccountRequest{
 				WalID:   8732478,
 				Balance: 255255,
 				Flags:   0,
@@ -27,7 +27,7 @@ func TestRequestEncoding(t *testing.T) {
 		},
 		{
 			name: "MakeTransfer",
-			request: MakeTransfer{
+			request: MakeTransferRequest{
 				WalID:  999,
 				FromID: 20,
 				ToID:   3,
@@ -37,19 +37,19 @@ func TestRequestEncoding(t *testing.T) {
 		},
 		{
 			name: "GetBalance",
-			request: GetBalance{
+			request: GetBalanceRequest{
 				AccountID: 7264,
 			},
 			expected: []byte("?7264\n"),
 		},
 		{
 			name:     "CountEntries",
-			request:  CountEntries{},
+			request:  CountEntriesRequest{},
 			expected: []byte("#\n"),
 		},
 		{
 			name: "UpdateAccount",
-			request: UpdateAccount{
+			request: UpdateAccountRequest{
 				WalID:     8384,
 				AccountID: 873247682,
 				Flags:     1,
@@ -58,7 +58,7 @@ func TestRequestEncoding(t *testing.T) {
 		},
 		{
 			name:     "Close",
-			request:  Close{},
+			request:  CloseRequest{},
 			expected: []byte(".\n"),
 		},
 	}

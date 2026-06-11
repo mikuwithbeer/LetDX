@@ -22,7 +22,7 @@ func main() {
 	go func() {
 		for {
 			response := client.Receive()
-			fmt.Printf("response: %s", string(response))
+			fmt.Printf("response: %#v\n", response)
 		}
 	}()
 
@@ -32,43 +32,43 @@ func main() {
 		}
 	}()
 
-	client.Send(tcp.Magic{})
+	client.Send(tcp.MagicRequest{})
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.CountEntries{})
+	client.Send(tcp.CountEntriesRequest{})
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.AddAccount{
+	client.Send(tcp.AddAccountRequest{
 		WalID:   0,
 		Balance: 1000,
 		Flags:   1,
 	})
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.AddAccount{
+	client.Send(tcp.AddAccountRequest{
 		WalID:   1,
 		Balance: 1000,
 		Flags:   2,
 	})
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.MakeTransfer{
+	client.Send(tcp.MakeTransferRequest{
 		WalID:  2,
 		FromID: 0,
 		ToID:   1,
 		Amount: 500,
 	})
 	time.Sleep(500 * time.Millisecond)
-	client.Send(tcp.GetBalance{
+	client.Send(tcp.GetBalanceRequest{
 		AccountID: 0,
 	})
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.GetBalance{
+	client.Send(tcp.GetBalanceRequest{
 		AccountID: 1,
 	})
 	time.Sleep(500 * time.Millisecond)
 
-	client.Send(tcp.Close{})
+	client.Send(tcp.CloseRequest{})
 	time.Sleep(500 * time.Millisecond)
 }

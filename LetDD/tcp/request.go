@@ -6,63 +6,51 @@ type Request interface {
 	Encode() []byte
 }
 
-type WalID uint64
-type AccountID uint64
-type AccountFlags uint8
+type MagicRequest struct{}
 
-type Magic struct{}
+func (MagicRequest) Encode() []byte { return []byte(";\n") }
 
-type AddAccount struct {
-	WalID   WalID
+type AddAccountRequest struct {
+	WalID   uint64
 	Balance uint64
-	Flags   AccountFlags
+	Flags   uint8
 }
 
-type MakeTransfer struct {
-	WalID  WalID
-	FromID AccountID
-	ToID   AccountID
-	Amount uint64
-}
-
-type GetBalance struct {
-	AccountID AccountID
-}
-
-type CountEntries struct{}
-
-type UpdateAccount struct {
-	WalID     WalID
-	AccountID AccountID
-	Flags     AccountFlags
-}
-
-type Close struct{}
-
-func (Magic) Encode() []byte {
-	return []byte(";\n")
-}
-
-func (r AddAccount) Encode() []byte {
+func (r AddAccountRequest) Encode() []byte {
 	return fmt.Appendf(nil, "+%d %d %d\n", r.WalID, r.Balance, r.Flags)
 }
 
-func (r MakeTransfer) Encode() []byte {
+type MakeTransferRequest struct {
+	WalID  uint64
+	FromID uint64
+	ToID   uint64
+	Amount uint64
+}
+
+func (r MakeTransferRequest) Encode() []byte {
 	return fmt.Appendf(nil, "%%%d %d %d %d\n", r.WalID, r.FromID, r.ToID, r.Amount)
 }
 
-func (r GetBalance) Encode() []byte {
-	return fmt.Appendf(nil, "?%d\n", r.AccountID)
+type GetBalanceRequest struct {
+	AccountID uint64
 }
 
-func (CountEntries) Encode() []byte {
-	return []byte("#\n")
+func (r GetBalanceRequest) Encode() []byte { return fmt.Appendf(nil, "?%d\n", r.AccountID) }
+
+type CountEntriesRequest struct{}
+
+func (r CountEntriesRequest) Encode() []byte { return []byte("#\n") }
+
+type UpdateAccountRequest struct {
+	WalID     uint64
+	AccountID uint64
+	Flags     uint8
 }
 
-func (r UpdateAccount) Encode() []byte {
+func (r UpdateAccountRequest) Encode() []byte {
 	return fmt.Appendf(nil, "=%d %d %d\n", r.WalID, r.AccountID, r.Flags)
 }
 
-func (Close) Encode() []byte {
-	return []byte(".\n")
-}
+type CloseRequest struct{}
+
+func (r CloseRequest) Encode() []byte { return []byte(".\n") }
