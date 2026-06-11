@@ -1,6 +1,10 @@
 package tcp
 
-import "fmt"
+import (
+	"LetDD/uint128"
+
+	"fmt"
+)
 
 type Request interface {
 	Encode() []byte
@@ -12,23 +16,23 @@ func (MagicRequest) Encode() []byte { return []byte(";\n") }
 
 type AddAccountRequest struct {
 	WalID   uint64
-	Balance uint64
+	Balance uint128.Uint128
 	Flags   uint8
 }
 
 func (r AddAccountRequest) Encode() []byte {
-	return fmt.Appendf(nil, "+%d %d %d\n", r.WalID, r.Balance, r.Flags)
+	return fmt.Appendf(nil, "+%d %s %d\n", r.WalID, r.Balance, r.Flags)
 }
 
 type MakeTransferRequest struct {
 	WalID  uint64
 	FromID uint64
 	ToID   uint64
-	Amount uint64
+	Amount uint128.Uint128
 }
 
 func (r MakeTransferRequest) Encode() []byte {
-	return fmt.Appendf(nil, "%%%d %d %d %d\n", r.WalID, r.FromID, r.ToID, r.Amount)
+	return fmt.Appendf(nil, "%%%d %d %d %s\n", r.WalID, r.FromID, r.ToID, r.Amount)
 }
 
 type GetBalanceRequest struct {

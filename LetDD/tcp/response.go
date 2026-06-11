@@ -1,6 +1,8 @@
 package tcp
 
 import (
+	"LetDD/uint128"
+
 	"bytes"
 	"fmt"
 	"strconv"
@@ -30,7 +32,7 @@ type AddAccountResponse struct {
 func (AddAccountResponse) Kind() string { return AddAccountResponseKind }
 
 type GetBalanceResponse struct {
-	Balance uint64
+	Balance uint128.Uint128
 }
 
 func (GetBalanceResponse) Kind() string { return GetBalanceResponseKind }
@@ -70,7 +72,6 @@ func ParseResponse(data []byte) (Response, error) {
 	}
 
 	value := data[4:]
-
 	switch {
 	case bytes.HasPrefix(data, []byte(AddAccountResponseKind)):
 		accountID, err := strconv.ParseUint(string(value), 16, 64)
@@ -80,16 +81,18 @@ func ParseResponse(data []byte) (Response, error) {
 
 		return AddAccountResponse{AccountID: accountID}, nil
 	case bytes.HasPrefix(data, []byte(GetBalanceResponseKind)):
-		balance, err := strconv.ParseUint(string(value), 16, 64)
+		balance, err := uint128.Parse(string(value))
 		if err != nil {
 			return nil, err
 		}
+
 		return GetBalanceResponse{Balance: balance}, nil
 	case bytes.HasPrefix(data, []byte(CountEntriesResponseKind)):
 		count, err := strconv.ParseUint(string(value), 16, 64)
 		if err != nil {
 			return nil, err
 		}
+
 		return CountEntriesResponse{Count: count}, nil
 	case bytes.HasPrefix(data, []byte(ErrorResponseKind)):
 		code, err := strconv.ParseUint(string(value), 16, 16)
