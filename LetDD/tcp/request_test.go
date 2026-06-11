@@ -5,20 +5,20 @@ import (
 	"testing"
 )
 
-func TestCommandEncoding(t *testing.T) {
+func TestRequestEncoding(t *testing.T) {
 	tests := []struct {
 		name     string
-		command  Command
+		request  Request
 		expected []byte
 	}{
 		{
 			name:     "Magic",
-			command:  Magic{},
+			request:  Magic{},
 			expected: []byte(";\n"),
 		},
 		{
 			name: "AddAccount",
-			command: AddAccount{
+			request: AddAccount{
 				WalID:   8732478,
 				Balance: 255255,
 				Flags:   0,
@@ -27,7 +27,7 @@ func TestCommandEncoding(t *testing.T) {
 		},
 		{
 			name: "MakeTransfer",
-			command: MakeTransfer{
+			request: MakeTransfer{
 				WalID:  999,
 				FromID: 20,
 				ToID:   3,
@@ -37,19 +37,19 @@ func TestCommandEncoding(t *testing.T) {
 		},
 		{
 			name: "GetBalance",
-			command: GetBalance{
+			request: GetBalance{
 				AccountID: 7264,
 			},
 			expected: []byte("?7264\n"),
 		},
 		{
 			name:     "CountEntries",
-			command:  CountEntries{},
+			request:  CountEntries{},
 			expected: []byte("#\n"),
 		},
 		{
 			name: "UpdateAccount",
-			command: UpdateAccount{
+			request: UpdateAccount{
 				WalID:     8384,
 				AccountID: 873247682,
 				Flags:     1,
@@ -58,14 +58,14 @@ func TestCommandEncoding(t *testing.T) {
 		},
 		{
 			name:     "Close",
-			command:  Close{},
+			request:  Close{},
 			expected: []byte(".\n"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.command.Encode()
+			got := tt.request.Encode()
 			if !bytes.Equal(got, tt.expected) {
 				t.Errorf("Encode() = %q, want %q", got, tt.expected)
 			}

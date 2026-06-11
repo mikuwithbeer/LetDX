@@ -12,7 +12,7 @@ type Client struct {
 	connection net.Conn
 	running    bool
 
-	Input  chan Command
+	Input  chan Request
 	Output chan []byte
 	Errors chan error
 }
@@ -28,7 +28,7 @@ func NewClient(port uint16) (*Client, error) {
 		connection: connection,
 		running:    false,
 
-		Input:  make(chan Command),
+		Input:  make(chan Request),
 		Output: make(chan []byte),
 		Errors: make(chan error),
 	}
@@ -43,8 +43,8 @@ func (c *Client) Start() {
 	go c.writeConnection()
 }
 
-func (c *Client) Send(command Command) {
-	c.Input <- command
+func (c *Client) Send(request Request) {
+	c.Input <- request
 }
 
 func (c *Client) Receive() []byte {
@@ -64,31 +64,30 @@ func (c *Client) readConnection() {
 	reader := bufio.NewReader(c.connection)
 
 	for c.running {
-		reply, err := reader.ReadBytes('\n')
+		response, err := reader.ReadBytes('\n')
 		if err != nil {
 			if errors.Is(err, net.ErrClosed) || err == io.EOF {
+				c.running = false
 				return
 			}
 
 			c.Errors <- err
-			return
+		} else {
+			c.Output <- response
 		}
-
-		c.Output <- reply
 	}
 }
 
 func (c *Client) writeConnection() {
-	for message := range c.Input {
+	for request := range c.Input {
 		if !c.running {
 			return
 		}
 
-		encoded := message.Encode()
+		encoded := request.Encode()
 		_, err := c.connection.Write(encoded)
 		if err != nil {
 			c.Errors <- err
-			return
 		}
 	}
 }

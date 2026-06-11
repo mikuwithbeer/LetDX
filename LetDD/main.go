@@ -21,8 +21,8 @@ func main() {
 
 	go func() {
 		for {
-			reply := client.Receive()
-			fmt.Printf("reply: %s", string(reply))
+			response := client.Receive()
+			fmt.Printf("response: %s", string(response))
 		}
 	}()
 

@@ -2,7 +2,7 @@ package tcp
 
 import "fmt"
 
-type Command interface {
+type Request interface {
 	Encode() []byte
 }
 
@@ -43,24 +43,24 @@ func (Magic) Encode() []byte {
 	return []byte(";\n")
 }
 
-func (c AddAccount) Encode() []byte {
-	return fmt.Appendf(nil, "+%d %d %d\n", c.WalID, c.Balance, c.Flags)
+func (r AddAccount) Encode() []byte {
+	return fmt.Appendf(nil, "+%d %d %d\n", r.WalID, r.Balance, r.Flags)
 }
 
-func (c MakeTransfer) Encode() []byte {
-	return fmt.Appendf(nil, "%%%d %d %d %d\n", c.WalID, c.FromID, c.ToID, c.Amount)
+func (r MakeTransfer) Encode() []byte {
+	return fmt.Appendf(nil, "%%%d %d %d %d\n", r.WalID, r.FromID, r.ToID, r.Amount)
 }
 
-func (c GetBalance) Encode() []byte {
-	return fmt.Appendf(nil, "?%d\n", c.AccountID)
+func (r GetBalance) Encode() []byte {
+	return fmt.Appendf(nil, "?%d\n", r.AccountID)
 }
 
 func (CountEntries) Encode() []byte {
 	return []byte("#\n")
 }
 
-func (c UpdateAccount) Encode() []byte {
-	return fmt.Appendf(nil, "=%d %d %d\n", c.WalID, c.AccountID, c.Flags)
+func (r UpdateAccount) Encode() []byte {
+	return fmt.Appendf(nil, "=%d %d %d\n", r.WalID, r.AccountID, r.Flags)
 }
 
 func (Close) Encode() []byte {
