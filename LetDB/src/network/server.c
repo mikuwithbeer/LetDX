@@ -54,6 +54,8 @@ let_error_t let_network_server_init(let_network_server_t *network_server,
 }
 
 let_error_t let_network_server_accept(const let_network_server_t *network_server,
+                                      let_u32_t read_timeout,
+                                      let_u32_t write_timeout,
                                       let_network_server_t *network_client) {
     socklen_t client_address_length = sizeof(network_client->address);
     const auto client_handle = accept(network_server->handle,
@@ -67,6 +69,19 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
 
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_ACCEPT_FAILED);
     }
+
+    const struct timeval network_read_timeout = {
+        .tv_sec = read_timeout,
+        .tv_usec = 0
+    };
+
+    const struct timeval network_write_timeout = {
+        .tv_sec = write_timeout,
+        .tv_usec = 0
+    };
+
+    setsockopt(client_handle, SOL_SOCKET, SO_RCVTIMEO, &network_read_timeout, sizeof(network_read_timeout));
+    setsockopt(client_handle, SOL_SOCKET, SO_SNDTIMEO, &network_write_timeout, sizeof(network_write_timeout));
 
     network_client->handle = client_handle;
     return let_error_none();
@@ -84,6 +99,10 @@ let_error_t let_network_client_read(const let_network_server_t *network_client,
         }
 
         if (read_result < 0) {
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_READ_TIMEOUT);
+            }
+
             if (errno == EINTR) {
                 return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CLOSED);
             }
@@ -116,6 +135,10 @@ let_error_t let_network_client_write(const let_network_server_t *network_client,
             0);
 
         if (send_result < 0) {
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_TIMEOUT);
+            }
+
             if (errno == EINTR) {
                 return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CLOSED);
             }

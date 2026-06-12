@@ -6,11 +6,17 @@
 
 constexpr char LET_CLI_DEFAULT_STORAGE_FILE[] = "LET__WAL";
 
+constexpr let_u32_t LET_CLI_DEFAULT_READ_TIMEOUT = 0;
+constexpr let_u32_t LET_CLI_DEFAULT_WRITE_TIMEOUT = 10;
+
 constexpr let_u16_t LET_CLI_DEFAULT_PORT = 55543;
 constexpr let_u16_t LET_CLI_DEFAULT_BACKLOG = 1 << 3;
 
 typedef struct {
     char *storage_file;
+
+    let_u32_t read_timeout;
+    let_u32_t write_timeout;
 
     let_u16_t port;
     let_u16_t backlog;

@@ -26,7 +26,7 @@ extern let_t let;
 
 void let_init(const let_cli_t *cli);
 
-void let_run(void);
+void let_run(const let_cli_t *cli);
 
 void let_close(int signal);
 

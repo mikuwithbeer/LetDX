@@ -46,7 +46,7 @@ int main(const int argc,
         goto cleanup;
     }
 
-    let_run();
+    let_run(&cli);
     if (let_error_exists(let.error)) {
         const auto error_report = let_error_report(let.error);
         puts(error_report.message);

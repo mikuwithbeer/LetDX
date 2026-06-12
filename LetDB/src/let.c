@@ -41,9 +41,12 @@ void let_init(const let_cli_t *cli) {
     let.running = true;
 }
 
-void let_run(void) {
+void let_run(const let_cli_t *cli) {
     while (let.running) {
-        let.error = let_network_server_accept(&let.network_server, &let.network_client);
+        let.error = let_network_server_accept(&let.network_server,
+                                              cli->read_timeout,
+                                              cli->write_timeout,
+                                              &let.network_client);
         if (let_error_exists(let.error)) {
             break;
         }

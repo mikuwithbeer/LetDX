@@ -117,6 +117,15 @@ let_error_report_t let_error_report(const let_error_t error) {
                     error_report.action = LET_ERROR_ACTION_IGNORE;
                     error_report.message = "Network server closed";
                     break;
+                case LET_ERROR_NETWORK_SERVER_READ_TIMEOUT:
+                    error_report.action = LET_ERROR_ACTION_IGNORE;
+                    error_report.message = "Network server read timeout";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_WRITE_TIMEOUT:
+                    error_report.action = LET_ERROR_ACTION_IGNORE;
+                    error_report.message = "Network server write timeout";
+                    break;
+
                 case LET_ERROR_NETWORK_REQUEST_UNKNOWN_COMMAND:
                     error_report.action = LET_ERROR_ACTION_REJECT;
                     error_report.message = "Unknown network request command";
@@ -186,6 +195,12 @@ let_error_report_t let_error_report(const let_error_t error) {
                     break;
                 case LET_ERROR_CLI_INVALID_BACKLOG:
                     error_report.message = "Invalid backlog size given";
+                    break;
+                case LET_ERROR_CLI_INVALID_READ_TIMEOUT:
+                    error_report.message = "Invalid read timeout given";
+                    break;
+                case LET_ERROR_CLI_INVALID_WRITE_TIMEOUT:
+                    error_report.message = "Invalid write timeout given";
                     break;
             }
 

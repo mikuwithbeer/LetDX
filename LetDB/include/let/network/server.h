@@ -21,6 +21,8 @@ let_error_t let_network_server_init(let_network_server_t *network_server,
                                     let_u16_t backlog);
 
 let_error_t let_network_server_accept(const let_network_server_t *network_server,
+                                      let_u32_t read_timeout,
+                                      let_u32_t write_timeout,
                                       let_network_server_t *network_client);
 
 let_error_t let_network_client_read(const let_network_server_t *network_client,
