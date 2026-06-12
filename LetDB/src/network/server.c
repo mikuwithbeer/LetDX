@@ -6,11 +6,10 @@
 #include <errno.h>
 
 let_network_server_t let_network_server_empty(void) {
-    return (let_network_server_t){
-        .address = {},
-        .handle = -1,
-        .port = 0
-    };
+    let_network_server_t network_server = {};
+    network_server.handle = -1;
+
+    return network_server;
 }
 
 let_error_t let_network_server_init(let_network_server_t *network_server,
@@ -54,8 +53,8 @@ let_error_t let_network_server_init(let_network_server_t *network_server,
 }
 
 let_error_t let_network_server_accept(const let_network_server_t *network_server,
-                                      let_u32_t read_timeout,
-                                      let_u32_t write_timeout,
+                                      const let_u32_t read_timeout,
+                                      const let_u32_t write_timeout,
                                       let_network_server_t *network_client) {
     socklen_t client_address_length = sizeof(network_client->address);
     const auto client_handle = accept(network_server->handle,
@@ -87,13 +86,14 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
     return let_error_none();
 }
 
-let_error_t let_network_client_read(const let_network_server_t *network_client,
+let_error_t let_network_client_read(let_network_server_t *network_client,
                                     let_network_request_t *request) {
-    auto network_parser = let_network_request_parser_empty();
-    let_u8_t current_byte = 0;
+    let_u8_t read_byte = 0;
 
-    while (true) {
-        const auto read_result = recv(network_client->handle, &current_byte, 1, 0);
+    for (network_client->read_buffer_index = 0
+         ; network_client->read_buffer_index < LET_NETWORK_BUFFER_LENGTH
+         ; network_client->read_buffer_index++) {
+        const auto read_result = recv(network_client->handle, &read_byte, sizeof(read_byte), 0);
         if (read_result == 0) {
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CLOSED);
         }
@@ -110,31 +110,47 @@ let_error_t let_network_client_read(const let_network_server_t *network_client,
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_READ_FAILED);
         }
 
-        const auto parser_result = let_network_request_parser_next(&network_parser, current_byte, request);
-        if (let_error_exists(parser_result)) {
-            return parser_result;
+        if (read_byte == '\n') {
+            network_client->read_buffer[network_client->read_buffer_index++] = ' ';
+            break;
         }
 
-        if (network_parser.state == LET_NETWORK_REQUEST_PARSER_STATE_DONE) {
-            return let_error_none();
-        }
+        network_client->read_buffer[network_client->read_buffer_index] = read_byte;
     }
+
+    if (network_client->read_buffer_index == LET_NETWORK_BUFFER_LENGTH && read_byte != '\n') {
+        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE);
+    }
+
+    auto request_decoder = let_network_request_decoder_empty();
+    let_network_request_decoder_init(&request_decoder, network_client->read_buffer, network_client->read_buffer_index);
+
+    const auto decode_result = let_network_request_decoder_run(&request_decoder);
+    if (let_error_exists(decode_result)) {
+        return decode_result;
+    }
+
+    *request = request_decoder.request;
+    return let_error_none();
 }
 
-let_error_t let_network_client_write(const let_network_server_t *network_client,
+let_error_t let_network_client_write(let_network_server_t *network_client,
                                      const let_network_response_t *response) {
-    let_u8_t response_buffer[LET_NETWORK_RESPONSE_SIZE_MAX] = {};
-    const auto response_length = let_network_response_to_bytes(response, response_buffer);
+    const auto response_length = let_network_response_to_bytes(response, network_client->write_buffer);
+    ssize_t receive_result = 0;
 
+    for (network_client->write_buffer_index = 0
+         ; network_client->write_buffer_index < response_length
+         ; network_client->write_buffer_index += (size_t) receive_result) {
+        const auto remaining_bytes = response_length - network_client->write_buffer_index;
 
-    for (size_t written_bytes = 0; written_bytes < response_length;) {
-        const auto send_result = send(
+        receive_result = send(
             network_client->handle,
-            response_buffer + written_bytes,
-            response_length - written_bytes,
+            network_client->write_buffer + network_client->write_buffer_index,
+            remaining_bytes,
             0);
 
-        if (send_result < 0) {
+        if (receive_result < 0) {
             if (errno == EWOULDBLOCK || errno == EAGAIN) {
                 return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_TIMEOUT);
             }
@@ -149,8 +165,6 @@ let_error_t let_network_client_write(const let_network_server_t *network_client,
 
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_FAILED);
         }
-
-        written_bytes += (size_t) send_result;
     }
 
     return let_error_none();
