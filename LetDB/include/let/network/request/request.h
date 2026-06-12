@@ -2,6 +2,7 @@
 #define LET_NETWORK_REQUEST_H
 
 #include "let/common.h"
+#include "let/error.h"
 
 typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_TYPE_MAGIC,
@@ -42,5 +43,9 @@ typedef struct {
 } let_network_request_t;
 
 [[nodiscard]] let_network_request_t let_network_request_empty(void);
+
+let_error_t let_network_request_decode(let_network_request_t *request,
+                                       let_u8_t *buffer,
+                                       let_size_t buffer_length);
 
 #endif //LET_NETWORK_REQUEST_H

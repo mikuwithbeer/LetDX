@@ -6,8 +6,8 @@ let_network_response_t let_network_response_empty(void) {
     return (let_network_response_t){};
 }
 
-let_size_t let_network_response_to_bytes(const let_network_response_t *response,
-                                         let_u8_t *output) {
+let_size_t let_network_response_encode(const let_network_response_t *response,
+                                       let_u8_t *output) {
     let_size_t written_bytes = 0;
     switch (response->type) {
         case LET_NETWORK_RESPONSE_TYPE_MAGIC: {

@@ -122,21 +122,12 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE);
     }
 
-    auto request_decoder = let_network_request_decoder_empty();
-    let_network_request_decoder_init(&request_decoder, network_client->read_buffer, network_client->read_buffer_index);
-
-    const auto decode_result = let_network_request_decoder_run(&request_decoder);
-    if (let_error_exists(decode_result)) {
-        return decode_result;
-    }
-
-    *request = request_decoder.request;
-    return let_error_none();
+    return let_network_request_decode(request, network_client->read_buffer, network_client->read_buffer_index);
 }
 
 let_error_t let_network_client_write(let_network_server_t *network_client,
                                      const let_network_response_t *response) {
-    const auto response_length = let_network_response_to_bytes(response, network_client->write_buffer);
+    const auto response_length = let_network_response_encode(response, network_client->write_buffer);
     ssize_t receive_result = 0;
 
     for (network_client->write_buffer_index = 0

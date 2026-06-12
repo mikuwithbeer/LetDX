@@ -30,7 +30,7 @@ typedef struct {
 
 [[nodiscard]] let_network_response_t let_network_response_empty(void);
 
-[[nodiscard]] let_size_t let_network_response_to_bytes(const let_network_response_t *response,
-                                                       let_u8_t *output);
+[[nodiscard]] let_size_t let_network_response_encode(const let_network_response_t *response,
+                                                     let_u8_t *output);
 
 #endif //LET_NETWORK_RESPONSE_H
