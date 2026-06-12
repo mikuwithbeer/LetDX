@@ -13,7 +13,8 @@ add_executable(LetDB)
 
 # --- Source Files ---
 target_sources(LetDB PRIVATE
-    src/network/request.c
+    src/network/request/decoder.c
+    src/network/request/request.c
     src/network/response.c
     src/network/server.c
     src/storage/crc.c

@@ -126,7 +126,15 @@ let_error_report_t let_error_report(const let_error_t error) {
                     error_report.message = "Network server write timeout";
                     break;
 
-                case LET_ERROR_NETWORK_REQUEST_UNKNOWN_COMMAND:
+                case LET_ERROR_NETWORK_REQUEST_EMPTY:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Empty network request";
+                    break;
+                case LET_ERROR_NETWORK_REQUEST_MALFORMED:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Malformed network request";
+                    break;
+                case LET_ERROR_NETWORK_REQUEST_INVALID_COMMAND:
                     error_report.action = LET_ERROR_ACTION_REJECT;
                     error_report.message = "Unknown network request command";
                     break;
@@ -136,11 +144,15 @@ let_error_report_t let_error_report(const let_error_t error) {
                     break;
                 case LET_ERROR_NETWORK_REQUEST_INTEGER_OVERFLOW:
                     error_report.action = LET_ERROR_ACTION_REJECT;
-                    error_report.message = "Network request integer overflow";
+                    error_report.message = "Network request possess integer overflow";
                     break;
                 case LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE:
                     error_report.action = LET_ERROR_ACTION_REJECT;
                     error_report.message = "Expected new line after network request";
+                    break;
+                case LET_ERROR_NETWORK_REQUEST_ARGUMENTS_MISSING:
+                    error_report.action = LET_ERROR_ACTION_REJECT;
+                    error_report.message = "Network request arguments missing";
                     break;
             }
 

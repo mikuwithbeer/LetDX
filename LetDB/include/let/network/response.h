@@ -5,7 +5,6 @@
 #include "let/error.h"
 
 constexpr let_u8_t LET_NETWORK_RESPONSE_MAGIC[3] = {0x4C, 0x45, 0x54};
-constexpr let_u8_t LET_NETWORK_RESPONSE_SIZE_MAX = 128;
 
 typedef enum : let_u8_t {
     LET_NETWORK_RESPONSE_TYPE_MAGIC,
