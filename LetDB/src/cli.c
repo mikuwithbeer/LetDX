@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 let_cli_t let_cli_empty(void) {
     return (let_cli_t){
