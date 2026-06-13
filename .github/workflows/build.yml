@@ -29,8 +29,11 @@ jobs:
           version: 21
           env: true
 
+      - name: Set up latest CMake
+        uses: lukka/get-cmake@latest
+
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
 
       - name: Build via CMake
         run: cmake --build build --config Release
