@@ -1,6 +1,9 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "let/let.h"
 #include "let/cli.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 

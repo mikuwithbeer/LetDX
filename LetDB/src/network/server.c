@@ -1,8 +1,8 @@
 #include "let/network/server.h"
 
+#include <sys/time.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <errno.h>
 
 let_network_server_t let_network_server_empty(void) {
