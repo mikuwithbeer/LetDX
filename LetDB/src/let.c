@@ -1,6 +1,8 @@
 #include "let/let.h"
 #include "let/cli.h"
 
+#include <time.h>
+
 let_t let = {};
 
 static let_error_t let_request(const let_network_request_t *network_request,
@@ -112,6 +114,11 @@ static let_error_t let_request(const let_network_request_t *network_request,
                                let_network_response_t *network_response) {
     let_error_t request_error = let_error_none();
 
+    const auto time_now = (let_time_t) time(nullptr);
+    if (time_now == (typeof_unqual(time_now)) -1) {
+        return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_INVALID_TIME);
+    }
+
     switch (network_request->type) {
         case LET_NETWORK_REQUEST_TYPE_MAGIC: {
             network_response->type = LET_NETWORK_RESPONSE_TYPE_MAGIC;
@@ -125,6 +132,7 @@ static let_error_t let_request(const let_network_request_t *network_request,
 
             auto storage_wal_entry = let_storage_wal_entry_new(
                 network_request->data.create_account.wal_id,
+                time_now,
                 LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
 
             storage_wal_entry.data.add_account = (let_storage_wal_entry_add_account_t){
@@ -137,7 +145,7 @@ static let_error_t let_request(const let_network_request_t *network_request,
                 break;
             }
 
-            const auto add_account = let_account_new(0, balance, flags);
+            const auto add_account = let_account_new(0, balance, time_now, flags);
 
             let_u64_t account_id;
             request_error = let_state_add_account(&let.state, add_account, &account_id);
@@ -162,6 +170,7 @@ static let_error_t let_request(const let_network_request_t *network_request,
 
             auto storage_wal_entry = let_storage_wal_entry_new(
                 network_request->data.make_transfer.wal_id,
+                time_now,
                 LET_STORAGE_WAL_ENTRY_TYPE_MAKE_TRANSFER);
 
             storage_wal_entry.data.make_transfer = (let_storage_wal_entry_make_transfer_t){
@@ -213,6 +222,7 @@ static let_error_t let_request(const let_network_request_t *network_request,
 
             auto storage_wal_entry = let_storage_wal_entry_new(
                 network_request->data.update_account.wal_id,
+                time_now,
                 LET_STORAGE_WAL_ENTRY_TYPE_UPDATE_ACCOUNT);
 
             storage_wal_entry.data.update_account = (let_storage_wal_entry_update_account_t){

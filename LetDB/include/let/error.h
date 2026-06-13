@@ -22,6 +22,7 @@ typedef enum [[nodiscard]] : let_u8_t {
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_STATE_OUT_OF_MEMORY = 1,
     LET_ERROR_STATE_INVALID_ACCOUNT_LIST,
+    LET_ERROR_STATE_INVALID_TIME,
 } let_error_state_t;
 
 typedef enum [[nodiscard]] : let_u8_t {

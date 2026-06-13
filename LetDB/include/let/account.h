@@ -32,6 +32,7 @@ typedef struct {
 
 [[nodiscard]] let_account_t let_account_new(let_u128_t credits,
                                             let_u128_t debits,
+                                            let_time_t created_at,
                                             let_account_flag_t flags);
 
 [[nodiscard]] let_account_list_t *let_account_list_new(void);

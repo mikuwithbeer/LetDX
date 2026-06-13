@@ -34,6 +34,11 @@ let_error_t let_state_make_transfer(const let_state_t *state,
                                     const let_u64_t from_account_id,
                                     const let_u64_t to_account_id,
                                     const let_u128_t amount) {
+    const auto time_now = (let_time_t) time(nullptr);
+    if (time_now == (typeof_unqual(time_now)) -1) {
+        return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_INVALID_TIME);
+    }
+
     const auto from_account = &state->account_list->accounts[from_account_id];
     const auto to_account = &state->account_list->accounts[to_account_id];
 
@@ -43,10 +48,8 @@ let_error_t let_state_make_transfer(const let_state_t *state,
     from_account->transactions++;
     to_account->transactions++;
 
-    const auto now = (let_u64_t) time(nullptr);
-
-    from_account->updated_at = now;
-    to_account->updated_at = now;
+    from_account->updated_at = time_now;
+    to_account->updated_at = time_now;
 
     return let_error_none();
 }

@@ -3,7 +3,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <time.h>
 #include <unistd.h>
 
 let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
@@ -98,7 +97,11 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
         switch (safe_entry.entry.header.type) {
             case LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT: {
                 const auto add_account = safe_entry.entry.data.add_account;
-                const auto account = let_account_new(0, add_account.balance, add_account.flags);
+                const auto account = let_account_new(
+                    0,
+                    add_account.balance,
+                    safe_entry.entry.header.timestamp,
+                    add_account.flags);
 
                 let_u64_t account_id;
                 const auto account_result = let_state_add_account(storage_wal->state, account, &account_id);
@@ -203,13 +206,12 @@ void let_storage_wal_close(let_storage_wal_t *storage_wal) {
 }
 
 let_storage_wal_entry_t let_storage_wal_entry_new(const let_u64_t id,
+                                                  const let_time_t timestamp,
                                                   const let_storage_wal_entry_type_t type) {
-    const auto time_now = (let_time_t) time(nullptr);
-
     return (let_storage_wal_entry_t){
         .header = {
             .id = id,
-            .timestamp = time_now,
+            .timestamp = timestamp,
             .type = type
         },
         .data = {}

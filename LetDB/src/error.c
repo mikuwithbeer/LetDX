@@ -51,6 +51,9 @@ let_error_report_t let_error_report(const let_error_t error) {
                 case LET_ERROR_STATE_INVALID_ACCOUNT_LIST:
                     error_report.message = "Corrupted account list given for the state subsystem";
                     break;
+                case LET_ERROR_STATE_INVALID_TIME:
+                    error_report.message = "Invalid time given for the state subsystem";
+                    break;
             }
 
             break;

@@ -64,6 +64,7 @@ typedef struct {
 } let_storage_wal_t;
 
 [[nodiscard]] let_storage_wal_entry_t let_storage_wal_entry_new(let_u64_t id,
+                                                                let_time_t timestamp,
                                                                 let_storage_wal_entry_type_t type);
 
 [[nodiscard]] let_storage_wal_t let_storage_wal_empty(void);
