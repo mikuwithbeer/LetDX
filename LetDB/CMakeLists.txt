@@ -15,7 +15,8 @@ add_executable(LetDB)
 target_sources(LetDB PRIVATE
     src/network/request/decoder.c
     src/network/request/request.c
-    src/network/response.c
+    src/network/response/encoder.c
+    src/network/response/response.c
     src/network/server.c
     src/storage/crc.c
     src/storage/wal.c
