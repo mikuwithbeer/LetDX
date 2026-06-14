@@ -157,6 +157,15 @@ let_error_report_t let_error_report(const let_error_t error) {
                     error_report.action = LET_ERROR_ACTION_REJECT;
                     error_report.message = "Network request arguments missing";
                     break;
+
+                case LET_ERROR_NETWORK_REQUEST_BUFFER_OVERFLOW:
+                    error_report.action = LET_ERROR_ACTION_CLOSE;
+                    error_report.message = "Network request buffer overflow";
+                    break;
+                case LET_ERROR_NETWORK_RESPONSE_BUFFER_OVERFLOW:
+                    error_report.action = LET_ERROR_ACTION_CLOSE;
+                    error_report.message = "Network response buffer overflow";
+                    break;
             }
 
             break;
