@@ -1,7 +1,6 @@
 #include "let/network/server.h"
 
 #include <sys/time.h>
-#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -24,8 +23,7 @@ let_error_t let_network_server_init(let_network_server_t *network_server,
     constexpr auto option_value = 1;
     setsockopt(network_server->handle, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(option_value));
 
-    memset(&network_server->address, 0, sizeof(network_server->address));
-
+    network_server->address = (typeof(network_server->address)){};
     network_server->address.sin_family = AF_INET;
     network_server->address.sin_addr.s_addr = INADDR_ANY;
     network_server->address.sin_port = htons(network_server->port);
@@ -126,10 +124,18 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
 }
 
 let_error_t let_network_client_write(let_network_server_t *network_client,
-                                     const let_network_response_t *response) {
-    const auto response_length = let_network_response_encode(response, network_client->write_buffer);
-    ssize_t receive_result = 0;
+                                     const let_network_response_t response) {
+    let_size_t response_length = 0;
+    const auto encode_result = let_network_response_encode(
+        response,
+        network_client->write_buffer,
+        &response_length);
 
+    if (let_error_exists(encode_result)) {
+        return encode_result;
+    }
+
+    ssize_t receive_result = 0;
     for (network_client->write_buffer_index = 0
          ; network_client->write_buffer_index < response_length
          ; network_client->write_buffer_index += (size_t) receive_result) {
@@ -148,10 +154,6 @@ let_error_t let_network_client_write(let_network_server_t *network_client,
 
             if (errno == EINTR) {
                 return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CLOSED);
-            }
-
-            if (errno == EPIPE || errno == ECONNRESET) {
-                return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_FAILED);
             }
 
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_FAILED);

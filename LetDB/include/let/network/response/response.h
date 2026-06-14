@@ -4,8 +4,6 @@
 #include "let/common.h"
 #include "let/error.h"
 
-constexpr let_u8_t LET_NETWORK_RESPONSE_MAGIC[3] = {0x4C, 0x45, 0x54};
-
 typedef enum : let_u8_t {
     LET_NETWORK_RESPONSE_TYPE_MAGIC,
     LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT,
@@ -30,7 +28,8 @@ typedef struct {
 
 [[nodiscard]] let_network_response_t let_network_response_empty(void);
 
-[[nodiscard]] let_size_t let_network_response_encode(const let_network_response_t *response,
-                                                     let_u8_t *output);
+let_error_t let_network_response_encode(let_network_response_t network_response,
+                                        let_u8_t *buffer,
+                                        let_size_t *buffer_length);
 
 #endif //LET_NETWORK_RESPONSE_H

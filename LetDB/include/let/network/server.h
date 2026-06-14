@@ -2,11 +2,11 @@
 #define LET_NETWORK_SERVER_H
 
 #include "let/network/request/decoder.h"
-#include "let/network/response.h"
+#include "let/network/response/encoder.h"
 
 #include <netinet/in.h>
 
-constexpr let_u8_t LET_NETWORK_BUFFER_LENGTH = 128;
+constexpr let_u8_t LET_NETWORK_BUFFER_LENGTH = 0xFF;
 
 typedef struct sockaddr_in let_network_server_address_t;
 
@@ -37,7 +37,7 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
                                     let_network_request_t *request);
 
 let_error_t let_network_client_write(let_network_server_t *network_client,
-                                     const let_network_response_t *response);
+                                     let_network_response_t response);
 
 void let_network_close(let_network_server_t *network_server);
 
