@@ -6,7 +6,7 @@
 
 #include <netinet/in.h>
 
-constexpr let_u8_t LET_NETWORK_BUFFER_LENGTH = 0xFF;
+constexpr let_u8_t LET_NETWORK_BUFFER_LENGTH = 128;
 
 typedef struct sockaddr_in let_network_server_address_t;
 

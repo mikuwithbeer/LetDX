@@ -10,9 +10,12 @@ let_network_response_encoder_t let_network_response_encoder_empty(void) {
 
 void let_network_response_encoder_init(let_network_response_encoder_t *response_encoder,
                                        const let_network_response_t network_response,
-                                       let_u8_t *buffer) {
+                                       let_u8_t *buffer,
+                                       const let_size_t buffer_capacity) {
     response_encoder->response = network_response;
+
     response_encoder->buffer = buffer;
+    response_encoder->buffer_capacity = buffer_capacity;
 }
 
 let_error_t let_network_response_encoder_run(let_network_response_encoder_t *response_encoder) {
@@ -98,6 +101,10 @@ static let_error_t let_network_response_encoder_run_integer(let_network_response
     auto skip = size;
     while (skip > 1 && bytes[skip - 1] == 0) {
         skip--;
+    }
+
+    if (response_decoder->buffer_length + skip * 2 > response_decoder->buffer_capacity) {
+        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_RESPONSE_BUFFER_OVERFLOW);
     }
 
     for (let_size_t index = skip; index-- > 0;) {

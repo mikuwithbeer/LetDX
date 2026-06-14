@@ -14,13 +14,15 @@ typedef struct {
 
     let_u8_t *buffer;
     let_size_t buffer_length;
+    let_size_t buffer_capacity;
 } let_network_response_encoder_t;
 
 [[nodiscard]] let_network_response_encoder_t let_network_response_encoder_empty(void);
 
 void let_network_response_encoder_init(let_network_response_encoder_t *response_encoder,
                                        let_network_response_t network_response,
-                                       let_u8_t *buffer);
+                                       let_u8_t *buffer,
+                                       let_size_t buffer_capacity);
 
 let_error_t let_network_response_encoder_run(let_network_response_encoder_t *response_encoder);
 

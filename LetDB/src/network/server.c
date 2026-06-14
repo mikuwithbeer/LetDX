@@ -117,10 +117,10 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
     }
 
     if (network_client->read_buffer_index == LET_NETWORK_BUFFER_LENGTH && read_byte != '\n') {
-        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE);
+        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_BUFFER_OVERFLOW);
     }
 
-    return let_network_request_decode(request, network_client->read_buffer, network_client->read_buffer_index);
+    return let_network_request_decode(network_client->read_buffer, network_client->read_buffer_index, request);
 }
 
 let_error_t let_network_client_write(let_network_server_t *network_client,
@@ -129,6 +129,7 @@ let_error_t let_network_client_write(let_network_server_t *network_client,
     const auto encode_result = let_network_response_encode(
         response,
         network_client->write_buffer,
+        LET_NETWORK_BUFFER_LENGTH,
         &response_length);
 
     if (let_error_exists(encode_result)) {

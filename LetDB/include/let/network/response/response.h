@@ -30,6 +30,7 @@ typedef struct {
 
 let_error_t let_network_response_encode(let_network_response_t network_response,
                                         let_u8_t *buffer,
-                                        let_size_t *buffer_length);
+                                        let_size_t buffer_capacity,
+                                        let_size_t *output);
 
 #endif //LET_NETWORK_RESPONSE_H

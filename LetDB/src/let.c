@@ -62,17 +62,12 @@ void let_run(const let_cli_t *cli) {
 
             let.error = let_network_client_read(&let.network_client, &network_request);
             if (let_error_exists(let.error)) {
-                report = let_error_report(let.error);
-                if (report.action == LET_ERROR_ACTION_FATAL) {
-                    let.accepting = false;
-                }
-
-                let.executing = false;
-                break;
+                goto handle_error;
             }
 
             let.error = let_request(&network_request, &network_response);
 
+        handle_error:
             report = let_error_report(let.error);
             switch (report.action) {
                 case LET_ERROR_ACTION_FATAL:
