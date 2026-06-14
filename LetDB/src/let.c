@@ -40,11 +40,11 @@ void let_init(const let_cli_t *cli) {
         return;
     }
 
-    let.running = true;
+    let.accepting = true;
 }
 
 void let_run(const let_cli_t *cli) {
-    while (let.running) {
+    while (let.accepting) {
         let.error = let_network_server_accept(&let.network_server,
                                               cli->read_timeout,
                                               cli->write_timeout,
@@ -53,41 +53,57 @@ void let_run(const let_cli_t *cli) {
             break;
         }
 
-        while (let.running) {
+        let.executing = true;
+        while (let.executing) {
+            let_error_report_t report;
+
             auto network_request = let_network_request_empty();
             auto network_response = let_network_response_empty();
 
             let.error = let_network_client_read(&let.network_client, &network_request);
             if (let_error_exists(let.error)) {
-                goto handle_error;
+                report = let_error_report(let.error);
+                if (report.action == LET_ERROR_ACTION_FATAL) {
+                    let.accepting = false;
+                }
+
+                let.executing = false;
+                break;
             }
 
             let.error = let_request(&network_request, &network_response);
 
-            if (let_error_exists(let.error)) {
-            handle_error:
-                const auto error_report = let_error_report(let.error);
-                switch (error_report.action) {
-                    case LET_ERROR_ACTION_FATAL:
-                        let.running = false;
-                        continue;
-                    case LET_ERROR_ACTION_IGNORE:
-                        let.error = let_error_none();
-                        break;
-                    case LET_ERROR_ACTION_REJECT:
-                        network_response.type = LET_NETWORK_RESPONSE_TYPE_ERROR;
-                        network_response.data.error = let.error;
-                        break;
-                }
+            report = let_error_report(let.error);
+            switch (report.action) {
+                case LET_ERROR_ACTION_FATAL:
+                    let.executing = false;
+                    let.accepting = false;
+                    continue;
+                case LET_ERROR_ACTION_IGNORE:
+                    let.error = let_error_none();
+                    break;
+                case LET_ERROR_ACTION_CLOSE:
+                    let.executing = false;
+                    continue;
+                case LET_ERROR_ACTION_REJECT:
+                    network_response.type = LET_NETWORK_RESPONSE_TYPE_ERROR;
+                    network_response.data.error = let.error;
+                    break;
             }
 
-            let.error = let_network_client_write(&let.network_client, &network_response);
+            let.error = let_network_client_write(&let.network_client, network_response);
             if (let_error_exists(let.error)) {
-                break;
+                report = let_error_report(let.error);
+                if (report.action == LET_ERROR_ACTION_FATAL) {
+                    let.accepting = false;
+                }
+
+                let.executing = report.action != LET_ERROR_ACTION_CLOSE;
+                continue;
             }
 
             if (network_request.type == LET_NETWORK_REQUEST_TYPE_CLOSE) {
-                break;
+                let.executing = false;
             }
         }
 
@@ -96,7 +112,8 @@ void let_run(const let_cli_t *cli) {
 }
 
 void let_close([[maybe_unused]] const int signal) {
-    let.running = false;
+    let.executing = false;
+    let.accepting = false;
 }
 
 void let_cleanup(void) {

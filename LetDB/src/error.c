@@ -109,24 +109,24 @@ let_error_report_t let_error_report(const let_error_t error) {
                     error_report.message = "Network server accept failed";
                     break;
                 case LET_ERROR_NETWORK_SERVER_READ_FAILED:
-                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.action = LET_ERROR_ACTION_CLOSE;
                     error_report.message = "Network server read failed";
                     break;
                 case LET_ERROR_NETWORK_SERVER_WRITE_FAILED:
-                    error_report.action = LET_ERROR_ACTION_FATAL;
+                    error_report.action = LET_ERROR_ACTION_CLOSE;
                     error_report.message = "Network server write failed";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_READ_TIMEOUT:
+                    error_report.action = LET_ERROR_ACTION_CLOSE;
+                    error_report.message = "Network server read timeout";
+                    break;
+                case LET_ERROR_NETWORK_SERVER_WRITE_TIMEOUT:
+                    error_report.action = LET_ERROR_ACTION_CLOSE;
+                    error_report.message = "Network server write timeout";
                     break;
                 case LET_ERROR_NETWORK_SERVER_CLOSED:
                     error_report.action = LET_ERROR_ACTION_IGNORE;
                     error_report.message = "Network server closed";
-                    break;
-                case LET_ERROR_NETWORK_SERVER_READ_TIMEOUT:
-                    error_report.action = LET_ERROR_ACTION_IGNORE;
-                    error_report.message = "Network server read timeout";
-                    break;
-                case LET_ERROR_NETWORK_SERVER_WRITE_TIMEOUT:
-                    error_report.action = LET_ERROR_ACTION_IGNORE;
-                    error_report.message = "Network server write timeout";
                     break;
 
                 case LET_ERROR_NETWORK_REQUEST_EMPTY:

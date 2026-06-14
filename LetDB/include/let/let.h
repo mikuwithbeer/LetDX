@@ -9,7 +9,9 @@
 #include <signal.h>
 
 typedef struct {
-    volatile sig_atomic_t running;
+    volatile sig_atomic_t accepting;
+    volatile sig_atomic_t executing;
+
     let_error_t error;
 
     let_account_list_t *account_list;

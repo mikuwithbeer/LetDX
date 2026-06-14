@@ -102,7 +102,7 @@ let_error_t let_cli_parse(let_cli_t *cli,
 }
 
 void let_cli_help(void) {
-    printf("Usage: LetDB [OPTIONS]\n"
+    puts("Usage: LetDB [OPTIONS]\n"
         "\n"
         "Options:\n"
         "-h, --help                 Show this help message and exit\n"
@@ -115,9 +115,9 @@ void let_cli_help(void) {
         "\n"
         "Examples:\n"
         "LetDB --port 8080 -b 4 --write-timeout 0\n"
-        "LetDB -f instance.db\n");
+        "LetDB -f instance.db");
 }
 
 void let_cli_version(void) {
-    printf("LetDB v0.0.0\n");
+    puts("LetDB v0.0.0");
 }

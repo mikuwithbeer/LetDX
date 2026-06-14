@@ -20,6 +20,13 @@ int main(const int argc,
     sigaction(SIGTERM, &signal_action, nullptr);
     sigaction(SIGINT, &signal_action, nullptr);
 
+    struct sigaction pipe_action = {};
+    sigemptyset(&pipe_action.sa_mask);
+
+    pipe_action.sa_handler = SIG_IGN;
+
+    sigaction(SIGPIPE, &pipe_action, nullptr);
+
     auto cli = let_cli_empty();
     const auto cli_result = let_cli_parse(&cli, argc, argv);
 
