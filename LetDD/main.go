@@ -1,91 +1,109 @@
 package main
 
 import (
+	"LetDD/http"
 	"LetDD/tcp"
 	"LetDD/uint128"
 
 	"fmt"
-	"time"
+
+	"github.com/labstack/echo/v5"
 )
 
 func main() {
-	client, err := tcp.NewClient(55543)
+	client, err := tcp.NewClient("localhost:55543")
 	if err != nil {
-		fmt.Println("connect error:", err)
-		return
+		panic(err)
 	}
 
-	defer client.Close()
+	// simple demo, not a real implementation of the server
+	server := http.NewServer()
+	server.GetAccount = func(ctx *echo.Context) error {
+		id, err := echo.QueryParam[uint64](ctx, "id")
+		if err != nil {
+			return err
+		}
 
-	response, err := client.Communicate(tcp.MagicRequest{})
-	if err != nil {
-		fmt.Println("error:", err)
-		return
+		response, err := client.Communicate(tcp.GetBalanceRequest{AccountID: id})
+		if err != nil {
+			return err
+		}
+
+		switch response.Kind() {
+		case tcp.GetBalanceResponseKind:
+			balance := response.(tcp.GetBalanceResponse).Balance
+			return ctx.String(200, fmt.Sprintf("Account ID: %d, Balance: %s", id, balance))
+		default:
+			return fmt.Errorf("unexpected response: %s", response.Kind())
+		}
 	}
 
-	fmt.Printf("response: %#v\n", response)
-	time.Sleep(500 * time.Millisecond)
+	server.PostAccount = func(ctx *echo.Context) error {
+		balance, err := echo.FormValue[string](ctx, "balance")
+		if err != nil {
+			return err
+		}
 
-	/*
-			response, err = client.Communicate(tcp.AddAccountRequest{
-				WalID:   client.WalID(),
-				Balance: uint128.Uint128{Low: 1000},
-				Flags:   1,
-			})
-			if err != nil {
-				fmt.Println("error:", err)
-				return
-			}
+		balanceUint128, err := uint128.Parse(balance)
+		if err != nil {
+			return err
+		}
 
-			fmt.Printf("response: %#v\n", response)
-			time.Sleep(500 * time.Millisecond)
+		flags, err := echo.FormValue[uint8](ctx, "flags")
+		if err != nil {
+			return err
+		}
 
-			response, err = client.Communicate(tcp.AddAccountRequest{
-				WalID:   client.WalID(),
-				Balance: uint128.Uint128{Low: 1000},
-				Flags:   2,
-			})
+		response, err := client.Communicate(tcp.AddAccountRequest{
+			WalID:   client.WalID(),
+			Balance: balanceUint128,
+			Flags:   flags,
+		})
+		if err != nil {
+			return err
+		}
 
-			if err != nil {
-				fmt.Println("error:", err)
-				return
-			}
-
-		fmt.Printf("response: %#v\n", response)
-		time.Sleep(500 * time.Millisecond)
-	*/
-
-	response, err = client.Communicate(tcp.MakeTransferRequest{
-		WalID:  client.WalID(),
-		FromID: 0,
-		ToID:   1,
-		Amount: uint128.Uint128{Low: 0x32},
-	})
-
-	if err != nil {
-		fmt.Println("error:", err)
-		return
+		switch response.Kind() {
+		case tcp.AddAccountResponseKind:
+			return ctx.String(200, "Account added successfully")
+		default:
+			return fmt.Errorf("unexpected response: %s", response.Kind())
+		}
 	}
 
-	fmt.Printf("response: %#v\n", response)
-	time.Sleep(500 * time.Millisecond)
+	server.UpdateAccount = func(ctx *echo.Context) error {
+		id, err := echo.FormValue[uint64](ctx, "id")
+		if err != nil {
+			return err
+		}
 
-	response, err = client.Communicate(tcp.GetBalanceRequest{AccountID: 0})
-	if err != nil {
-		fmt.Println("error:", err)
-		return
+		flags, err := echo.FormValue[uint8](ctx, "flags")
+		if err != nil {
+			return err
+		}
+
+		response, err := client.Communicate(tcp.UpdateAccountRequest{
+			WalID:     client.WalID(),
+			AccountID: id,
+			Flags:     flags,
+		})
+		if err != nil {
+			return err
+		}
+
+		switch response.Kind() {
+		case tcp.OkeResponseKind:
+			return ctx.String(200, "Account updated successfully")
+		default:
+			return fmt.Errorf("unexpected response: %s", response.Kind())
+		}
 	}
 
-	fmt.Printf("response: %#v\n", response)
-	time.Sleep(500 * time.Millisecond)
-
-	response, err = client.Communicate(tcp.GetBalanceRequest{AccountID: 1})
-	if err != nil {
-		fmt.Println("error:", err)
-		return
+	server.PostTransfer = func(ctx *echo.Context) error {
+		return ctx.String(200, "PostTransfer")
 	}
 
-	fmt.Printf("response: %#v\n", response)
-	time.Sleep(500 * time.Millisecond)
-
+	if err := server.Start(":8080"); err != nil {
+		panic(err)
+	}
 }
