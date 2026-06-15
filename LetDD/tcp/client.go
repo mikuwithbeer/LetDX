@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"sync"
 )
 
 type Client struct {
@@ -12,10 +13,11 @@ type Client struct {
 
 	reader *bufio.Reader
 	writer *bufio.Writer
+
+	mutex sync.Mutex
 }
 
-func NewClient(port uint16) (*Client, error) {
-	address := fmt.Sprintf("localhost:%d", port)
+func NewClient(address string) (*Client, error) {
 	connection, err := net.Dial("tcp", address)
 	if err != nil {
 		return nil, err
@@ -48,6 +50,9 @@ func (c *Client) WalID() uint64 {
 }
 
 func (c *Client) Communicate(request Request) (Response, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
 	updateTransactions := false
 	switch request.(type) {
 	case AddAccountRequest, MakeTransferRequest, UpdateAccountRequest:
