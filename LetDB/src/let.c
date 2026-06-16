@@ -83,6 +83,8 @@ void let_run(const let_cli_t *cli) {
                 case LET_ERROR_ACTION_REJECT:
                     network_response.type = LET_NETWORK_RESPONSE_TYPE_ERROR;
                     network_response.data.error = let.error;
+
+                    let.error = let_error_none();
                     break;
             }
 
@@ -113,12 +115,7 @@ void let_close([[maybe_unused]] const int signal) {
 
 void let_cleanup(void) {
     let_network_close(&let.network_server);
-
-    if (let.storage_wal.descriptor != -1) {
-        let.error = let_storage_wal_sync(&let.storage_wal);
-        let_storage_wal_close(&let.storage_wal);
-    }
-
+    let_storage_wal_close(&let.storage_wal);
     let_account_list_free(let.account_list);
 }
 

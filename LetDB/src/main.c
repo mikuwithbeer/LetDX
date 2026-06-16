@@ -5,12 +5,26 @@
 
 #include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
+
+static void apply_signal(void);
+
+static bool apply_process(int argc,
+                          char **argv);
 
 int main(const int argc,
          char **argv) {
-    auto success = EXIT_SUCCESS;
+    apply_signal();
 
+    const auto success = apply_process(argc, argv);
+    if (!success) {
+        const auto report = let_error_report(let.error);
+        fprintf(stderr, "%s\n", report.message);
+    }
+
+    return success ? 0 : 1;
+}
+
+static void apply_signal(void) {
     struct sigaction signal_action = {};
     sigemptyset(&signal_action.sa_mask);
 
@@ -26,55 +40,34 @@ int main(const int argc,
     pipe_action.sa_handler = SIG_IGN;
 
     sigaction(SIGPIPE, &pipe_action, nullptr);
+}
 
-    auto cli = let_cli_empty();
-    const auto cli_result = let_cli_parse(&cli, argc, argv);
-
-    if (let_error_exists(cli_result)) {
-        const auto error_report = let_error_report(cli_result);
-        puts(error_report.message);
-
-        success = EXIT_FAILURE;
-        goto exit;
+static bool apply_process(const int argc,
+                          char **argv) {
+    auto let_cli = let_cli_empty();
+    let.error = let_cli_parse(&let_cli, argc, argv);
+    if (let_error_exists(let.error)) {
+        return false;
     }
 
-    if (cli.help) {
+    if (let_cli.help) {
         let_cli_help();
-        goto exit;
+        return true;
     }
 
-    if (cli.version) {
+    if (let_cli.version) {
         let_cli_version();
-        goto exit;
+        return true;
     }
 
-    let_init(&cli);
+    let_init(&let_cli);
     if (let_error_exists(let.error)) {
-        const auto error_report = let_error_report(let.error);
-        puts(error_report.message);
-
-        success = EXIT_FAILURE;
         goto cleanup;
     }
 
-    let_run(&cli);
-    if (let_error_exists(let.error)) {
-        const auto error_report = let_error_report(let.error);
-        puts(error_report.message);
-
-        success = EXIT_FAILURE;
-        goto cleanup;
-    }
+    let_run(&let_cli);
 
 cleanup:
     let_cleanup();
-    if (let_error_exists(let.error)) {
-        const auto error_report = let_error_report(let.error);
-        puts(error_report.message);
-
-        success = EXIT_FAILURE;
-    }
-
-exit:
-    return success;
+    return !let_error_exists(let.error);
 }
