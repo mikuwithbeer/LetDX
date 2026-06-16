@@ -55,6 +55,12 @@ func (r UpdateAccountRequest) Encode() []byte {
 	return fmt.Appendf(nil, "=%d %d %d\n", r.WalID, r.AccountID, r.Flags)
 }
 
+type GetFlagsRequest struct {
+	AccountID uint64
+}
+
+func (r GetFlagsRequest) Encode() []byte { return fmt.Appendf(nil, "!%d\n", r.AccountID) }
+
 type CloseRequest struct{}
 
 func (r CloseRequest) Encode() []byte { return []byte(".\n") }

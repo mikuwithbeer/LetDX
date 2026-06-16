@@ -13,6 +13,7 @@ const (
 	AddAccountResponseKind   = "AID"
 	GetBalanceResponseKind   = "BAL"
 	CountEntriesResponseKind = "SEC"
+	GetFlagsResponseKind     = "FLG"
 	OkeResponseKind          = "OKE"
 	ErrorResponseKind        = "ERR"
 )
@@ -42,6 +43,12 @@ type CountEntriesResponse struct {
 }
 
 func (CountEntriesResponse) Kind() string { return CountEntriesResponseKind }
+
+type GetFlagsResponse struct {
+	Flags uint8
+}
+
+func (GetFlagsResponse) Kind() string { return GetFlagsResponseKind }
 
 type OkeResponse struct{}
 
@@ -81,7 +88,7 @@ func ParseResponse(data []byte) (Response, error) {
 
 		return AddAccountResponse{AccountID: accountID}, nil
 	case bytes.HasPrefix(data, []byte(GetBalanceResponseKind)):
-		balance, err := uint128.Parse(string(value))
+		balance, err := uint128.Parse(string(value), 16)
 		if err != nil {
 			return nil, err
 		}
@@ -94,6 +101,13 @@ func ParseResponse(data []byte) (Response, error) {
 		}
 
 		return CountEntriesResponse{Count: count}, nil
+	case bytes.HasPrefix(data, []byte(GetFlagsResponseKind)):
+		flags, err := strconv.ParseUint(string(value), 16, 8)
+		if err != nil {
+			return nil, err
+		}
+
+		return GetFlagsResponse{Flags: uint8(flags)}, nil
 	case bytes.HasPrefix(data, []byte(ErrorResponseKind)):
 		code, err := strconv.ParseUint(string(value), 16, 16)
 		if err != nil {
