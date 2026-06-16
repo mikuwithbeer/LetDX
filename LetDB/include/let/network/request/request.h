@@ -11,6 +11,7 @@ typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_TYPE_GET_BALANCE,
     LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES,
     LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT,
+    LET_NETWORK_REQUEST_TYPE_GET_FLAGS,
     LET_NETWORK_REQUEST_TYPE_CLOSE,
 } let_network_request_type_t;
 
@@ -35,6 +36,7 @@ typedef union {
     } update_account;
 
     let_u64_t get_balance;
+    let_u64_t get_flags;
 } let_network_request_data_t;
 
 typedef struct {

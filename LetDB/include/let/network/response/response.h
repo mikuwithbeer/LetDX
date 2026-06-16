@@ -9,6 +9,7 @@ typedef enum : let_u8_t {
     LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT,
     LET_NETWORK_RESPONSE_TYPE_GET_BALANCE,
     LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES,
+    LET_NETWORK_RESPONSE_TYPE_GET_FLAGS,
     LET_NETWORK_RESPONSE_TYPE_OK,
     LET_NETWORK_RESPONSE_TYPE_ERROR,
 } let_network_response_type_t;
@@ -17,6 +18,7 @@ typedef union {
     let_u128_t get_balance;
     let_u64_t add_account;
     let_u64_t count_entries;
+    let_u8_t get_flags;
 
     let_error_t error;
 } let_network_response_data_t;

@@ -1,7 +1,5 @@
 #include "let/network/request/decoder.h"
 
-#include <stddef.h>
-
 static let_error_t let_network_request_decoder_run_command(let_network_request_decoder_t *request_decoder,
                                                            let_u8_t current_byte);
 
@@ -40,7 +38,7 @@ let_error_t let_network_request_decoder_run(let_network_request_decoder_t *reque
         return let_error_none();
     }
 
-    size_t buffer_index = 0;
+    let_size_t buffer_index = 0;
     while (buffer_index < request_decoder->buffer_length) {
         const auto current_byte = request_decoder->buffer[buffer_index];
         switch (request_decoder->state) {
@@ -108,6 +106,10 @@ static let_error_t let_network_request_decoder_run_command(let_network_request_d
             request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT;
             request_decoder->request_argc = 3;
             break;
+        case '!':
+            request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_GET_FLAGS;
+            request_decoder->request_argc = 1;
+            break;
         case '.':
             request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_CLOSE;
             break;
@@ -160,8 +162,6 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
                     current_byte,
                     &request_decoder->request.data.create_account.flags
                 );
-            } else {
-                unreachable();
             }
 
             break;
@@ -191,8 +191,6 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
                     current_byte,
                     &request_decoder->request.data.make_transfer.amount
                 );
-            } else {
-                unreachable();
             }
 
             break;
@@ -227,14 +225,23 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
                     current_byte,
                     &request_decoder->request.data.update_account.flags
                 );
-            } else {
-                unreachable();
+            }
+
+            break;
+        }
+        case LET_NETWORK_REQUEST_TYPE_GET_FLAGS: {
+            if (request_decoder->request_argc == 1) {
+                argument_result = let_network_request_decoder_parse_u64(
+                    request_decoder,
+                    current_byte,
+                    &request_decoder->request.data.get_flags
+                );
             }
 
             break;
         }
         default:
-            unreachable();
+            break;
     }
 
     return argument_result;

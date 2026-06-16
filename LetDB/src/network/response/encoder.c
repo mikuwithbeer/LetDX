@@ -67,6 +67,19 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
 
             break;
         }
+        case LET_NETWORK_RESPONSE_TYPE_GET_FLAGS: {
+            response_encoder->buffer[response_encoder->buffer_length++] = 'F';
+            response_encoder->buffer[response_encoder->buffer_length++] = 'L';
+            response_encoder->buffer[response_encoder->buffer_length++] = 'G';
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+
+            encoder_result = let_network_response_encoder_run_integer(
+                response_encoder,
+                &response_encoder->response.data.get_flags,
+                sizeof(response_encoder->response.data.get_flags));
+
+            break;
+        }
         case LET_NETWORK_RESPONSE_TYPE_OK: {
             response_encoder->buffer[response_encoder->buffer_length++] = 'O';
             response_encoder->buffer[response_encoder->buffer_length++] = 'K';
