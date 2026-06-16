@@ -1,9 +1,11 @@
 package uint128
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"math/big"
 	"math/bits"
-	"strconv"
 )
 
 const QUINTILLION = 1e18
@@ -50,33 +52,41 @@ func (u Uint128) String() string {
 	return string(u.Bytes())
 }
 
-func Parse(hexadecimal string) (Uint128, error) {
-	length := len(hexadecimal)
-
-	if length == 0 {
+func Parse(input string, base int) (Uint128, error) {
+	if len(input) == 0 {
 		return Uint128{}, errors.New("empty string")
 	}
 
-	if length > 32 {
-		return Uint128{}, errors.New("hexadecimal too long")
+	number, ok := new(big.Int).SetString(input, base)
+	if !ok {
+		return Uint128{}, errors.New("invalid string format for the given base")
 	}
 
-	uint128 := Uint128{}
-	err := error(nil)
-
-	if length <= 16 {
-		uint128.Low, err = strconv.ParseUint(hexadecimal, 16, 64)
-		return uint128, err
+	uint128Max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1))
+	if number.Cmp(uint128Max) > 0 {
+		return Uint128{}, errors.New("value exceeds 128 bits")
 	}
 
-	low := hexadecimal[length-16:]
-	high := hexadecimal[:length-16]
+	mask := new(big.Int).SetUint64(^uint64(0))
+	return Uint128{
+		High: new(big.Int).Rsh(number, 64).Uint64(),
+		Low:  new(big.Int).And(number, mask).Uint64(),
+	}, nil
+}
 
-	uint128.Low, err = strconv.ParseUint(low, 16, 64)
+func (u Uint128) MarshalJSON() ([]byte, error) {
+	return fmt.Appendf(nil, "%q", u.Bytes()), nil
+}
+
+func (u *Uint128) UnmarshalJSON(b []byte) error {
+	b = bytes.TrimPrefix(b, []byte(`"`))
+	b = bytes.TrimSuffix(b, []byte(`"`))
+
+	result, err := Parse(string(b), 10)
 	if err != nil {
-		return uint128, err
+		return err
 	}
 
-	uint128.High, err = strconv.ParseUint(high, 16, 64)
-	return uint128, err
+	*u = result
+	return nil
 }
