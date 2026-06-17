@@ -15,25 +15,27 @@ jobs:
         os: [ ubuntu-latest, macos-latest ]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
           go-version: 1.26
+          go-version-file: LetDD/go.mod
+          cache-dependency-path: LetDD/go.sum
 
-      - name: Set up LLVM
-        uses: KyleMayes/install-llvm-action@v2
+      - name: Setup LLVM
+        uses: ZhongRuoyu/setup-llvm@d003170672d8166e07ad7d62459ad713c84a1d27
         with:
-          version: 21
-          env: true
+          llvm-version: 22
 
-      - name: Set up latest CMake
-        uses: lukka/get-cmake@latest
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2.2.0
+        with:
+          cmake-version: 4.x
 
       - name: Configure CMake
         run: cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build via CMake
+      - name: Build with CMake
         run: cmake --build build --config Release
