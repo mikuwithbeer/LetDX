@@ -1,7 +1,5 @@
 #include "let/state.h"
 
-#include <time.h>
-
 let_state_t let_state_empty(void) {
     return (let_state_t){};
 }
@@ -23,7 +21,7 @@ let_error_t let_state_add_account(const let_state_t *state,
     const auto account_result = let_account_list_add(state->account_list, account);
 
     if (let_error_exists(account_result)) {
-        return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_OUT_OF_MEMORY);
+        return account_result;
     }
 
     *account_id = current_length;
@@ -34,7 +32,7 @@ let_error_t let_state_make_transfer(const let_state_t *state,
                                     const let_u64_t from_account_id,
                                     const let_u64_t to_account_id,
                                     const let_u128_t amount) {
-    const auto time_now = (let_time_t) time(nullptr);
+    const auto time_now = time(nullptr);
     if (time_now == (typeof_unqual(time_now)) -1) {
         return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_INVALID_TIME);
     }

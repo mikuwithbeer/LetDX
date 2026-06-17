@@ -2,8 +2,6 @@
 #define LET_NETWORK_REQUEST_DECODER_H
 
 #include "let/network/request/request.h"
-#include "let/common.h"
-#include "let/error.h"
 
 typedef enum : let_u8_t {
     LET_NETWORK_REQUEST_DECODER_STATE_COMMAND,

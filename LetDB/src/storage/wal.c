@@ -30,7 +30,7 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
     } else if (errno == EEXIST) {
         descriptor = open(path, O_RDWR);
         if (descriptor < 0) {
-            return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CREATE_FAILED);
+            return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_OPEN_FAILED);
         }
 
         storage_wal->descriptor = descriptor;
@@ -136,6 +136,7 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
                 if (let_error_exists(account_result)) {
                     return account_result;
                 }
+
                 break;
             }
             default:

@@ -1,8 +1,6 @@
 #include "let/let.h"
 #include "let/cli.h"
 
-#include <time.h>
-
 let_t let = {};
 
 static let_error_t let_request(const let_network_request_t *network_request,
@@ -55,7 +53,7 @@ void let_run(const let_cli_t *cli) {
 
         let.executing = true;
         while (let.executing) {
-            let_error_report_t report;
+            let_error_report_t error_report;
 
             auto network_request = let_network_request_empty();
             auto network_response = let_network_response_empty();
@@ -68,8 +66,8 @@ void let_run(const let_cli_t *cli) {
             let.error = let_request(&network_request, &network_response);
 
         handle_error:
-            report = let_error_report(let.error);
-            switch (report.action) {
+            error_report = let_error_report(let.error);
+            switch (error_report.action) {
                 case LET_ERROR_ACTION_FATAL:
                     let.executing = false;
                     let.accepting = false;
@@ -83,19 +81,18 @@ void let_run(const let_cli_t *cli) {
                 case LET_ERROR_ACTION_REJECT:
                     network_response.type = LET_NETWORK_RESPONSE_TYPE_ERROR;
                     network_response.data.error = let.error;
-
                     let.error = let_error_none();
                     break;
             }
 
             let.error = let_network_client_write(&let.network_client, network_response);
             if (let_error_exists(let.error)) {
-                report = let_error_report(let.error);
-                if (report.action == LET_ERROR_ACTION_FATAL) {
+                error_report = let_error_report(let.error);
+                if (error_report.action == LET_ERROR_ACTION_FATAL) {
                     let.accepting = false;
                 }
 
-                let.executing = report.action != LET_ERROR_ACTION_CLOSE;
+                let.executing = error_report.action != LET_ERROR_ACTION_CLOSE;
                 continue;
             }
 
@@ -123,7 +120,7 @@ static let_error_t let_request(const let_network_request_t *network_request,
                                let_network_response_t *network_response) {
     let_error_t request_error = let_error_none();
 
-    const auto time_now = (let_time_t) time(nullptr);
+    const auto time_now = time(nullptr);
     if (time_now == (typeof_unqual(time_now)) -1) {
         return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_INVALID_TIME);
     }

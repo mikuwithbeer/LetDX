@@ -2,7 +2,6 @@
 #define LET_NETWORK_RESPONSE_ENCODER_H
 
 #include "let/network/response/response.h"
-#include "let/common.h"
 
 constexpr let_u8_t LET_NETWORK_RESPONSE_ENCODER_HEX_DIGITS[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',

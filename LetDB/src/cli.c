@@ -23,8 +23,6 @@ let_cli_t let_cli_empty(void) {
 let_error_t let_cli_parse(let_cli_t *cli,
                           const int argc,
                           char **argv) {
-    let_error_t error = let_error_none();
-
     const struct option long_options[8] = {
         {"help", no_argument, nullptr, 'h'},
         {"version", no_argument, nullptr, 'v'},
@@ -53,8 +51,7 @@ let_error_t let_cli_parse(let_cli_t *cli,
             case 'p': {
                 const auto value = strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_U16_MAX) {
-                    error = let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_PORT);
-                    break;
+                    return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_PORT);
                 }
 
                 cli->port = (let_u16_t) value;
@@ -63,8 +60,7 @@ let_error_t let_cli_parse(let_cli_t *cli,
             case 'b': {
                 const auto value = strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_U16_MAX) {
-                    error = let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_BACKLOG);
-                    break;
+                    return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_BACKLOG);
                 }
 
                 cli->backlog = (let_u16_t) value;
@@ -73,7 +69,7 @@ let_error_t let_cli_parse(let_cli_t *cli,
             case 'r': {
                 const auto value = strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_U32_MAX) {
-                    error = let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_READ_TIMEOUT);
+                    return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_READ_TIMEOUT);
                 }
 
                 cli->read_timeout = (let_u32_t) value;
@@ -82,7 +78,7 @@ let_error_t let_cli_parse(let_cli_t *cli,
             case 'w': {
                 const auto value = strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_U32_MAX) {
-                    error = let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_WRITE_TIMEOUT);
+                    return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_WRITE_TIMEOUT);
                 }
 
                 cli->write_timeout = (let_u32_t) value;
@@ -92,13 +88,12 @@ let_error_t let_cli_parse(let_cli_t *cli,
                 break;
             }
             default: {
-                error = let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_OPTION);
-                break;
+                return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_OPTION);
             }
         }
     }
 
-    return error;
+    return let_error_none();
 }
 
 void let_cli_help(void) {

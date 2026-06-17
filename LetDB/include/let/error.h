@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+constexpr auto LET_ERROR_HEADER_CAPACITY = 1 << 5;
+constexpr auto LET_ERROR_BUFFER_CAPACITY = 1 << 6;
+
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_ID_NONE = 0,
     LET_ERROR_ID_ACCOUNT,
@@ -20,8 +23,7 @@ typedef enum [[nodiscard]] : let_u8_t {
 } let_error_account_t;
 
 typedef enum [[nodiscard]] : let_u8_t {
-    LET_ERROR_STATE_OUT_OF_MEMORY = 1,
-    LET_ERROR_STATE_INVALID_ACCOUNT_LIST,
+    LET_ERROR_STATE_INVALID_ACCOUNT_LIST = 1,
     LET_ERROR_STATE_INVALID_TIME,
 } let_error_state_t;
 
@@ -61,6 +63,7 @@ typedef enum [[nodiscard]] : let_u8_t {
 
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_STORAGE_WAL_CREATE_FAILED = 1,
+    LET_ERROR_STORAGE_WAL_OPEN_FAILED,
     LET_ERROR_STORAGE_WAL_WRITE_FAILED,
     LET_ERROR_STORAGE_WAL_READ_FAILED,
     LET_ERROR_STORAGE_WAL_SYNC_FAILED,
@@ -70,6 +73,7 @@ typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_STORAGE_WAL_NONCE_MISMATCH,
     LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH,
     LET_ERROR_STORAGE_WAL_INVALID_ENTRY_TYPE,
+    LET_ERROR_STORAGE_WAL_INVALID_TIME,
 } let_error_storage_t;
 
 typedef enum [[nodiscard]] : let_u8_t {
@@ -92,21 +96,24 @@ typedef struct [[nodiscard]] {
     let_u8_t error;
 } let_error_t;
 
+typedef let_u16_t let_error_code_t;
+
 typedef struct [[nodiscard]] {
+    let_time_t timestamp;
     let_error_action_t action;
     const char *message;
 } let_error_report_t;
-
-typedef let_u16_t let_error_code_t;
 
 let_error_t let_error_none(void);
 
 let_error_t let_error_new(let_error_id_t id,
                           let_u8_t code);
 
+let_error_code_t let_error_code(let_error_t error);
+
 let_error_report_t let_error_report(let_error_t error);
 
-let_error_code_t let_error_code(let_error_t error);
+void let_error_print(let_error_report_t error_report);
 
 [[nodiscard, maybe_unused]] static inline bool let_error_exists(const let_error_t error) {
     return error.id != LET_ERROR_ID_NONE;

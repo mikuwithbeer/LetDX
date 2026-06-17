@@ -1,10 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "let/let.h"
-#include "let/cli.h"
-
-#include <signal.h>
-#include <stdio.h>
 
 static void apply_signal(void);
 
@@ -14,14 +10,7 @@ static bool apply_process(int argc,
 int main(const int argc,
          char **argv) {
     apply_signal();
-
-    const auto success = apply_process(argc, argv);
-    if (!success) {
-        const auto report = let_error_report(let.error);
-        fprintf(stderr, "%s\n", report.message);
-    }
-
-    return success ? 0 : 1;
+    return apply_process(argc, argv) ? 0 : 1;
 }
 
 static void apply_signal(void) {
