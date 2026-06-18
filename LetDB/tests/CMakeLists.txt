@@ -7,3 +7,8 @@ add_test(NAME LetTestCRC COMMAND TestCRC)
 add_executable(TestAccount account.c)
 target_link_libraries(TestAccount PRIVATE Let)
 add_test(NAME LetTestAccount COMMAND TestAccount)
+
+# --- state.c ---
+add_executable(TestState state.c)
+target_link_libraries(TestState PRIVATE Let)
+add_test(NAME LetTestState COMMAND TestState)

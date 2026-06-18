@@ -4,7 +4,7 @@
 
 static let_account_list_t *account_list;
 
-static void test_new_account(void) {
+static void test_account_new(void) {
     const auto account_1 = let_account_new(
         100,
         50,
@@ -66,18 +66,18 @@ static void test_account_list_update(void) {
     assert(!let_error_exists(let_account_list_update(account_list, 1, LET_ACCOUNT_FLAG_CAN_SEND)));
 }
 
-static void test_account_list_free(void) {
+static void test_cleanup(void) {
     let_account_list_free(account_list);
     assert(true);
 }
 
 int main(void) {
-    test_new_account();
+    test_account_new();
     test_account_list_new();
     test_account_list_add();
     test_account_list_get();
     test_account_list_update();
-    test_account_list_free();
 
+    test_cleanup();
     return 0;
 }
