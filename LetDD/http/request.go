@@ -8,7 +8,8 @@ import (
 )
 
 type PostAccountRequest struct {
-	Balance uint128.Uint128 `json:"balance" validate:"required"`
+	Credits uint128.Uint128 `json:"credits" validate:"required"`
+	Debits  uint128.Uint128 `json:"debits" validate:"required"`
 	Flags   uint8           `json:"flags" validate:"required"`
 }
 

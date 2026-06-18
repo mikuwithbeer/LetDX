@@ -11,9 +11,8 @@ import (
 const (
 	MagicResponseKind        = "LET"
 	AddAccountResponseKind   = "AID"
-	GetBalanceResponseKind   = "BAL"
+	GetAccountResponseKind   = "ACC"
 	CountEntriesResponseKind = "SEC"
-	GetFlagsResponseKind     = "FLG"
 	OkeResponseKind          = "OKE"
 	ErrorResponseKind        = "ERR"
 )
@@ -32,23 +31,19 @@ type AddAccountResponse struct {
 
 func (AddAccountResponse) Kind() string { return AddAccountResponseKind }
 
-type GetBalanceResponse struct {
-	Balance uint128.Uint128
+type GetAccountResponse struct {
+	Credits uint128.Uint128
+	Debits  uint128.Uint128
+	Flags   uint8
 }
 
-func (GetBalanceResponse) Kind() string { return GetBalanceResponseKind }
+func (GetAccountResponse) Kind() string { return GetAccountResponseKind }
 
 type CountEntriesResponse struct {
 	Count uint64
 }
 
 func (CountEntriesResponse) Kind() string { return CountEntriesResponseKind }
-
-type GetFlagsResponse struct {
-	Flags uint8
-}
-
-func (GetFlagsResponse) Kind() string { return GetFlagsResponseKind }
 
 type OkeResponse struct{}
 
@@ -62,6 +57,7 @@ func (ErrorResponse) Kind() string { return ErrorResponseKind }
 
 func ParseResponse(data []byte) (Response, error) {
 	data = bytes.TrimSpace(data)
+
 	if len(data) == 0 {
 		return nil, fmt.Errorf("empty response")
 	}
@@ -74,42 +70,58 @@ func ParseResponse(data []byte) (Response, error) {
 		return OkeResponse{}, nil
 	}
 
-	if len(data) < 5 {
-		return nil, fmt.Errorf("invalid response format")
-	}
+	parameters := bytes.SplitN(data, []byte(" "), 4)
 
-	value := data[4:]
 	switch {
 	case bytes.HasPrefix(data, []byte(AddAccountResponseKind)):
-		accountID, err := strconv.ParseUint(string(value), 16, 64)
+		if len(parameters) != 2 {
+			return nil, fmt.Errorf("invalid add account response format")
+		}
+
+		accountID, err := strconv.ParseUint(string(parameters[1]), 16, 64)
 		if err != nil {
 			return nil, err
 		}
 
 		return AddAccountResponse{AccountID: accountID}, nil
-	case bytes.HasPrefix(data, []byte(GetBalanceResponseKind)):
-		balance, err := uint128.Parse(string(value), 16)
+	case bytes.HasPrefix(data, []byte(GetAccountResponseKind)):
+		if len(parameters) != 4 {
+			return nil, fmt.Errorf("invalid get account response format")
+		}
+
+		credits, err := uint128.Parse(string(parameters[1]), 16)
 		if err != nil {
 			return nil, err
 		}
 
-		return GetBalanceResponse{Balance: balance}, nil
+		debits, err := uint128.Parse(string(parameters[2]), 16)
+		if err != nil {
+			return nil, err
+		}
+
+		flags, err := strconv.ParseUint(string(parameters[3]), 16, 8)
+		if err != nil {
+			return nil, err
+		}
+
+		return GetAccountResponse{Credits: credits, Debits: debits, Flags: uint8(flags)}, nil
 	case bytes.HasPrefix(data, []byte(CountEntriesResponseKind)):
-		count, err := strconv.ParseUint(string(value), 16, 64)
+		if len(parameters) != 2 {
+			return nil, fmt.Errorf("invalid count entries response format")
+		}
+
+		count, err := strconv.ParseUint(string(parameters[1]), 16, 64)
 		if err != nil {
 			return nil, err
 		}
 
 		return CountEntriesResponse{Count: count}, nil
-	case bytes.HasPrefix(data, []byte(GetFlagsResponseKind)):
-		flags, err := strconv.ParseUint(string(value), 16, 8)
-		if err != nil {
-			return nil, err
+	case bytes.HasPrefix(data, []byte(ErrorResponseKind)):
+		if len(parameters) != 2 {
+			return nil, fmt.Errorf("invalid error response format")
 		}
 
-		return GetFlagsResponse{Flags: uint8(flags)}, nil
-	case bytes.HasPrefix(data, []byte(ErrorResponseKind)):
-		code, err := strconv.ParseUint(string(value), 16, 16)
+		code, err := strconv.ParseUint(string(parameters[1]), 16, 16)
 		if err != nil {
 			return nil, err
 		}

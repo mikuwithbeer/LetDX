@@ -25,8 +25,7 @@ func NewServer(client *tcp.Client) *Server {
 func (s *Server) Start(address string) error {
 	s.Echo.Use(middleware.RequestLogger())
 
-	s.Echo.GET("/accounts/:id/balance", s.getAccountBalance)
-	s.Echo.GET("/accounts/:id/flags", s.getAccountFlags)
+	s.Echo.GET("/accounts/:id", s.getAccount)
 	s.Echo.PUT("/accounts/:id", s.updateAccount)
 	s.Echo.POST("/accounts", s.postAccount)
 	s.Echo.POST("/transfers", s.postTransfer)
@@ -34,32 +33,13 @@ func (s *Server) Start(address string) error {
 	return s.Echo.Start(address)
 }
 
-func (s *Server) getAccountBalance(ctx *echo.Context) error {
+func (s *Server) getAccount(ctx *echo.Context) error {
 	accountId, err := echo.PathParam[uint64](ctx, "id")
 	if err != nil {
 		return err
 	}
 
-	clientResponse, err := s.Client.Communicate(tcp.GetBalanceRequest{AccountID: accountId})
-	if err != nil {
-		return err
-	}
-
-	serverResponse, err := ToResponse(clientResponse)
-	if err != nil {
-		return err
-	}
-
-	return serverResponse.ToJSON(ctx)
-}
-
-func (s *Server) getAccountFlags(ctx *echo.Context) error {
-	accountId, err := echo.PathParam[uint64](ctx, "id")
-	if err != nil {
-		return err
-	}
-
-	clientResponse, err := s.Client.Communicate(tcp.GetFlagsRequest{AccountID: accountId})
+	clientResponse, err := s.Client.Communicate(tcp.GetAccountRequest{AccountID: accountId})
 	if err != nil {
 		return err
 	}
@@ -122,7 +102,8 @@ func (s *Server) postAccount(ctx *echo.Context) error {
 
 	clientResponse, err := s.Client.Communicate(tcp.AddAccountRequest{
 		WalID:   s.Client.WalID(),
-		Balance: postAccount.Balance,
+		Credits: postAccount.Credits,
+		Debits:  postAccount.Debits,
 		Flags:   postAccount.Flags,
 	})
 	if err != nil {
