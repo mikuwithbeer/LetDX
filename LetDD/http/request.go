@@ -8,19 +8,19 @@ import (
 )
 
 type PostAccountRequest struct {
-	Credits uint128.Uint128 `json:"credits" validate:"required"`
-	Debits  uint128.Uint128 `json:"debits" validate:"required"`
-	Flags   uint8           `json:"flags" validate:"required"`
+	Credits *uint128.Uint128 `json:"credits" validate:"required"`
+	Debits  *uint128.Uint128 `json:"debits" validate:"required"`
+	Flags   *uint8           `json:"flags" validate:"required"`
 }
 
 type UpdateAccountRequest struct {
-	Flags uint8 `json:"flags" validate:"required"`
+	Flags *uint8 `json:"flags" validate:"required"`
 }
 
 type PostTransferRequest struct {
-	FromID uint64          `json:"from" validate:"required"`
-	ToID   uint64          `json:"to" validate:"required"`
-	Amount uint128.Uint128 `json:"amount" validate:"required"`
+	FromID *uint64          `json:"from" validate:"required"`
+	ToID   *uint64          `json:"to" validate:"required"`
+	Amount *uint128.Uint128 `json:"amount" validate:"required"`
 }
 
 type RequestValidator struct {

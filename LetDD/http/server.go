@@ -73,7 +73,7 @@ func (s *Server) updateAccount(ctx *echo.Context) error {
 	clientResponse, err := s.Client.Communicate(tcp.UpdateAccountRequest{
 		WalID:     s.Client.WalID(),
 		AccountID: accountId,
-		Flags:     updateAccount.Flags,
+		Flags:     *updateAccount.Flags,
 	})
 	if err != nil {
 		return err
@@ -102,9 +102,9 @@ func (s *Server) postAccount(ctx *echo.Context) error {
 
 	clientResponse, err := s.Client.Communicate(tcp.AddAccountRequest{
 		WalID:   s.Client.WalID(),
-		Credits: postAccount.Credits,
-		Debits:  postAccount.Debits,
-		Flags:   postAccount.Flags,
+		Credits: *postAccount.Credits,
+		Debits:  *postAccount.Debits,
+		Flags:   *postAccount.Flags,
 	})
 	if err != nil {
 		return err
@@ -133,9 +133,9 @@ func (s *Server) postTransfer(ctx *echo.Context) error {
 
 	clientResponse, err := s.Client.Communicate(tcp.MakeTransferRequest{
 		WalID:  s.Client.WalID(),
-		FromID: postTransfer.FromID,
-		ToID:   postTransfer.ToID,
-		Amount: postTransfer.Amount,
+		FromID: *postTransfer.FromID,
+		ToID:   *postTransfer.ToID,
+		Amount: *postTransfer.Amount,
 	})
 	if err != nil {
 		return err
