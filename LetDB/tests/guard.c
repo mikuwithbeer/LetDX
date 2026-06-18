@@ -32,24 +32,24 @@ static void test_guard_make_transfer(void) {
     error = let_guard_make_transfer(&guard, 1, 0, 1000);
     assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_SENDER_NOT_FOUND);
 
-    error = let_guard_make_transfer(&guard, 0, 1, 1000);
-    assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_SENDER_NOT_FOUND);
-
     auto account = let_account_new(0, 100, 0, LET_ACCOUNT_FLAG_CAN_RECEIVE);
-    assert(!let_error_exists(let_account_list_add(guard.state->account_list, account)));
+    assert(!let_error_exists(let_account_list_add(state.account_list, account)));
+
+    error = let_guard_make_transfer(&guard, 0, 1, 1000);
+    assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_RECIPIENT_NOT_FOUND);
 
     account = let_account_new(0, 100, 0, LET_ACCOUNT_FLAG_CAN_SEND);
-    assert(!let_error_exists(let_account_list_add(guard.state->account_list, account)));
+    assert(!let_error_exists(let_account_list_add(state.account_list, account)));
 
     error = let_guard_make_transfer(&guard, 0, 1, 1000);
     assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_ACCOUNT_CANNOT_SEND);
 
-    guard.state->account_list->accounts[0].flags |= LET_ACCOUNT_FLAG_CAN_SEND;
+    state.account_list->accounts[0].flags |= LET_ACCOUNT_FLAG_CAN_SEND;
 
     error = let_guard_make_transfer(&guard, 0, 1, 1000);
     assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_ACCOUNT_CANNOT_RECEIVE);
 
-    guard.state->account_list->accounts[1].flags |= LET_ACCOUNT_FLAG_CAN_RECEIVE;
+    state.account_list->accounts[1].flags |= LET_ACCOUNT_FLAG_CAN_RECEIVE;
 
     error = let_guard_make_transfer(&guard, 0, 1, 1000);
     assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_INSUFFICIENT_BALANCE);
@@ -65,7 +65,7 @@ static void test_guard_update_account(void) {
 }
 
 static void test_cleanup(void) {
-    let_account_list_free(guard.state->account_list);
+    let_account_list_free(state.account_list);
     assert(true);
 }
 

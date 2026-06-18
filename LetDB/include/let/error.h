@@ -4,7 +4,6 @@
 #include "common.h"
 
 constexpr auto LET_ERROR_HEADER_CAPACITY = 1 << 5;
-constexpr auto LET_ERROR_BUFFER_CAPACITY = 1 << 6;
 
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_ID_NONE = 0,

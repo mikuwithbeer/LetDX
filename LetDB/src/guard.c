@@ -47,13 +47,11 @@ let_error_t let_guard_make_transfer(const let_guard_t *guard,
         return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_ACCOUNT_CANNOT_RECEIVE);
     }
 
-    if (from_account->debits < from_account->credits ||
-        from_account->debits - from_account->credits < amount) {
+    if (from_account->debits < from_account->credits || from_account->debits - from_account->credits < amount) {
         return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_INSUFFICIENT_BALANCE);
     }
 
-    if (from_account->transactions == LET_U64_MAX
-        || to_account->transactions == LET_U64_MAX) {
+    if (from_account->transactions == LET_U64_MAX || to_account->transactions == LET_U64_MAX) {
         return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_TRANSACTION_OVERFLOW);
     }
 
