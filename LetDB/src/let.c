@@ -195,19 +195,20 @@ static let_error_t let_request(const let_network_request_t *network_request,
             request_error = let_state_make_transfer(&let.state, from_id, to_id, amount);
             break;
         }
-        case LET_NETWORK_REQUEST_TYPE_GET_BALANCE: {
-            network_response->type = LET_NETWORK_RESPONSE_TYPE_GET_BALANCE;
+        case LET_NETWORK_REQUEST_TYPE_GET_ACCOUNT: {
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_GET_ACCOUNT;
 
             let_account_t account;
-            const auto account_id = network_request->data.get_balance;
+            const auto account_id = network_request->data.get_account;
 
             request_error = let_account_list_get(let.account_list, account_id, &account);
             if (let_error_exists(request_error)) {
                 break;
             }
 
-            network_response->data.get_balance.credits = account.credits;
-            network_response->data.get_balance.debits = account.debits;
+            network_response->data.get_account.credits = account.credits;
+            network_response->data.get_account.debits = account.debits;
+            network_response->data.get_account.flags = account.flags;
             break;
         }
         case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES: {
@@ -244,20 +245,6 @@ static let_error_t let_request(const let_network_request_t *network_request,
             }
 
             request_error = let_state_update_account(&let.state, account_id, flags);
-            break;
-        }
-        case LET_NETWORK_REQUEST_TYPE_GET_FLAGS: {
-            network_response->type = LET_NETWORK_RESPONSE_TYPE_GET_FLAGS;
-
-            let_account_t account;
-            const auto account_id = network_request->data.get_flags;
-
-            request_error = let_account_list_get(let.account_list, account_id, &account);
-            if (let_error_exists(request_error)) {
-                break;
-            }
-
-            network_response->data.get_flags = account.flags;
             break;
         }
         case LET_NETWORK_REQUEST_TYPE_CLOSE: {

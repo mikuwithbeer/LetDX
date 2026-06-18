@@ -8,10 +8,8 @@
 
 constexpr let_u8_t LET_NETWORK_BUFFER_LENGTH = 128;
 
-typedef struct sockaddr_in let_network_server_address_t;
-
 typedef struct {
-    let_network_server_address_t address;
+    struct sockaddr_in address;
     let_i32_t handle;
     let_u16_t port;
 

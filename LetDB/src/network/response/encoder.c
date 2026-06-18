@@ -45,16 +45,16 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
 
             break;
         }
-        case LET_NETWORK_RESPONSE_TYPE_GET_BALANCE: {
-            response_encoder->buffer[response_encoder->buffer_length++] = 'B';
+        case LET_NETWORK_RESPONSE_TYPE_GET_ACCOUNT: {
             response_encoder->buffer[response_encoder->buffer_length++] = 'A';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'L';
+            response_encoder->buffer[response_encoder->buffer_length++] = 'C';
+            response_encoder->buffer[response_encoder->buffer_length++] = 'C';
             response_encoder->buffer[response_encoder->buffer_length++] = ' ';
 
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
-                &response_encoder->response.data.get_balance.credits,
-                sizeof(response_encoder->response.data.get_balance.credits));
+                &response_encoder->response.data.get_account.credits,
+                sizeof(response_encoder->response.data.get_account.credits));
 
             if (let_error_exists(encoder_result)) {
                 return encoder_result;
@@ -64,8 +64,19 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
 
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
-                &response_encoder->response.data.get_balance.debits,
-                sizeof(response_encoder->response.data.get_balance.debits));
+                &response_encoder->response.data.get_account.debits,
+                sizeof(response_encoder->response.data.get_account.debits));
+
+            if (let_error_exists(encoder_result)) {
+                return encoder_result;
+            }
+
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+
+            encoder_result = let_network_response_encoder_run_integer(
+                response_encoder,
+                &response_encoder->response.data.get_account.flags,
+                sizeof(response_encoder->response.data.get_account.flags));
 
             if (let_error_exists(encoder_result)) {
                 return encoder_result;
@@ -83,23 +94,6 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 response_encoder,
                 &response_encoder->response.data.count_entries,
                 sizeof(response_encoder->response.data.count_entries));
-
-            if (let_error_exists(encoder_result)) {
-                return encoder_result;
-            }
-
-            break;
-        }
-        case LET_NETWORK_RESPONSE_TYPE_GET_FLAGS: {
-            response_encoder->buffer[response_encoder->buffer_length++] = 'F';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'L';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'G';
-            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
-
-            encoder_result = let_network_response_encoder_run_integer(
-                response_encoder,
-                &response_encoder->response.data.get_flags,
-                sizeof(response_encoder->response.data.get_flags));
 
             if (let_error_exists(encoder_result)) {
                 return encoder_result;

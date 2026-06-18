@@ -96,7 +96,7 @@ static let_error_t let_network_request_decoder_run_command(let_network_request_d
             request_decoder->request_argc = 4;
             break;
         case '?':
-            request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_GET_BALANCE;
+            request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_GET_ACCOUNT;
             request_decoder->request_argc = 1;
             break;
         case '#':
@@ -105,10 +105,6 @@ static let_error_t let_network_request_decoder_run_command(let_network_request_d
         case '=':
             request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT;
             request_decoder->request_argc = 3;
-            break;
-        case '!':
-            request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_GET_FLAGS;
-            request_decoder->request_argc = 1;
             break;
         case '.':
             request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_CLOSE;
@@ -201,12 +197,12 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
 
             break;
         }
-        case LET_NETWORK_REQUEST_TYPE_GET_BALANCE: {
+        case LET_NETWORK_REQUEST_TYPE_GET_ACCOUNT: {
             if (request_decoder->request_argc == 1) {
                 argument_result = let_network_request_decoder_parse_u64(
                     request_decoder,
                     current_byte,
-                    &request_decoder->request.data.get_balance
+                    &request_decoder->request.data.get_account
                 );
             }
 
@@ -230,17 +226,6 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
                     request_decoder,
                     current_byte,
                     &request_decoder->request.data.update_account.flags
-                );
-            }
-
-            break;
-        }
-        case LET_NETWORK_REQUEST_TYPE_GET_FLAGS: {
-            if (request_decoder->request_argc == 1) {
-                argument_result = let_network_request_decoder_parse_u64(
-                    request_decoder,
-                    current_byte,
-                    &request_decoder->request.data.get_flags
                 );
             }
 
