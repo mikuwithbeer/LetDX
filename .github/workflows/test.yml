@@ -1,4 +1,4 @@
-name: Build LetDX
+name: Test LetDX
 
 on:
   push:
@@ -52,3 +52,11 @@ jobs:
 
       - name: Build with CMake
         run: cmake --build build --config Release
+
+      - name: Test LetDB
+        run: ctest --test-dir build/LetDB --output-on-failure
+
+      - name: Test LetDD
+        run: |
+          cd LetDD
+          go test -v
