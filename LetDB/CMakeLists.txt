@@ -3,16 +3,9 @@ project(LetDB
     LANGUAGES C
 )
 
-# --- Standards and Features ---
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
-
-# --- Executable ---
-add_executable(LetDB)
-
-# --- Source Files ---
-target_sources(LetDB PRIVATE
+# --- Core Library ---
+add_library(Let STATIC)
+target_sources(Let PRIVATE
     src/network/request/decoder.c
     src/network/request/request.c
     src/network/response/encoder.c
@@ -25,14 +18,16 @@ target_sources(LetDB PRIVATE
     src/error.c
     src/guard.c
     src/let.c
-    src/main.c
     src/state.c
 )
 
-# --- Include Directories ---
-target_include_directories(LetDB PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+target_include_directories(Let PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(Let PRIVATE CompilationOpts)
 
-# --- Apply Compilation Options ---
-target_link_libraries(LetDB PRIVATE CompilationOpts)
+# --- Executable ---
+add_executable(LetDB src/main.c)
+target_link_libraries(LetDB PRIVATE Let)
+
+# --- Testing ---
+enable_testing()
+add_subdirectory(tests)

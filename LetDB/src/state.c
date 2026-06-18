@@ -33,7 +33,7 @@ let_error_t let_state_make_transfer(const let_state_t *state,
                                     const let_u64_t to_account_id,
                                     const let_u128_t amount) {
     const auto time_now = time(nullptr);
-    if (time_now == (typeof_unqual(time_now)) -1) {
+    if (time_now == -1) {
         return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_INVALID_TIME);
     }
 

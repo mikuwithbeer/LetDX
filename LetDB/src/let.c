@@ -121,7 +121,7 @@ static let_error_t let_request(const let_network_request_t *network_request,
     let_error_t request_error = let_error_none();
 
     const auto time_now = time(nullptr);
-    if (time_now == (typeof_unqual(time_now)) -1) {
+    if (time_now == -1) {
         return let_error_new(LET_ERROR_ID_STATE, LET_ERROR_STATE_INVALID_TIME);
     }
 
