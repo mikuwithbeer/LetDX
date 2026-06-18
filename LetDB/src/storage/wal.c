@@ -98,8 +98,8 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
             case LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT: {
                 const auto add_account = safe_entry.entry.data.add_account;
                 const auto account = let_account_new(
-                    0,
-                    add_account.balance,
+                    add_account.credits,
+                    add_account.debits,
                     safe_entry.entry.header.timestamp,
                     add_account.flags);
 

@@ -39,6 +39,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 &response_encoder->response.data.add_account,
                 sizeof(response_encoder->response.data.add_account));
 
+            if (let_error_exists(encoder_result)) {
+                return encoder_result;
+            }
+
             break;
         }
         case LET_NETWORK_RESPONSE_TYPE_GET_BALANCE: {
@@ -49,8 +53,23 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
 
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
-                &response_encoder->response.data.get_balance,
-                sizeof(response_encoder->response.data.get_balance));
+                &response_encoder->response.data.get_balance.credits,
+                sizeof(response_encoder->response.data.get_balance.credits));
+
+            if (let_error_exists(encoder_result)) {
+                return encoder_result;
+            }
+
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+
+            encoder_result = let_network_response_encoder_run_integer(
+                response_encoder,
+                &response_encoder->response.data.get_balance.debits,
+                sizeof(response_encoder->response.data.get_balance.debits));
+
+            if (let_error_exists(encoder_result)) {
+                return encoder_result;
+            }
 
             break;
         }
@@ -65,6 +84,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 &response_encoder->response.data.count_entries,
                 sizeof(response_encoder->response.data.count_entries));
 
+            if (let_error_exists(encoder_result)) {
+                return encoder_result;
+            }
+
             break;
         }
         case LET_NETWORK_RESPONSE_TYPE_GET_FLAGS: {
@@ -77,6 +100,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 response_encoder,
                 &response_encoder->response.data.get_flags,
                 sizeof(response_encoder->response.data.get_flags));
+
+            if (let_error_exists(encoder_result)) {
+                return encoder_result;
+            }
 
             break;
         }
@@ -97,6 +124,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 response_encoder,
                 &error_code,
                 sizeof(error_code));
+
+            if (let_error_exists(encoder_result)) {
+                return encoder_result;
+            }
 
             break;
         }

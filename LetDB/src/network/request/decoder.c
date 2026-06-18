@@ -89,7 +89,7 @@ static let_error_t let_network_request_decoder_run_command(let_network_request_d
             break;
         case '+':
             request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT;
-            request_decoder->request_argc = 3;
+            request_decoder->request_argc = 4;
             break;
         case '%':
             request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER;
@@ -144,17 +144,23 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
 
     switch (request_decoder->request.type) {
         case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
-            if (request_decoder->request_argc == 3) {
+            if (request_decoder->request_argc == 4) {
                 argument_result = let_network_request_decoder_parse_u64(
                     request_decoder,
                     current_byte,
                     &request_decoder->request.data.create_account.wal_id
                 );
+            } else if (request_decoder->request_argc == 3) {
+                argument_result = let_network_request_decoder_parse_u128(
+                    request_decoder,
+                    current_byte,
+                    &request_decoder->request.data.create_account.credits
+                );
             } else if (request_decoder->request_argc == 2) {
                 argument_result = let_network_request_decoder_parse_u128(
                     request_decoder,
                     current_byte,
-                    &request_decoder->request.data.create_account.balance
+                    &request_decoder->request.data.create_account.debits
                 );
             } else if (request_decoder->request_argc == 1) {
                 argument_result = let_network_request_decoder_parse_u8(

@@ -18,7 +18,8 @@ typedef enum : let_u8_t {
 typedef union {
     struct {
         let_u64_t wal_id;
-        let_u128_t balance;
+        let_u128_t credits;
+        let_u128_t debits;
         let_u8_t flags;
     } create_account;
 

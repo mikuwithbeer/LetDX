@@ -15,7 +15,11 @@ typedef enum : let_u8_t {
 } let_network_response_type_t;
 
 typedef union {
-    let_u128_t get_balance;
+    struct {
+        let_u128_t credits;
+        let_u128_t debits;
+    } get_balance;
+
     let_u64_t add_account;
     let_u64_t count_entries;
     let_u8_t get_flags;

@@ -24,7 +24,8 @@ typedef struct {
 } let_storage_wal_entry_header_t;
 
 typedef struct {
-    let_u128_t balance;
+    let_u128_t credits;
+    let_u128_t debits;
     let_u8_t flags;
 } let_storage_wal_entry_add_account_t;
 

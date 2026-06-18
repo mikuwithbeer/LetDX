@@ -133,7 +133,8 @@ static let_error_t let_request(const let_network_request_t *network_request,
         case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
             network_response->type = LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT;
 
-            const auto balance = network_request->data.create_account.balance;
+            const auto credits = network_request->data.create_account.credits;
+            const auto debits = network_request->data.create_account.debits;
             const auto flags = network_request->data.create_account.flags;
 
             auto storage_wal_entry = let_storage_wal_entry_new(
@@ -142,7 +143,8 @@ static let_error_t let_request(const let_network_request_t *network_request,
                 LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT);
 
             storage_wal_entry.data.add_account = (let_storage_wal_entry_add_account_t){
-                .balance = balance,
+                .credits = credits,
+                .debits = debits,
                 .flags = flags
             };
 
@@ -151,7 +153,7 @@ static let_error_t let_request(const let_network_request_t *network_request,
                 break;
             }
 
-            const auto add_account = let_account_new(0, balance, time_now, flags);
+            const auto add_account = let_account_new(credits, debits, time_now, flags);
 
             let_u64_t account_id;
             request_error = let_state_add_account(&let.state, add_account, &account_id);
@@ -204,8 +206,8 @@ static let_error_t let_request(const let_network_request_t *network_request,
                 break;
             }
 
-            const auto calculated_balance = account.debits - account.credits;
-            network_response->data.get_balance = calculated_balance;
+            network_response->data.get_balance.credits = account.credits;
+            network_response->data.get_balance.debits = account.debits;
             break;
         }
         case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES: {
