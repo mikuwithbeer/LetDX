@@ -9,7 +9,8 @@ constexpr let_u64_t LET_ACCOUNT_CAPACITY_DEFAULT = 1 << 10;
 typedef enum : let_u8_t {
     LET_ACCOUNT_FLAG_NONE = 0,
     LET_ACCOUNT_FLAG_CAN_SEND = 1 << 0,
-    LET_ACCOUNT_FLAG_CAN_RECEIVE = 1 << 1
+    LET_ACCOUNT_FLAG_CAN_RECEIVE = 1 << 1,
+    LET_ACCOUNT_FLAG_CAN_DEBT = 1 << 2,
 } let_account_flag_t;
 
 typedef struct {

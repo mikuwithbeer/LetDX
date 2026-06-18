@@ -44,17 +44,25 @@ static void test_guard_make_transfer(void) {
     error = let_guard_make_transfer(&guard, 0, 1, 1000);
     assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_ACCOUNT_CANNOT_SEND);
 
-    state.account_list->accounts[0].flags |= LET_ACCOUNT_FLAG_CAN_SEND;
+    const auto from_account = &state.account_list->accounts[0];
+    const auto to_account = &state.account_list->accounts[1];
+
+    from_account->flags |= LET_ACCOUNT_FLAG_CAN_SEND;
 
     error = let_guard_make_transfer(&guard, 0, 1, 1000);
     assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_ACCOUNT_CANNOT_RECEIVE);
 
-    state.account_list->accounts[1].flags |= LET_ACCOUNT_FLAG_CAN_RECEIVE;
+    to_account->flags |= LET_ACCOUNT_FLAG_CAN_RECEIVE;
 
     error = let_guard_make_transfer(&guard, 0, 1, 1000);
     assert(error.id == LET_ERROR_ID_GUARD && error.error == LET_ERROR_GUARD_INSUFFICIENT_BALANCE);
 
-    error = let_guard_make_transfer(&guard, 0, 1, 10);
+    error = let_guard_make_transfer(&guard, 0, 1, 100);
+    assert(!let_error_exists(error));
+
+    from_account->flags |= LET_ACCOUNT_FLAG_CAN_DEBT;
+
+    error = let_guard_make_transfer(&guard, 0, 1, 1000);
     assert(!let_error_exists(error));
 }
 
