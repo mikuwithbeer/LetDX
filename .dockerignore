@@ -1,0 +1,6 @@
+Dockerfile
+build/
+.git/
+.github/
+.gitignore
+*.md
