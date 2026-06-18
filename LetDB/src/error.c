@@ -81,8 +81,11 @@ let_error_report_t let_error_report(const let_error_t error) {
                 case LET_ERROR_GUARD_SAME_ACCOUNT:
                     error_report.message = "The source and destination accounts must be different";
                     break;
-                case LET_ERROR_GUARD_ACCOUNT_NOT_FOUND:
-                    error_report.message = "The transaction sender or recipient was not found";
+                case LET_ERROR_GUARD_SENDER_NOT_FOUND:
+                    error_report.message = "The transaction sender was not found";
+                    break;
+                case LET_ERROR_GUARD_RECIPIENT_NOT_FOUND:
+                    error_report.message = "The transaction recipient was not found";
                     break;
                 case LET_ERROR_GUARD_INSUFFICIENT_BALANCE:
                     error_report.message = "The account balance is insufficient for this transfer";

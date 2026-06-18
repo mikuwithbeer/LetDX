@@ -27,8 +27,13 @@ let_error_t let_guard_make_transfer(const let_guard_t *guard,
     }
 
     const auto account_count = guard->state->account_list->length;
-    if (from_account_id >= account_count || to_account_id >= account_count) {
-        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_ACCOUNT_NOT_FOUND);
+
+    if (from_account_id >= account_count) {
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_SENDER_NOT_FOUND);
+    }
+
+    if (to_account_id >= account_count) {
+        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_RECIPIENT_NOT_FOUND);
     }
 
     const auto from_account = &guard->state->account_list->accounts[from_account_id];
@@ -59,7 +64,7 @@ let_error_t let_guard_update_account(const let_guard_t *guard,
                                      const let_u64_t account_id) {
     const auto account_count = guard->state->account_list->length;
     if (account_id >= account_count) {
-        return let_error_new(LET_ERROR_ID_GUARD, LET_ERROR_GUARD_ACCOUNT_NOT_FOUND);
+        return let_error_new(LET_ERROR_ID_ACCOUNT, LET_ERROR_ACCOUNT_NOT_FOUND);
     }
 
     return let_error_none();
