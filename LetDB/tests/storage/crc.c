@@ -39,6 +39,10 @@ static void test_binary_data(void) {
     assert(crc1 == crc2);
 }
 
+static void test_cleanup(void) {
+    assert(true);
+}
+
 int main(void) {
     test_single_byte();
     test_empty_string();
@@ -46,5 +50,6 @@ int main(void) {
     test_known_string_2();
     test_binary_data();
 
+    test_cleanup();
     return 0;
 }

@@ -65,16 +65,13 @@ let_error_t let_network_request_decoder_run(let_network_request_decoder_t *reque
         buffer_index++;
     }
 
-    if (request_decoder->state != LET_NETWORK_REQUEST_DECODER_STATE_END) {
-        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_MALFORMED);
-    }
-
 exit_loop:
     if (request_decoder->request_argc != 0) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_ARGUMENTS_MISSING);
     }
 
-    if (request_decoder->buffer_length != buffer_index) {
+    if (request_decoder->state != LET_NETWORK_REQUEST_DECODER_STATE_END
+        || buffer_index != request_decoder->buffer_length) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_MALFORMED);
     }
 

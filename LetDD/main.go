@@ -18,4 +18,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create HTTP server: %v", err)
 	}
+
+	client.Close()
 }
