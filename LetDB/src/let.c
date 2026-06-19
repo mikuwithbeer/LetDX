@@ -38,11 +38,21 @@ void let_init(const let_cli_t *cli) {
         return;
     }
 
+    let_log_print(LET_LOG_LEVEL_INFO,
+                  "Application initialized on port:%u, backlog:%u",
+                  cli->port,
+                  cli->backlog);
+
     let.accepting = true;
 }
 
 void let_run(const let_cli_t *cli) {
     while (let.accepting) {
+        let_log_print(LET_LOG_LEVEL_DEBUG,
+                      "Awaiting incoming connection with rt:%us, wt:%us",
+                      cli->read_timeout,
+                      cli->write_timeout);
+
         let.error = let_network_server_accept(&let.network_server,
                                               cli->read_timeout,
                                               cli->write_timeout,
@@ -50,6 +60,10 @@ void let_run(const let_cli_t *cli) {
         if (let_error_exists(let.error)) {
             break;
         }
+
+        let_log_print(LET_LOG_LEVEL_DEBUG,
+                      "Connection accepted from id:%u",
+                      let.network_client.handle);
 
         let.executing = true;
         while (let.executing) {

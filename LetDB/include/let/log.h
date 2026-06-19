@@ -18,7 +18,7 @@ extern let_log_level_t let_log_level;
 
 void let_log_level_set(let_log_level_t log_level);
 
-void let_log_print(let_log_level_t log_level,
-                   const char *message);
+[[gnu::format(printf, 2, 3)]] void let_log_print(let_log_level_t log_level,
+                                                 const char *format, ...);
 
 #endif //LET_LOG_H

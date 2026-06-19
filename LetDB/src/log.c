@@ -1,5 +1,6 @@
 #include "let/log.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
 let_log_level_t let_log_level = LET_LOG_LEVEL_DEBUG;
@@ -27,7 +28,7 @@ void let_log_level_set(const let_log_level_t log_level) {
 }
 
 void let_log_print(const let_log_level_t log_level,
-                   const char *message) {
+                   const char *format, ...) {
     if (log_level < let_log_level) {
         return;
     }
@@ -46,10 +47,15 @@ void let_log_print(const let_log_level_t log_level,
     strftime(header_buffer, LET_LOG_HEADER_CAPACITY, "%Y-%m-%d %H:%M:%S", time_info);
 
     fprintf(stderr,
-            "%s[%s] (%s): %s%s\n",
+            "%s[%s] (%s): ",
             let_log_level_colors[log_level],
             header_buffer,
-            let_log_level_attributes[log_level],
-            message,
-            let_log_level_colors[LET_LOG_LEVEL_NONE]);
+            let_log_level_attributes[log_level]);
+
+    va_list args = {};
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+
+    fprintf(stderr, "%s\n", let_log_level_colors[LET_LOG_LEVEL_NONE]);
 }
