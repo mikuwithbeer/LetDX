@@ -1,6 +1,7 @@
 package http
 
 import (
+	"LetDD/config"
 	"LetDD/tcp"
 
 	"github.com/labstack/echo/v5"
@@ -10,19 +11,25 @@ import (
 type Server struct {
 	Echo   *echo.Echo
 	Client *tcp.Client
+	Config *config.Config
 }
 
-func NewServer(client *tcp.Client) *Server {
+func NewServer(client *tcp.Client, config *config.Config) *Server {
 	echo := echo.New()
 	echo.Validator = NewRequestValidator()
 
 	return &Server{
 		Echo:   echo,
 		Client: client,
+		Config: config,
 	}
 }
 
-func (s *Server) Start(address string) error {
+func (s *Server) Start() error {
+	if s.Config.ServerToken != nil {
+		s.Echo.Use(middleware.KeyAuth(s.Authorization))
+	}
+
 	s.Echo.Use(middleware.RequestLogger())
 
 	s.Echo.GET("/accounts/:id", s.getAccount)
@@ -30,7 +37,7 @@ func (s *Server) Start(address string) error {
 	s.Echo.POST("/accounts", s.postAccount)
 	s.Echo.POST("/transfers", s.postTransfer)
 
-	return s.Echo.Start(address)
+	return s.Echo.Start(*s.Config.ServerAddress)
 }
 
 func (s *Server) getAccount(ctx *echo.Context) error {

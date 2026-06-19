@@ -6,13 +6,19 @@ set(GO_BINARY_NAME ${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX})
 set(GO_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/${GO_BINARY_NAME}")
 
 set(GO_SOURCE_FILE
+    ${CMAKE_CURRENT_SOURCE_DIR}/config/config.go
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/http/authorization.go
     ${CMAKE_CURRENT_SOURCE_DIR}/http/request.go
     ${CMAKE_CURRENT_SOURCE_DIR}/http/response.go
     ${CMAKE_CURRENT_SOURCE_DIR}/http/server.go
+
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/client.go
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/request.go
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/response.go
+
     ${CMAKE_CURRENT_SOURCE_DIR}/uint128/uint128.go
+    
     ${CMAKE_CURRENT_SOURCE_DIR}/main.go
     ${CMAKE_CURRENT_SOURCE_DIR}/go.mod
 )

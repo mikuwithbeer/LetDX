@@ -1,6 +1,7 @@
 package main
 
 import (
+	"LetDD/config"
 	"LetDD/http"
 	"LetDD/tcp"
 
@@ -8,16 +9,16 @@ import (
 )
 
 func main() {
-	cli := &CLI{}
-	cli.Parse()
+	config := &config.Config{}
+	config.Collect()
 
-	client, err := tcp.NewClient(*cli.connect)
+	client, err := tcp.NewClient(*config.ConnectAddress)
 	if err != nil {
 		log.Fatalf("Failed to create TCP client: %v", err)
 	}
 
-	server := http.NewServer(client)
-	err = server.Start(*cli.serve)
+	server := http.NewServer(client, config)
+	err = server.Start()
 	if err != nil {
 		log.Fatalf("Failed to create HTTP server: %v", err)
 	}
