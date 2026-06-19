@@ -24,6 +24,7 @@ target_sources(Let PRIVATE
 
 target_include_directories(Let PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(Let PRIVATE CompilationOpts)
+target_compile_definitions(Let PRIVATE LET_VERSION="${PROJECT_VERSION}")
 
 # --- Executable ---
 add_executable(LetDB src/main.c)

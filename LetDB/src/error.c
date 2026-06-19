@@ -29,6 +29,8 @@ let_error_t let_error_new(const let_error_id_t id,
         case LET_ERROR_ACTION_FATAL:
             let_log_print(LET_LOG_LEVEL_FATAL, "%s", report.message);
             break;
+        default:
+            break;
     }
 
     return error;

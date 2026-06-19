@@ -123,5 +123,5 @@ void let_cli_help(void) {
 }
 
 void let_cli_version(void) {
-    puts("LetDB v0.0.0");
+    printf("%s\n", LET_VERSION);
 }
