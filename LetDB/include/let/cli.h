@@ -1,7 +1,6 @@
 #ifndef LET_CLI_H
 #define LET_CLI_H
 
-#include "let/common.h"
 #include "let/error.h"
 #include "let/log.h"
 
@@ -11,7 +10,7 @@ constexpr let_u32_t LET_CLI_DEFAULT_READ_TIMEOUT = 0;
 constexpr let_u32_t LET_CLI_DEFAULT_WRITE_TIMEOUT = 10;
 
 constexpr let_u16_t LET_CLI_DEFAULT_PORT = 55543;
-constexpr let_u16_t LET_CLI_DEFAULT_BACKLOG = 1 << 3;
+constexpr let_u16_t LET_CLI_DEFAULT_BACKLOG = 1 << 2;
 
 constexpr let_log_level_t LET_CLI_DEFAULT_LOG_LEVEL = LET_LOG_LEVEL_INFO;
 

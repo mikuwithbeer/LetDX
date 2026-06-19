@@ -87,6 +87,7 @@ void let_run(const let_cli_t *cli) {
                     let.accepting = false;
                     continue;
                 case LET_ERROR_ACTION_IGNORE:
+                    let.executing = false;
                     let.error = let_error_none();
                     break;
                 case LET_ERROR_ACTION_CLOSE:

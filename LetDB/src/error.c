@@ -155,9 +155,14 @@ let_error_report_t let_error_report(const let_error_t error) {
                     error_report.action = LET_ERROR_ACTION_CLOSE;
                     error_report.message = "The network write operation timed out";
                     break;
+
                 case LET_ERROR_NETWORK_SERVER_CLOSED:
                     error_report.action = LET_ERROR_ACTION_IGNORE;
                     error_report.message = "The network server is closed";
+                    break;
+                case LET_ERROR_NETWORK_CLIENT_CLOSED:
+                    error_report.action = LET_ERROR_ACTION_IGNORE;
+                    error_report.message = "The network client is closed";
                     break;
 
                 case LET_ERROR_NETWORK_REQUEST_EMPTY:

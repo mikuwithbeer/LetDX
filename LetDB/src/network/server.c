@@ -93,7 +93,7 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
          ; network_client->read_buffer_index++) {
         const auto read_result = recv(network_client->handle, &read_byte, sizeof(read_byte), 0);
         if (read_result == 0) {
-            return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CLOSED);
+            return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_CLIENT_CLOSED);
         }
 
         if (read_result < 0) {
@@ -147,6 +147,10 @@ let_error_t let_network_client_write(let_network_server_t *network_client,
             network_client->write_buffer + network_client->write_buffer_index,
             remaining_bytes,
             0);
+
+        if (receive_result == 0) {
+            return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_CLIENT_CLOSED);
+        }
 
         if (receive_result < 0) {
             if (errno == EWOULDBLOCK || errno == EAGAIN) {
