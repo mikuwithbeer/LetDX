@@ -49,6 +49,8 @@ static bool apply_process(const int argc,
         return true;
     }
 
+    let_log_level_set(let_cli.log_level);
+
     let_init(&let_cli);
     if (let_error_exists(let.error)) {
         goto cleanup;

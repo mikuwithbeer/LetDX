@@ -5,6 +5,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static const struct option let_cli_options[] = {
+    {"help", no_argument, nullptr, 'h'},
+    {"version", no_argument, nullptr, 'v'},
+    {"port", required_argument, nullptr, 'p'},
+    {"backlog", required_argument, nullptr, 'b'},
+    {"read-timeout", required_argument, nullptr, 'r'},
+    {"write-timeout", required_argument, nullptr, 'w'},
+    {"log-level", required_argument, nullptr, 'l'},
+    {"file", required_argument, nullptr, 'f'},
+    {nullptr, 0, nullptr, 0}
+};
+
 let_cli_t let_cli_empty(void) {
     return (let_cli_t){
         .storage_file = (char *) LET_CLI_DEFAULT_STORAGE_FILE,
@@ -23,21 +35,9 @@ let_cli_t let_cli_empty(void) {
 let_error_t let_cli_parse(let_cli_t *cli,
                           const int argc,
                           char **argv) {
-    const struct option long_options[8] = {
-        {"help", no_argument, nullptr, 'h'},
-        {"version", no_argument, nullptr, 'v'},
-        {"port", required_argument, nullptr, 'p'},
-        {"backlog", required_argument, nullptr, 'b'},
-        {"read-timeout", required_argument, nullptr, 'r'},
-        {"write-timeout", required_argument, nullptr, 'w'},
-        {"file", required_argument, nullptr, 'f'},
-        {nullptr, 0, nullptr, 0}
-    };
-
     char *end;
     int option;
-
-    while ((option = getopt_long(argc, argv, "hvp:b:r:w:f:", long_options, nullptr)) != -1) {
+    while ((option = getopt_long(argc, argv, "hvp:b:r:w:l:f:", let_cli_options, nullptr)) != -1) {
         errno = 0;
         switch (option) {
             case 'h': {
@@ -83,6 +83,14 @@ let_error_t let_cli_parse(let_cli_t *cli,
 
                 cli->write_timeout = (let_u32_t) value;
             }
+            case 'l': {
+                const auto value = strtoul(optarg, &end, 10);
+                if (end == optarg || errno == ERANGE || value > LET_LOG_LEVEL_NONE) {
+                    return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_LOG_LEVEL);
+                }
+
+                cli->log_level = (let_log_level_t) value;
+            }
             case 'f': {
                 cli->storage_file = optarg;
                 break;
@@ -106,11 +114,12 @@ void let_cli_help(void) {
         "-b, --backlog <SIZE>       Set the connection backlog size\n"
         "-r, --read-timeout <TIME>  Set the read timeout in seconds\n"
         "-w, --write-timeout <TIME> Set the write timeout in seconds\n"
+        "-l, --log-level <LEVEL>    Set the log level\n"
         "-f, --file <PATH>          Specify the file to use\n"
         "\n"
         "Examples:\n"
         "LetDB --port 8080 -b 4 --write-timeout 0\n"
-        "LetDB -f instance.db");
+        "LetDB --file debug.db -l 0 -r 60");
 }
 
 void let_cli_version(void) {

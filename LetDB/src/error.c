@@ -1,6 +1,5 @@
 #include "let/error.h"
-
-#include <stdio.h>
+#include "let/log.h"
 
 let_error_t let_error_none(void) {
     return (let_error_t){
@@ -17,7 +16,20 @@ let_error_t let_error_new(const let_error_id_t id,
     };
 
     const auto report = let_error_report(error);
-    let_error_print(report);
+    switch (report.action) {
+        case LET_ERROR_ACTION_IGNORE:
+            let_log_print(LET_LOG_LEVEL_INFO, report.message);
+            break;
+        case LET_ERROR_ACTION_REJECT:
+            let_log_print(LET_LOG_LEVEL_WARNING, report.message);
+            break;
+        case LET_ERROR_ACTION_CLOSE:
+            let_log_print(LET_LOG_LEVEL_ERROR, report.message);
+            break;
+        case LET_ERROR_ACTION_FATAL:
+            let_log_print(LET_LOG_LEVEL_FATAL, report.message);
+            break;
+    }
 
     return error;
 }
@@ -36,7 +48,6 @@ let_error_code_t let_error_code(const let_error_t error) {
 
 let_error_report_t let_error_report(const let_error_t error) {
     let_error_report_t error_report = {
-        .timestamp = time(nullptr), // TODO: handle edge cases
         .action = LET_ERROR_ACTION_IGNORE,
         .message = "No error occurred"
     };
@@ -252,6 +263,9 @@ let_error_report_t let_error_report(const let_error_t error) {
                 case LET_ERROR_CLI_INVALID_WRITE_TIMEOUT:
                     error_report.message = "The specified write timeout value must be positive";
                     break;
+                case LET_ERROR_CLI_INVALID_LOG_LEVEL:
+                    error_report.message = "The specified log level is out of range";
+                    break;
             }
 
             break;
@@ -259,34 +273,4 @@ let_error_report_t let_error_report(const let_error_t error) {
     }
 
     return error_report;
-}
-
-void let_error_print(const let_error_report_t error_report) {
-    if (error_report.action == LET_ERROR_ACTION_IGNORE) {
-        return;
-    }
-
-    const auto header_info = localtime(&error_report.timestamp);
-    if (header_info == nullptr) {
-        return;
-    }
-
-    char header_buffer[LET_ERROR_HEADER_CAPACITY] = {};
-    strftime(header_buffer, LET_ERROR_HEADER_CAPACITY, "[%Y-%m-%d %H:%M:%S]", header_info);
-
-    switch (error_report.action) {
-#ifndef NDEBUG
-        case LET_ERROR_ACTION_REJECT:
-            fprintf(stderr, "\033[0;33m%s [WARNING]: %s\033[0m\n", header_buffer, error_report.message);
-            break;
-#endif
-        case LET_ERROR_ACTION_CLOSE:
-            fprintf(stderr, "\033[0;31m%s [RECOVERABLE]: %s\033[0m\n", header_buffer, error_report.message);
-            break;
-        case LET_ERROR_ACTION_FATAL:
-            fprintf(stderr, "\033[1;31m%s [CRITICAL]: %s\033[0m\n", header_buffer, error_report.message);
-            break;
-        default:
-            break;
-    }
 }

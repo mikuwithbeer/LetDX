@@ -1,8 +1,9 @@
 #ifndef LET_CLI_H
 #define LET_CLI_H
 
-#include "common.h"
-#include "error.h"
+#include "let/common.h"
+#include "let/error.h"
+#include "let/log.h"
 
 constexpr char LET_CLI_DEFAULT_STORAGE_FILE[] = "LET__WAL";
 
@@ -12,6 +13,8 @@ constexpr let_u32_t LET_CLI_DEFAULT_WRITE_TIMEOUT = 10;
 constexpr let_u16_t LET_CLI_DEFAULT_PORT = 55543;
 constexpr let_u16_t LET_CLI_DEFAULT_BACKLOG = 1 << 3;
 
+constexpr let_log_level_t LET_CLI_DEFAULT_LOG_LEVEL = LET_LOG_LEVEL_INFO;
+
 typedef struct {
     char *storage_file;
 
@@ -20,6 +23,8 @@ typedef struct {
 
     let_u16_t port;
     let_u16_t backlog;
+
+    let_log_level_t log_level;
 
     bool help;
     bool version;

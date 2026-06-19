@@ -18,6 +18,7 @@ target_sources(Let PRIVATE
     src/error.c
     src/guard.c
     src/let.c
+    src/log.c
     src/state.c
 )
 

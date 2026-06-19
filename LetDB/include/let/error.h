@@ -1,9 +1,7 @@
 #ifndef LET_ERROR_H
 #define LET_ERROR_H
 
-#include "common.h"
-
-constexpr auto LET_ERROR_HEADER_CAPACITY = 1 << 5;
+#include "let/common.h"
 
 typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_ID_NONE = 0,
@@ -82,6 +80,7 @@ typedef enum [[nodiscard]] : let_u8_t {
     LET_ERROR_CLI_INVALID_BACKLOG,
     LET_ERROR_CLI_INVALID_READ_TIMEOUT,
     LET_ERROR_CLI_INVALID_WRITE_TIMEOUT,
+    LET_ERROR_CLI_INVALID_LOG_LEVEL,
 } let_error_cli_t;
 
 typedef enum : let_u8_t {
@@ -99,7 +98,6 @@ typedef struct [[nodiscard]] {
 typedef let_u16_t let_error_code_t;
 
 typedef struct [[nodiscard]] {
-    let_time_t timestamp;
     let_error_action_t action;
     const char *message;
 } let_error_report_t;
@@ -112,8 +110,6 @@ let_error_t let_error_new(let_error_id_t id,
 let_error_code_t let_error_code(let_error_t error);
 
 let_error_report_t let_error_report(let_error_t error);
-
-void let_error_print(let_error_report_t error_report);
 
 [[nodiscard, maybe_unused]] static inline bool let_error_exists(const let_error_t error) {
     return error.id != LET_ERROR_ID_NONE;
