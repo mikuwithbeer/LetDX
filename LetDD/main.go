@@ -8,13 +8,16 @@ import (
 )
 
 func main() {
-	client, err := tcp.NewClient("localhost:55543")
+	cli := &CLI{}
+	cli.Parse()
+
+	client, err := tcp.NewClient(*cli.connect)
 	if err != nil {
 		log.Fatalf("Failed to create TCP client: %v", err)
 	}
 
 	server := http.NewServer(client)
-	err = server.Start("localhost:5543")
+	err = server.Start(*cli.serve)
 	if err != nil {
 		log.Fatalf("Failed to create HTTP server: %v", err)
 	}
