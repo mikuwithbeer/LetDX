@@ -48,7 +48,7 @@ let_error_code_t let_error_code(const let_error_t error) {
 
 let_error_report_t let_error_report(const let_error_t error) {
     let_error_report_t error_report = {
-        .action = LET_ERROR_ACTION_IGNORE,
+        .action = LET_ERROR_ACTION_NONE,
         .message = "No error occurred"
     };
 

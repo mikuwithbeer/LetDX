@@ -98,6 +98,8 @@ void let_run(const let_cli_t *cli) {
                     network_response.data.error = let.error;
                     let.error = let_error_none();
                     break;
+                default:
+                    break;
             }
 
             let.error = let_network_client_write(&let.network_client, network_response);

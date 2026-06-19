@@ -86,6 +86,7 @@ typedef enum [[nodiscard]] : let_u8_t {
 } let_error_cli_t;
 
 typedef enum : let_u8_t {
+    LET_ERROR_ACTION_NONE = 0,
     LET_ERROR_ACTION_IGNORE,
     LET_ERROR_ACTION_REJECT,
     LET_ERROR_ACTION_CLOSE,
