@@ -5,23 +5,47 @@ import (
 	"LetDD/http"
 	"LetDD/tcp"
 
+	"context"
+	"errors"
+	"fmt"
 	"log"
+	stdhttp "net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
-func main() {
+func run(ctx context.Context) error {
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
 	config := &config.Config{}
 	config.Collect()
 
+	if config.ConnectAddress == nil {
+		return errors.New("connection address is missing from configuration")
+	}
+
 	client, err := tcp.NewClient(*config.ConnectAddress)
 	if err != nil {
-		log.Fatalf("Failed to create TCP client: %v", err)
+		return fmt.Errorf("failed to initialize TCP client: %w", err)
 	}
+
+	defer client.Close()
 
 	server := http.NewServer(client, config)
-	err = server.Start()
-	if err != nil {
-		log.Fatalf("Failed to create HTTP server: %v", err)
+
+	err = server.Start(ctx)
+	if err != nil && !errors.Is(err, stdhttp.ErrServerClosed) {
+		return fmt.Errorf("HTTP server encountered an error: %w", err)
 	}
 
-	client.Close()
+	return nil
+}
+
+func main() {
+	ctx := context.Background()
+	if err := run(ctx); err != nil {
+		log.Fatalf("Failed to run application: %v", err)
+	}
 }
