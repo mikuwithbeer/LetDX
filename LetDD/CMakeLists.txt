@@ -11,6 +11,7 @@ set(GO_SOURCE_FILE
     ${CMAKE_CURRENT_SOURCE_DIR}/http/authorization.go
     ${CMAKE_CURRENT_SOURCE_DIR}/http/request.go
     ${CMAKE_CURRENT_SOURCE_DIR}/http/response.go
+    ${CMAKE_CURRENT_SOURCE_DIR}/http/routes.go
     ${CMAKE_CURRENT_SOURCE_DIR}/http/server.go
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/client.go
