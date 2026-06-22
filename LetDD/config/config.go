@@ -17,6 +17,7 @@ var (
 type Config struct {
 	ConnectAddress *string
 	ServerAddress  *string
+	SizeLimit      *int64
 
 	ServerToken *[]byte
 	ServerPerms Permission
@@ -25,6 +26,7 @@ type Config struct {
 func (c *Config) Collect() {
 	c.ConnectAddress = flag.String("connect", "localhost:55543", "Address to connect TCP client")
 	c.ServerAddress = flag.String("serve", "localhost:5543", "Address to serve HTTP server")
+	c.SizeLimit = flag.Int64("size-limit", 1024*1024, "Maximum size of the request body")
 
 	flag.Parse()
 

@@ -33,6 +33,7 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	s.Echo.Use(middleware.RequestLogger())
+	s.Echo.Use(middleware.BodyLimit(*s.Config.SizeLimit))
 
 	s.Echo.GET("/accounts/:id", s.getAccount)
 	s.Echo.PUT("/accounts/:id", s.updateAccount)
