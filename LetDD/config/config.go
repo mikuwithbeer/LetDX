@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/subtle"
 	"flag"
 	"os"
 )
@@ -17,7 +18,7 @@ type Config struct {
 	ConnectAddress *string
 	ServerAddress  *string
 
-	ServerToken *string
+	ServerToken *[]byte
 	ServerPerms Permission
 }
 
@@ -31,7 +32,8 @@ func (c *Config) Collect() {
 	if !exists {
 		c.ServerToken = nil
 	} else {
-		c.ServerToken = &token
+		tokenBytes := []byte(token)
+		c.ServerToken = &tokenBytes
 	}
 
 	switch os.Getenv("LETDD_PERMISSIONS") {
@@ -47,11 +49,16 @@ func (c *Config) Collect() {
 }
 
 func (c *Config) IsMatches(token string) bool {
-	if *c.ServerToken == token {
-		return true
+	if c.ServerToken == nil {
+		return false
 	}
 
-	return false
+	tokenBytes := []byte(token)
+	if len(*c.ServerToken) != len(tokenBytes) {
+		return false
+	}
+
+	return subtle.ConstantTimeCompare(*c.ServerToken, tokenBytes) == 1
 }
 
 func (c *Config) IsPermitted(permission Permission) bool {

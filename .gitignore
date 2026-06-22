@@ -19,9 +19,8 @@ Makefile
 *.dll
 *.lib
 
-# Zig build artifacts
-zig-out/
-.zig-cache/
+# WAL
+LET__WAL
 
 # IDEs
 .idea/

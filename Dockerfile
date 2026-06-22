@@ -24,8 +24,11 @@ ENV CXX=clang++
 RUN cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
  && cmake --build build -j$(nproc)
 
-# --- Run Tests ---
+# --- Run LetDB Tests ---
 RUN ctest --test-dir build/LetDB --output-on-failure
+
+# --- Run LetDD Tests ---
+RUN cd LetDD && go test -v ./...
 
 # ------------------------
 # --- Runner Container ---
