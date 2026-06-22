@@ -33,13 +33,20 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	s.Echo.Use(middleware.RequestLogger())
+
 	s.Echo.Use(middleware.BodyLimit(*s.Config.SizeLimit))
+	s.Echo.Use(middleware.ContextTimeout(*s.Config.ContextTimeout))
 
 	s.Echo.GET("/accounts/:id", s.getAccount)
 	s.Echo.PUT("/accounts/:id", s.updateAccount)
 	s.Echo.POST("/accounts", s.postAccount)
 	s.Echo.POST("/transfers", s.postTransfer)
 
-	sc := echo.StartConfig{Address: *s.Config.ServerAddress, HideBanner: true}
+	sc := echo.StartConfig{
+		Address:         *s.Config.ServerAddress,
+		GracefulTimeout: *s.Config.GracefulTimeout,
+		HideBanner:      true,
+	}
+
 	return sc.Start(ctx, s.Echo)
 }
