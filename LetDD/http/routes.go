@@ -12,7 +12,9 @@ func (s *Server) getAccount(ctx *echo.Context) error {
 		return err
 	}
 
-	clientResponse, err := s.Client.Communicate(tcp.GetAccountRequest{AccountID: accountId})
+	clientResponse, err := s.Client.Communicate(ctx.Request().Context(), tcp.GetAccountRequest{
+		AccountID: accountId,
+	})
 	if err != nil {
 		return err
 	}
@@ -43,7 +45,7 @@ func (s *Server) updateAccount(ctx *echo.Context) error {
 		return err
 	}
 
-	clientResponse, err := s.Client.Communicate(tcp.UpdateAccountRequest{
+	clientResponse, err := s.Client.Communicate(ctx.Request().Context(), tcp.UpdateAccountRequest{
 		WalID:     s.Client.WalID(),
 		AccountID: accountId,
 		Flags:     *updateAccount.Flags,
@@ -73,7 +75,7 @@ func (s *Server) postAccount(ctx *echo.Context) error {
 		return err
 	}
 
-	clientResponse, err := s.Client.Communicate(tcp.AddAccountRequest{
+	clientResponse, err := s.Client.Communicate(ctx.Request().Context(), tcp.AddAccountRequest{
 		WalID:   s.Client.WalID(),
 		Credits: *postAccount.Credits,
 		Debits:  *postAccount.Debits,
@@ -104,7 +106,7 @@ func (s *Server) postTransfer(ctx *echo.Context) error {
 		return err
 	}
 
-	clientResponse, err := s.Client.Communicate(tcp.MakeTransferRequest{
+	clientResponse, err := s.Client.Communicate(ctx.Request().Context(), tcp.MakeTransferRequest{
 		WalID:  s.Client.WalID(),
 		FromID: *postTransfer.FromID,
 		ToID:   *postTransfer.ToID,

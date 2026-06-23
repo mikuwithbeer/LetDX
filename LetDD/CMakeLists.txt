@@ -16,6 +16,9 @@ set(GO_SOURCE_FILE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/client.go
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/request_test.go
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/supervisor/supervisor.go
+
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/request.go
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/response_test.go
     ${CMAKE_CURRENT_SOURCE_DIR}/tcp/response.go

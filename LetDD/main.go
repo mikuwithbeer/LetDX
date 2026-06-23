@@ -26,16 +26,11 @@ func run(ctx context.Context) error {
 		return errors.New("connection address is missing from configuration")
 	}
 
-	client, err := tcp.NewClient(*config.ConnectAddress)
-	if err != nil {
-		return fmt.Errorf("failed to initialize TCP client: %w", err)
-	}
-
+	client := tcp.NewClient(*config.ConnectAddress)
 	defer client.Close()
 
 	server := http.NewServer(client, config)
-
-	err = server.Start(ctx)
+	err := server.Start(ctx)
 	if err != nil && !errors.Is(err, stdhttp.ErrServerClosed) {
 		return fmt.Errorf("HTTP server encountered an error: %w", err)
 	}
