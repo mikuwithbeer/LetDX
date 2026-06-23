@@ -6,8 +6,13 @@
 constexpr let_u64_t LET_STORAGE_WAL_HEADER_MAGIC = 0x4C'41'57'5F'5F'54'45'4C;
 constexpr let_u16_t LET_STORAGE_WAL_HEADER_VERSION = 1;
 
-constexpr let_size_t LET_STORAGE_WAL_HEADER_LENGTH = sizeof(LET_STORAGE_WAL_HEADER_MAGIC)
-                                                     + sizeof(LET_STORAGE_WAL_HEADER_VERSION);
+constexpr let_size_t LET_STORAGE_WAL_HEADER_LENGTH = sizeof(let_u64_t) + sizeof(let_u16_t);
+
+typedef enum : let_u8_t {
+    LET_STORAGE_WAL_SEEK_START,
+    LET_STORAGE_WAL_SEEK_CURRENT,
+    LET_STORAGE_WAL_SEEK_END,
+} let_storage_wal_seek_t;
 
 #pragma pack(push, 1)
 
@@ -74,12 +79,20 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                                  let_state_t *state,
                                  const char *path);
 
-let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal);
+let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal,
+                                   bool truncate_on_failure);
 
 let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
                                   const let_storage_wal_entry_t *entry);
 
 let_error_t let_storage_wal_sync(const let_storage_wal_t *storage_wal);
+
+let_error_t let_storage_wal_seek(const let_storage_wal_t *storage_wal,
+                                 let_size_t offset,
+                                 let_storage_wal_seek_t seek);
+
+let_error_t let_storage_wal_truncate(const let_storage_wal_t *storage_wal,
+                                     let_size_t offset);
 
 void let_storage_wal_close(let_storage_wal_t *storage_wal);
 

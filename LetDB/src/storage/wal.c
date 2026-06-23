@@ -1,5 +1,6 @@
 #include "let/storage/wal.h"
 #include "let/storage/crc.h"
+#include "let/log.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -67,20 +68,22 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CREATE_FAILED);
     }
 
-    const auto seek_result = lseek(storage_wal->descriptor, 0, SEEK_END);
-    if (seek_result == (typeof(seek_result)) -1) {
+    const auto seek_result = let_storage_wal_seek(storage_wal, 0, LET_STORAGE_WAL_SEEK_END);
+    if (let_error_exists(seek_result)) {
         close(storage_wal->descriptor);
         storage_wal->descriptor = -1;
-        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SEEK_FAILED);
     }
 
-    return let_error_none();
+    return seek_result;
 }
 
-let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
-    auto seek_result = lseek(storage_wal->descriptor, LET_STORAGE_WAL_HEADER_LENGTH, SEEK_SET);
-    if (seek_result == (typeof(seek_result)) -1) {
-        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SEEK_FAILED);
+let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal,
+                                   const bool truncate_on_failure) {
+    let_size_t file_offset = LET_STORAGE_WAL_HEADER_LENGTH;
+
+    auto seek_result = let_storage_wal_seek(storage_wal, file_offset, LET_STORAGE_WAL_SEEK_START);
+    if (let_error_exists(seek_result)) {
+        return seek_result;
     }
 
     let_storage_wal_entry_safe_t safe_entry;
@@ -91,9 +94,24 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
          ; storage_wal->transactions++) {
         const auto crc_result = let_storage_crc32c(&safe_entry.entry, sizeof(let_storage_wal_entry_t));
         if (crc_result != safe_entry.checksum) {
-            return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH);
+            if (!truncate_on_failure) {
+                return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH);
+            }
+
+            const auto truncate_result = let_storage_wal_truncate(storage_wal, file_offset);
+            if (let_error_exists(truncate_result)) {
+                return truncate_result;
+            }
+
+            let_log_print(LET_LOG_LEVEL_WARNING,
+                          "Truncated storage file due to checksum mismatch at seq:%llu, offset:%zu",
+                          storage_wal->transactions,
+                          file_offset);
+
+            break;
         }
 
+        file_offset += sizeof(safe_entry);
         switch (safe_entry.entry.header.type) {
             case LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT: {
                 const auto add_account = safe_entry.entry.data.add_account;
@@ -145,19 +163,27 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal) {
     }
 
     if (bytes_read > 0 && (let_size_t) bytes_read < sizeof(safe_entry)) {
-        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
+        if (!truncate_on_failure) {
+            return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
+        }
+
+        const auto truncate_result = let_storage_wal_truncate(storage_wal, file_offset);
+        if (let_error_exists(truncate_result)) {
+            return truncate_result;
+        }
+
+        let_log_print(LET_LOG_LEVEL_WARNING,
+                      "Truncated storage file due to incomplete entry at seq:%llu, offset:%zu",
+                      storage_wal->transactions,
+                      file_offset);
     }
 
     if (bytes_read < 0) {
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
     }
 
-    seek_result = lseek(storage_wal->descriptor, 0, SEEK_END);
-    if (seek_result == (typeof(seek_result)) -1) {
-        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SEEK_FAILED);
-    }
-
-    return let_error_none();
+    seek_result = let_storage_wal_seek(storage_wal, 0, LET_STORAGE_WAL_SEEK_END);
+    return seek_result;
 }
 
 let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
@@ -194,6 +220,27 @@ let_error_t let_storage_wal_sync(const let_storage_wal_t *storage_wal) {
 
     if (!sync_success) {
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SYNC_FAILED);
+    }
+
+    return let_error_none();
+}
+
+let_error_t let_storage_wal_seek(const let_storage_wal_t *storage_wal,
+                                 const let_size_t offset,
+                                 const let_storage_wal_seek_t seek) {
+    const auto seek_result = lseek(storage_wal->descriptor, (off_t) offset, seek);
+    if (seek_result == -1) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SEEK_FAILED);
+    }
+
+    return let_error_none();
+}
+
+let_error_t let_storage_wal_truncate(const let_storage_wal_t *storage_wal,
+                                     const let_size_t offset) {
+    const auto truncate_result = ftruncate(storage_wal->descriptor, (off_t) offset);
+    if (truncate_result == -1) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_TRUNCATE_FAILED);
     }
 
     return let_error_none();

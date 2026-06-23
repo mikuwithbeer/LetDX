@@ -26,7 +26,7 @@ void let_init(const let_cli_t *cli) {
         return;
     }
 
-    let.error = let_storage_wal_replay(&let.storage_wal);
+    let.error = let_storage_wal_replay(&let.storage_wal, cli->truncate_on_fail);
     if (let_error_exists(let.error)) {
         return;
     }

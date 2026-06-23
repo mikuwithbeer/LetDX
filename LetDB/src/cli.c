@@ -13,6 +13,7 @@ static const struct option let_cli_options[] = {
     {"read-timeout", required_argument, nullptr, 'r'},
     {"write-timeout", required_argument, nullptr, 'w'},
     {"log-level", required_argument, nullptr, 'l'},
+    {"truncate-on-fail", no_argument, nullptr, 't'},
     {"file", required_argument, nullptr, 'f'},
     {nullptr, 0, nullptr, 0}
 };
@@ -27,6 +28,9 @@ let_cli_t let_cli_empty(void) {
         .port = LET_CLI_DEFAULT_PORT,
         .backlog = LET_CLI_DEFAULT_BACKLOG,
 
+        .log_level = LET_CLI_DEFAULT_LOG_LEVEL,
+        .truncate_on_fail = LET_CLI_DEFAULT_TRUNCATE_ON_FAIL,
+
         .help = false,
         .version = false,
     };
@@ -37,7 +41,7 @@ let_error_t let_cli_parse(let_cli_t *cli,
                           char **argv) {
     char *end;
     int option;
-    while ((option = getopt_long(argc, argv, "hvp:b:r:w:l:f:", let_cli_options, nullptr)) != -1) {
+    while ((option = getopt_long(argc, argv, "hvp:b:r:w:l:tf:", let_cli_options, nullptr)) != -1) {
         errno = 0;
         switch (option) {
             case 'h': {
@@ -91,6 +95,10 @@ let_error_t let_cli_parse(let_cli_t *cli,
 
                 cli->log_level = (let_log_level_t) value;
             }
+            case 't': {
+                cli->truncate_on_fail = true;
+                break;
+            }
             case 'f': {
                 cli->storage_file = optarg;
                 break;
@@ -115,6 +123,7 @@ void let_cli_help(void) {
         "-r, --read-timeout <TIME>  Set the read timeout in seconds\n"
         "-w, --write-timeout <TIME> Set the write timeout in seconds\n"
         "-l, --log-level <LEVEL>    Set the log level\n"
+        "-t, --truncate-on-fail     Truncate the storage on failure\n"
         "-f, --file <PATH>          Specify the file to use\n"
         "\n"
         "Examples:\n"
