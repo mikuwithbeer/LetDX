@@ -212,38 +212,41 @@ let_error_report_t let_error_report(const let_error_t error) {
             error_report.action = LET_ERROR_ACTION_FATAL;
             switch ((let_error_storage_t) error.error) {
                 case LET_ERROR_STORAGE_WAL_CREATE_FAILED:
-                    error_report.message = "The system failed to create a new log file";
+                    error_report.message = "The system failed to create a new storage file";
                     break;
                 case LET_ERROR_STORAGE_WAL_OPEN_FAILED:
-                    error_report.message = "The system failed to open the log file";
+                    error_report.message = "The system failed to open the storage file";
                     break;
                 case LET_ERROR_STORAGE_WAL_WRITE_FAILED:
-                    error_report.message = "The system failed to write data to the log file";
+                    error_report.message = "The system failed to write data to the storage file";
                     break;
                 case LET_ERROR_STORAGE_WAL_READ_FAILED:
-                    error_report.message = "The system failed to read data from the log file";
+                    error_report.message = "The system failed to read data from the storage file";
                     break;
                 case LET_ERROR_STORAGE_WAL_SYNC_FAILED:
-                    error_report.message = "The system failed to sync the log data to disk";
+                    error_report.message = "The system failed to sync the storage data to disk";
                     break;
                 case LET_ERROR_STORAGE_WAL_SEEK_FAILED:
-                    error_report.message = "The system failed to reposition the log file pointer";
+                    error_report.message = "The system failed to reposition the storage file pointer";
+                    break;
+                case LET_ERROR_STORAGE_WAL_TRUNCATE_FAILED:
+                    error_report.message = "The system failed to truncate the storage file";
                     break;
                 case LET_ERROR_STORAGE_WAL_INVALID_MAGIC:
-                    error_report.message = "The log file contains an invalid magic number signature";
+                    error_report.message = "The storage file contains an invalid magic number signature";
                     break;
                 case LET_ERROR_STORAGE_WAL_INVALID_VERSION:
-                    error_report.message = "The log file version is not supported by this engine";
+                    error_report.message = "The storage file version is not supported by this engine";
                     break;
                 case LET_ERROR_STORAGE_WAL_NONCE_MISMATCH:
                     error_report.action = LET_ERROR_ACTION_REJECT;
                     error_report.message = "The transaction nonce does not match the file metadata";
                     break;
                 case LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH:
-                    error_report.message = "The log file data failed the checksum validation check";
+                    error_report.message = "The storage file data failed the checksum validation check";
                     break;
                 case LET_ERROR_STORAGE_WAL_INVALID_ENTRY_TYPE:
-                    error_report.message = "The log file contains an unknown tracking entry type";
+                    error_report.message = "The storage file contains an unknown tracking entry type";
                     break;
                 case LET_ERROR_STORAGE_WAL_INVALID_TIME:
                     error_report.message = "The provided timestamp for storage subsystem is invalid";
