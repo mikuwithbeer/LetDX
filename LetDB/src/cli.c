@@ -40,72 +40,64 @@ let_error_t let_cli_parse(let_cli_t *cli,
                           const int argc,
                           char **argv) {
     char *end;
-    int option;
+    let_i64_t option, value;
     while ((option = getopt_long(argc, argv, "hvp:b:r:w:l:tf:", let_cli_options, nullptr)) != -1) {
         errno = 0;
         switch (option) {
-            case 'h': {
+            case 'h':
                 cli->help = true;
                 break;
-            }
-            case 'v': {
+            case 'v':
                 cli->version = true;
                 break;
-            }
-            case 'p': {
-                const auto value = strtoul(optarg, &end, 10);
+            case 'p':
+                value = (let_i64_t) strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_U16_MAX) {
                     return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_PORT);
                 }
 
                 cli->port = (let_u16_t) value;
                 break;
-            }
-            case 'b': {
-                const auto value = strtoul(optarg, &end, 10);
+            case 'b':
+                value = (let_i64_t) strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_U16_MAX) {
                     return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_BACKLOG);
                 }
 
                 cli->backlog = (let_u16_t) value;
                 break;
-            }
-            case 'r': {
-                const auto value = strtoul(optarg, &end, 10);
+            case 'r':
+                value = (let_i64_t) strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_U32_MAX) {
                     return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_READ_TIMEOUT);
                 }
 
                 cli->read_timeout = (let_u32_t) value;
                 break;
-            }
-            case 'w': {
-                const auto value = strtoul(optarg, &end, 10);
+            case 'w':
+                value = (let_i64_t) strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_U32_MAX) {
                     return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_WRITE_TIMEOUT);
                 }
 
                 cli->write_timeout = (let_u32_t) value;
-            }
-            case 'l': {
-                const auto value = strtoul(optarg, &end, 10);
+                break;
+            case 'l':
+                value = (let_i64_t) strtoul(optarg, &end, 10);
                 if (end == optarg || errno == ERANGE || value > LET_LOG_LEVEL_NONE) {
                     return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_LOG_LEVEL);
                 }
 
                 cli->log_level = (let_log_level_t) value;
-            }
-            case 't': {
+                break;
+            case 't':
                 cli->truncate_on_fail = true;
                 break;
-            }
-            case 'f': {
+            case 'f':
                 cli->storage_file = optarg;
                 break;
-            }
-            default: {
+            default:
                 return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_OPTION);
-            }
         }
     }
 
