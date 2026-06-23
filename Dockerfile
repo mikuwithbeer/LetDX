@@ -16,9 +16,10 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY . .
 
-# --- Override to LLVM Toolchain ---
+# --- Setup Environment ---
 ENV CC=clang
 ENV CXX=clang++
+ENV CGO_ENABLED=0
 
 # --- Build LetDX ---
 RUN cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \

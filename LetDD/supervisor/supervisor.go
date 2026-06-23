@@ -25,7 +25,7 @@ func NewSupervisor(cancelAfter uint64, minimumDelay, maximumDelay time.Duration)
 }
 
 func (s *Supervisor) Try(ctx context.Context) bool {
-	if s.currentTry >= s.cancelAfter || ctx.Err() != nil {
+	if ctx.Err() != nil {
 		return false
 	}
 
@@ -34,9 +34,11 @@ func (s *Supervisor) Try(ctx context.Context) bool {
 		return true
 	}
 
-	backoff := (time.Duration(1) << (s.currentTry - 1)) * s.minimumDelay
-	backoff = min(max(backoff, s.minimumDelay), s.maximumDelay)
+	if s.currentTry >= s.cancelAfter {
+		return false
+	}
 
+	backoff := s.CalculateBackoff()
 	slog.Log(ctx, slog.LevelInfo, "Supervisor: retrying",
 		slog.Duration("backoff", backoff),
 		slog.Uint64("try", s.currentTry),
@@ -53,6 +55,11 @@ func (s *Supervisor) Try(ctx context.Context) bool {
 		s.currentTry++
 		return true
 	}
+}
+
+func (s *Supervisor) CalculateBackoff() time.Duration {
+	backoff := (time.Duration(1) << (s.currentTry - 1)) * s.minimumDelay
+	return min(max(backoff, s.minimumDelay), s.maximumDelay)
 }
 
 func (s *Supervisor) Reset() {
