@@ -23,7 +23,7 @@ let_error_t let_network_server_init(let_network_server_t *network_server,
     constexpr auto option_value = 1;
     setsockopt(network_server->handle, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(option_value));
 
-    network_server->address = (typeof(network_server->address)){};
+    network_server->address = (typeof_unqual(network_server->address)){};
     network_server->address.sin_family = AF_INET;
     network_server->address.sin_addr.s_addr = INADDR_ANY;
     network_server->address.sin_port = htons(network_server->port);
@@ -55,9 +55,11 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
                                       const let_u32_t write_timeout,
                                       let_network_server_t *network_client) {
     socklen_t client_address_length = sizeof(network_client->address);
-    const auto client_handle = accept(network_server->handle,
-                                      (struct sockaddr *) &network_client->address,
-                                      &client_address_length);
+
+    const auto client_handle = accept(
+        network_server->handle,
+        (struct sockaddr *) &network_client->address,
+        &client_address_length);
 
     if (client_handle < 0) {
         if (errno == EINTR) {
@@ -92,6 +94,7 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
          ; network_client->read_buffer_index < LET_NETWORK_BUFFER_LENGTH
          ; network_client->read_buffer_index++) {
         const auto read_result = recv(network_client->handle, &read_byte, sizeof(read_byte), 0);
+
         if (read_result == 0) {
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_CLIENT_CLOSED);
         }
@@ -126,6 +129,7 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
 let_error_t let_network_client_write(let_network_server_t *network_client,
                                      const let_network_response_t response) {
     let_size_t response_length = 0;
+
     const auto encode_result = let_network_response_encode(
         response,
         network_client->write_buffer,
@@ -136,23 +140,23 @@ let_error_t let_network_client_write(let_network_server_t *network_client,
         return encode_result;
     }
 
-    ssize_t receive_result = 0;
+    let_i64_t sent_bytes = 0;
     for (network_client->write_buffer_index = 0
          ; network_client->write_buffer_index < response_length
-         ; network_client->write_buffer_index += (size_t) receive_result) {
+         ; network_client->write_buffer_index += (size_t) sent_bytes) {
         const auto remaining_bytes = response_length - network_client->write_buffer_index;
 
-        receive_result = send(
+        sent_bytes = send(
             network_client->handle,
             network_client->write_buffer + network_client->write_buffer_index,
             remaining_bytes,
             0);
 
-        if (receive_result == 0) {
+        if (sent_bytes == 0) {
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_CLIENT_CLOSED);
         }
 
-        if (receive_result < 0) {
+        if (sent_bytes < 0) {
             if (errno == EWOULDBLOCK || errno == EAGAIN) {
                 return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_WRITE_TIMEOUT);
             }

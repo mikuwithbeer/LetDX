@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
-
 #include "let/storage/wal.h"
 #include "let/storage/crc.h"
 #include "let/log.h"
@@ -7,6 +5,23 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+let_storage_wal_entry_t let_storage_wal_entry_new(const let_u64_t id,
+                                                  const let_time_t timestamp,
+                                                  const let_storage_wal_entry_type_t type) {
+    return (let_storage_wal_entry_t){
+        .header = {
+            .id = id,
+            .timestamp = timestamp,
+            .type = type
+        },
+        .data = {}
+    };
+}
+
+let_storage_wal_t let_storage_wal_empty(void) {
+    return (let_storage_wal_t){};
+}
 
 let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                                  let_state_t *state,
@@ -253,21 +268,4 @@ void let_storage_wal_close(let_storage_wal_t *storage_wal) {
         close(storage_wal->descriptor);
         storage_wal->descriptor = -1;
     }
-}
-
-let_storage_wal_entry_t let_storage_wal_entry_new(const let_u64_t id,
-                                                  const let_time_t timestamp,
-                                                  const let_storage_wal_entry_type_t type) {
-    return (let_storage_wal_entry_t){
-        .header = {
-            .id = id,
-            .timestamp = timestamp,
-            .type = type
-        },
-        .data = {}
-    };
-}
-
-let_storage_wal_t let_storage_wal_empty(void) {
-    return (let_storage_wal_t){};
 }

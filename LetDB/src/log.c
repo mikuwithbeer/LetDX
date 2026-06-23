@@ -5,7 +5,7 @@
 
 let_log_level_t let_log_level = LET_LOG_LEVEL_DEBUG;
 
-static const char *let_log_level_attributes[] = {
+static const char *const let_log_level_attributes[] = {
     "DEBUG",
     "INFO",
     "WARNING",
@@ -14,7 +14,7 @@ static const char *let_log_level_attributes[] = {
     ""
 };
 
-static const char *let_log_level_colors[] = {
+static const char *const let_log_level_colors[] = {
     "\033[1;36m",
     "\033[0;34m",
     "\033[0;33m",
@@ -44,7 +44,7 @@ void let_log_print(const let_log_level_t log_level,
     }
 
     char header_buffer[LET_LOG_HEADER_CAPACITY] = {};
-    strftime(header_buffer, LET_LOG_HEADER_CAPACITY, "%Y-%m-%d %H:%M:%S", time_info);
+    strftime(header_buffer, sizeof(header_buffer), "%Y-%m-%d %H:%M:%S", time_info);
 
     fprintf(stderr,
             "%s[%s] (%s): ",

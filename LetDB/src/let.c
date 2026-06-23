@@ -8,6 +8,7 @@ static let_error_t let_request(const let_network_request_t *network_request,
 
 void let_init(const let_cli_t *cli) {
     let.account_list = let_account_list_new();
+
     let.state = let_state_empty();
     let.error = let_state_init(&let.state, let.account_list);
     if (let_error_exists(let.error)) {
@@ -33,6 +34,7 @@ void let_init(const let_cli_t *cli) {
 
     let.network_server = let_network_server_empty();
     let.network_client = let_network_server_empty();
+
     let.error = let_network_server_init(&let.network_server, cli->port, cli->backlog);
     if (let_error_exists(let.error)) {
         return;
@@ -67,20 +69,15 @@ void let_run(const let_cli_t *cli) {
 
         let.executing = true;
         while (let.executing) {
-            let_error_report_t error_report;
-
             auto network_request = let_network_request_empty();
             auto network_response = let_network_response_empty();
 
             let.error = let_network_client_read(&let.network_client, &network_request);
-            if (let_error_exists(let.error)) {
-                goto handle_error;
+            if (!let_error_exists(let.error)) {
+                let.error = let_request(&network_request, &network_response);
             }
 
-            let.error = let_request(&network_request, &network_response);
-
-        handle_error:
-            error_report = let_error_report(let.error);
+            auto error_report = let_error_report(let.error);
             switch (error_report.action) {
                 case LET_ERROR_ACTION_FATAL:
                     let.executing = false;
@@ -114,6 +111,10 @@ void let_run(const let_cli_t *cli) {
             }
 
             if (network_request.type == LET_NETWORK_REQUEST_TYPE_CLOSE) {
+                let_log_print(LET_LOG_LEVEL_INFO,
+                              "Requested graceful closure from id:%u",
+                              let.network_client.handle);
+
                 let.executing = false;
             }
         }
@@ -122,7 +123,7 @@ void let_run(const let_cli_t *cli) {
     }
 }
 
-void let_close([[maybe_unused]] const int signal) {
+void let_close([[maybe_unused]] int signal) {
     let.executing = false;
     let.accepting = false;
 }
@@ -135,7 +136,7 @@ void let_cleanup(void) {
 
 static let_error_t let_request(const let_network_request_t *network_request,
                                let_network_response_t *network_response) {
-    let_error_t request_error = let_error_none();
+    auto request_error = let_error_none();
 
     const auto time_now = time(nullptr);
     if (time_now == -1) {
@@ -143,10 +144,9 @@ static let_error_t let_request(const let_network_request_t *network_request,
     }
 
     switch (network_request->type) {
-        case LET_NETWORK_REQUEST_TYPE_MAGIC: {
+        case LET_NETWORK_REQUEST_TYPE_MAGIC:
             network_response->type = LET_NETWORK_RESPONSE_TYPE_MAGIC;
             break;
-        }
         case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
             network_response->type = LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT;
 
@@ -228,13 +228,10 @@ static let_error_t let_request(const let_network_request_t *network_request,
             network_response->data.get_account.flags = account.flags;
             break;
         }
-        case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES: {
+        case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES:
             network_response->type = LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES;
-
-            const auto transaction_count = let.storage_wal.transactions;
-            network_response->data.count_entries = transaction_count;
+            network_response->data.count_entries = let.storage_wal.transactions;
             break;
-        }
         case LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT: {
             network_response->type = LET_NETWORK_RESPONSE_TYPE_OK;
 
@@ -264,10 +261,9 @@ static let_error_t let_request(const let_network_request_t *network_request,
             request_error = let_state_update_account(&let.state, account_id, flags);
             break;
         }
-        case LET_NETWORK_REQUEST_TYPE_CLOSE: {
+        case LET_NETWORK_REQUEST_TYPE_CLOSE:
             network_response->type = LET_NETWORK_RESPONSE_TYPE_OK;
             break;
-        }
     }
 
     return request_error;

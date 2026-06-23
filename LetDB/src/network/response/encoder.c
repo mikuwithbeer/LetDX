@@ -1,6 +1,6 @@
 #include "let/network/response/encoder.h"
 
-static let_error_t let_network_response_encoder_run_integer(let_network_response_encoder_t *response_decoder,
+static let_error_t let_network_response_encoder_run_integer(let_network_response_encoder_t *response_encoder,
                                                             const void *value,
                                                             let_size_t size);
 
@@ -21,14 +21,12 @@ void let_network_response_encoder_init(let_network_response_encoder_t *response_
 let_error_t let_network_response_encoder_run(let_network_response_encoder_t *response_encoder) {
     auto encoder_result = let_error_none();
     switch (response_encoder->response.type) {
-        case LET_NETWORK_RESPONSE_TYPE_MAGIC: {
+        case LET_NETWORK_RESPONSE_TYPE_MAGIC:
             response_encoder->buffer[response_encoder->buffer_length++] = 'L';
             response_encoder->buffer[response_encoder->buffer_length++] = 'E';
             response_encoder->buffer[response_encoder->buffer_length++] = 'T';
-
             break;
-        }
-        case LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT: {
+        case LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT:
             response_encoder->buffer[response_encoder->buffer_length++] = 'A';
             response_encoder->buffer[response_encoder->buffer_length++] = 'I';
             response_encoder->buffer[response_encoder->buffer_length++] = 'D';
@@ -44,8 +42,7 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
             }
 
             break;
-        }
-        case LET_NETWORK_RESPONSE_TYPE_GET_ACCOUNT: {
+        case LET_NETWORK_RESPONSE_TYPE_GET_ACCOUNT:
             response_encoder->buffer[response_encoder->buffer_length++] = 'A';
             response_encoder->buffer[response_encoder->buffer_length++] = 'C';
             response_encoder->buffer[response_encoder->buffer_length++] = 'C';
@@ -83,8 +80,7 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
             }
 
             break;
-        }
-        case LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES: {
+        case LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES:
             response_encoder->buffer[response_encoder->buffer_length++] = 'S';
             response_encoder->buffer[response_encoder->buffer_length++] = 'E';
             response_encoder->buffer[response_encoder->buffer_length++] = 'C';
@@ -100,14 +96,12 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
             }
 
             break;
-        }
-        case LET_NETWORK_RESPONSE_TYPE_OK: {
+        case LET_NETWORK_RESPONSE_TYPE_OK:
             response_encoder->buffer[response_encoder->buffer_length++] = 'O';
             response_encoder->buffer[response_encoder->buffer_length++] = 'K';
             response_encoder->buffer[response_encoder->buffer_length++] = 'E';
             break;
-        }
-        case LET_NETWORK_RESPONSE_TYPE_ERROR: {
+        case LET_NETWORK_RESPONSE_TYPE_ERROR:
             response_encoder->buffer[response_encoder->buffer_length++] = 'E';
             response_encoder->buffer[response_encoder->buffer_length++] = 'R';
             response_encoder->buffer[response_encoder->buffer_length++] = 'R';
@@ -124,35 +118,34 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
             }
 
             break;
-        }
     }
 
     response_encoder->buffer[response_encoder->buffer_length++] = '\n';
     return encoder_result;
 }
 
-static let_error_t let_network_response_encoder_run_integer(let_network_response_encoder_t *response_decoder,
+static let_error_t let_network_response_encoder_run_integer(let_network_response_encoder_t *response_encoder,
                                                             const void *value,
                                                             const let_size_t size) {
     const auto bytes = (const let_u8_t *) value;
-
     auto skip = size;
+
     while (skip > 1 && bytes[skip - 1] == 0) {
         skip--;
     }
 
-    if (response_decoder->buffer_length + skip * 2 > response_decoder->buffer_capacity) {
+    if (response_encoder->buffer_length + skip * 2 > response_encoder->buffer_capacity) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_RESPONSE_BUFFER_OVERFLOW);
     }
 
     for (let_size_t index = skip; index-- > 0;) {
         const auto byte = bytes[index];
 
-        response_decoder->buffer[response_decoder->buffer_length++] = LET_NETWORK_RESPONSE_ENCODER_HEX_DIGITS[
+        response_encoder->buffer[response_encoder->buffer_length++] = LET_NETWORK_RESPONSE_ENCODER_HEX_DIGITS[
             byte >> 4 & 0x0F
         ];
 
-        response_decoder->buffer[response_decoder->buffer_length++] = LET_NETWORK_RESPONSE_ENCODER_HEX_DIGITS[
+        response_encoder->buffer[response_encoder->buffer_length++] = LET_NETWORK_RESPONSE_ENCODER_HEX_DIGITS[
             byte & 0x0F
         ];
     }

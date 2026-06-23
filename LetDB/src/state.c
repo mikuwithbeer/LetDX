@@ -17,14 +17,13 @@ let_error_t let_state_init(let_state_t *state,
 let_error_t let_state_add_account(const let_state_t *state,
                                   const let_account_t account,
                                   let_u64_t *account_id) {
-    const auto current_length = state->account_list->length;
     const auto account_result = let_account_list_add(state->account_list, account);
 
     if (let_error_exists(account_result)) {
         return account_result;
     }
 
-    *account_id = current_length;
+    *account_id = state->account_list->length;
     return let_error_none();
 }
 

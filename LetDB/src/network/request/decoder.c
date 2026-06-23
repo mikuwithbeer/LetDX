@@ -18,7 +18,7 @@ static let_error_t let_network_request_decoder_parse_u8(let_network_request_deco
                                                         let_u8_t current_byte,
                                                         let_u8_t *output);
 
-[[nodiscard]] let_network_request_decoder_t let_network_request_decoder_empty(void) {
+let_network_request_decoder_t let_network_request_decoder_empty(void) {
     return (let_network_request_decoder_t){};
 }
 
@@ -30,42 +30,39 @@ void let_network_request_decoder_init(let_network_request_decoder_t *request_dec
 }
 
 let_error_t let_network_request_decoder_run(let_network_request_decoder_t *request_decoder) {
+    auto decoder_result = let_error_none();
+
     if (request_decoder->buffer == nullptr || request_decoder->buffer_length == 0) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_EMPTY);
     }
 
-    if (request_decoder->state == LET_NETWORK_REQUEST_DECODER_STATE_END) {
-        return let_error_none();
-    }
-
     let_size_t buffer_index = 0;
-    while (buffer_index < request_decoder->buffer_length) {
+    while (buffer_index < request_decoder->buffer_length
+           && request_decoder->state != LET_NETWORK_REQUEST_DECODER_STATE_END) {
         const auto current_byte = request_decoder->buffer[buffer_index];
+
         switch (request_decoder->state) {
-            case LET_NETWORK_REQUEST_DECODER_STATE_COMMAND: {
-                const auto decoder_result = let_network_request_decoder_run_command(request_decoder, current_byte);
+            case LET_NETWORK_REQUEST_DECODER_STATE_COMMAND:
+                decoder_result = let_network_request_decoder_run_command(request_decoder, current_byte);
                 if (let_error_exists(decoder_result)) {
                     return decoder_result;
                 }
 
                 break;
-            }
-            case LET_NETWORK_REQUEST_DECODER_STATE_ARGUMENT: {
-                const auto decoder_result = let_network_request_decoder_run_argument(request_decoder, current_byte);
+            case LET_NETWORK_REQUEST_DECODER_STATE_ARGUMENT:
+                decoder_result = let_network_request_decoder_run_argument(request_decoder, current_byte);
                 if (let_error_exists(decoder_result)) {
                     return decoder_result;
                 }
 
                 break;
-            }
             case LET_NETWORK_REQUEST_DECODER_STATE_END:
-                goto exit_loop;
+                break;
         }
 
         buffer_index++;
     }
 
-exit_loop:
     if (request_decoder->request_argc != 0) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_ARGUMENTS_MISSING);
     }
@@ -75,7 +72,7 @@ exit_loop:
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_MALFORMED);
     }
 
-    return let_error_none();
+    return decoder_result;
 }
 
 static let_error_t let_network_request_decoder_run_command(let_network_request_decoder_t *request_decoder,
@@ -117,7 +114,7 @@ static let_error_t let_network_request_decoder_run_command(let_network_request_d
 
 static let_error_t let_network_request_decoder_run_argument(let_network_request_decoder_t *request_decoder,
                                                             const let_u8_t current_byte) {
-    let_error_t argument_result = let_error_none();
+    auto argument_result = let_error_none();
 
     if (request_decoder->request_argc == 0) {
         if (current_byte == ' ') {
@@ -125,18 +122,18 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
             return argument_result;
         }
 
-        argument_result = let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE);
-        return argument_result;
+        return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_EXPECTED_NEW_LINE);
     }
 
     if (request_decoder->request_argc == 1 && current_byte == ' ') {
         request_decoder->request_argc--;
         request_decoder->state = LET_NETWORK_REQUEST_DECODER_STATE_END;
+
         return argument_result;
     }
 
     switch (request_decoder->request.type) {
-        case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT: {
+        case LET_NETWORK_REQUEST_TYPE_ADD_ACCOUNT:
             if (request_decoder->request_argc == 4) {
                 argument_result = let_network_request_decoder_parse_u64(
                     request_decoder,
@@ -164,8 +161,7 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
             }
 
             break;
-        }
-        case LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER: {
+        case LET_NETWORK_REQUEST_TYPE_MAKE_TRANSFER:
             if (request_decoder->request_argc == 4) {
                 argument_result = let_network_request_decoder_parse_u64(
                     request_decoder,
@@ -193,8 +189,7 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
             }
 
             break;
-        }
-        case LET_NETWORK_REQUEST_TYPE_GET_ACCOUNT: {
+        case LET_NETWORK_REQUEST_TYPE_GET_ACCOUNT:
             if (request_decoder->request_argc == 1) {
                 argument_result = let_network_request_decoder_parse_u64(
                     request_decoder,
@@ -204,8 +199,7 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
             }
 
             break;
-        }
-        case LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT: {
+        case LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT:
             if (request_decoder->request_argc == 3) {
                 argument_result = let_network_request_decoder_parse_u64(
                     request_decoder,
@@ -227,7 +221,6 @@ static let_error_t let_network_request_decoder_run_argument(let_network_request_
             }
 
             break;
-        }
         default:
             break;
     }
@@ -241,6 +234,7 @@ static let_error_t let_network_request_decoder_parse_u128(let_network_request_de
                                                           let_u128_t *output) {
     if (current_byte >= '0' && current_byte <= '9') {
         const let_u8_t digit = current_byte - '0';
+
         if (*output > LET_U128_MAX / 10) {
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_INTEGER_OVERFLOW);
         }
@@ -265,11 +259,8 @@ static let_error_t let_network_request_decoder_parse_u64(let_network_request_dec
                                                          const let_u8_t current_byte,
                                                          let_u64_t *output) {
     let_u128_t current_output = *output;
-    const auto parse_result = let_network_request_decoder_parse_u128(
-        request_decoder,
-        current_byte,
-        &current_output);
 
+    const auto parse_result = let_network_request_decoder_parse_u128(request_decoder, current_byte, &current_output);
     if (let_error_exists(parse_result)) {
         return parse_result;
     }
@@ -286,11 +277,8 @@ static let_error_t let_network_request_decoder_parse_u8(let_network_request_deco
                                                         const let_u8_t current_byte,
                                                         let_u8_t *output) {
     let_u128_t current_output = *output;
-    const auto parse_result = let_network_request_decoder_parse_u128(
-        request_decoder,
-        current_byte,
-        &current_output);
 
+    auto parse_result = let_network_request_decoder_parse_u128(request_decoder, current_byte, &current_output);
     if (let_error_exists(parse_result)) {
         return parse_result;
     }

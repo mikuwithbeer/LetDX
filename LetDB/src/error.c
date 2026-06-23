@@ -57,7 +57,7 @@ let_error_report_t let_error_report(const let_error_t error) {
     switch (error.id) {
         case LET_ERROR_ID_NONE:
             break;
-        case LET_ERROR_ID_ACCOUNT: {
+        case LET_ERROR_ID_ACCOUNT:
             switch ((let_error_account_t) error.error) {
                 case LET_ERROR_ACCOUNT_OUT_OF_MEMORY:
                     error_report.action = LET_ERROR_ACTION_FATAL;
@@ -74,8 +74,7 @@ let_error_report_t let_error_report(const let_error_t error) {
             }
 
             break;
-        }
-        case LET_ERROR_ID_STATE: {
+        case LET_ERROR_ID_STATE:
             error_report.action = LET_ERROR_ACTION_FATAL;
             switch ((let_error_state_t) error.error) {
                 case LET_ERROR_STATE_INVALID_ACCOUNT_LIST:
@@ -87,8 +86,7 @@ let_error_report_t let_error_report(const let_error_t error) {
             }
 
             break;
-        }
-        case LET_ERROR_ID_GUARD: {
+        case LET_ERROR_ID_GUARD:
             error_report.action = LET_ERROR_ACTION_REJECT;
             switch ((let_error_guard_t) error.error) {
                 case LET_ERROR_GUARD_SAME_ACCOUNT:
@@ -122,8 +120,7 @@ let_error_report_t let_error_report(const let_error_t error) {
             }
 
             break;
-        }
-        case LET_ERROR_ID_NETWORK: {
+        case LET_ERROR_ID_NETWORK:
             switch ((let_error_network_t) error.error) {
                 case LET_ERROR_NETWORK_SERVER_CREATE_FAILED:
                     error_report.action = LET_ERROR_ACTION_FATAL;
@@ -207,8 +204,7 @@ let_error_report_t let_error_report(const let_error_t error) {
             }
 
             break;
-        }
-        case LET_ERROR_ID_STORAGE: {
+        case LET_ERROR_ID_STORAGE:
             error_report.action = LET_ERROR_ACTION_FATAL;
             switch ((let_error_storage_t) error.error) {
                 case LET_ERROR_STORAGE_WAL_CREATE_FAILED:
@@ -254,8 +250,7 @@ let_error_report_t let_error_report(const let_error_t error) {
             }
 
             break;
-        }
-        case LET_ERROR_ID_CLI: {
+        case LET_ERROR_ID_CLI:
             error_report.action = LET_ERROR_ACTION_FATAL;
             switch ((let_error_cli_t) error.error) {
                 case LET_ERROR_CLI_INVALID_OPTION:
@@ -279,7 +274,6 @@ let_error_report_t let_error_report(const let_error_t error) {
             }
 
             break;
-        }
     }
 
     return error_report;
