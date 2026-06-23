@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "let/storage/wal.h"
 #include "let/storage/crc.h"
 #include "let/log.h"

@@ -51,7 +51,7 @@ func TestCalculateBackoff(t *testing.T) {
 	}
 }
 
-func TestTry_MaxAttempts(t *testing.T) {
+func TestMaxAttempts(t *testing.T) {
 	ctx := context.Background()
 	s := NewSupervisor(3, 1*time.Millisecond, 5*time.Millisecond)
 
