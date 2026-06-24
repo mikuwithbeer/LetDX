@@ -1,4 +1,13 @@
+/**
+ * @file request.c
+ * @brief The network request implementation.
+ */
+
 #include "let/network/request/decoder.h"
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 
 let_network_request_t let_network_request_empty(void) {
     return (let_network_request_t){};
@@ -12,6 +21,7 @@ let_error_t let_network_request_decode(let_u8_t *buffer,
 
     const auto decode_result = let_network_request_decoder_run(&request_decoder);
     if (!let_error_exists(decode_result)) {
+        // If decoding is successful, copy the decoded request to the output parameter.
         *output = request_decoder.request;
     }
 

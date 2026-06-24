@@ -1,12 +1,21 @@
+/**
+ * @file server.c
+ * @brief The network server implementation.
+ */
+
 #include "let/network/server.h"
 
 #include <sys/time.h>
 #include <unistd.h>
 #include <errno.h>
 
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
+
 let_network_server_t let_network_server_empty(void) {
     let_network_server_t network_server = {};
-    network_server.handle = -1;
+    network_server.handle = -1; // Represents an unallocated or dead socket handle
 
     return network_server;
 }
@@ -14,20 +23,23 @@ let_network_server_t let_network_server_empty(void) {
 let_error_t let_network_server_init(let_network_server_t *network_server,
                                     const let_u16_t port,
                                     const let_u16_t backlog) {
+    // Create a TCP socket for IPv4 communication.
     network_server->port = port;
     network_server->handle = socket(AF_INET, SOCK_STREAM, 0);
     if (network_server->handle < 0) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_CREATE_FAILED);
     }
 
-    constexpr auto option_value = 1;
+    auto option_value = 1; // Allow the socket to be reused immediately after closure
     setsockopt(network_server->handle, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(option_value));
 
+    // Configure the socket address structure for binding.
     network_server->address = (typeof_unqual(network_server->address)){};
     network_server->address.sin_family = AF_INET;
     network_server->address.sin_addr.s_addr = INADDR_ANY;
     network_server->address.sin_port = htons(network_server->port);
 
+    // Bind the socket to the specified port and address.
     const auto bind_result = bind(
         network_server->handle,
         (struct sockaddr *) &network_server->address,
@@ -39,6 +51,7 @@ let_error_t let_network_server_init(let_network_server_t *network_server,
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_BIND_FAILED);
     }
 
+    // Start listening for incoming connections on the socket.
     const auto listen_result = listen(network_server->handle, backlog);
 
     if (listen_result < 0) {
@@ -56,6 +69,7 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
                                       let_network_server_t *network_client) {
     socklen_t client_address_length = sizeof(network_client->address);
 
+    // Accept an incoming connection and get a new socket handle for the client.
     const auto client_handle = accept(
         network_server->handle,
         (struct sockaddr *) &network_client->address,
@@ -69,6 +83,7 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_SERVER_ACCEPT_FAILED);
     }
 
+    // Set the read and write timeouts for the client socket to prevent indefinite blocking.
     const struct timeval network_read_timeout = {
         .tv_sec = read_timeout,
         .tv_usec = 0
@@ -82,7 +97,7 @@ let_error_t let_network_server_accept(const let_network_server_t *network_server
     setsockopt(client_handle, SOL_SOCKET, SO_RCVTIMEO, &network_read_timeout, sizeof(network_read_timeout));
     setsockopt(client_handle, SOL_SOCKET, SO_SNDTIMEO, &network_write_timeout, sizeof(network_write_timeout));
 
-    network_client->handle = client_handle;
+    network_client->handle = client_handle; // Assign the accepted client socket handle to the network client structure
     return let_error_none();
 }
 
@@ -90,11 +105,13 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
                                     let_network_request_t *request) {
     let_u8_t read_byte = 0;
 
+    // Read bytes from the client socket one at a time until a newline character is encountered or the buffer is full.
     for (network_client->read_buffer_index = 0
          ; network_client->read_buffer_index < LET_NETWORK_BUFFER_LENGTH
          ; network_client->read_buffer_index++) {
         const auto read_result = recv(network_client->handle, &read_byte, sizeof(read_byte), 0);
 
+        // Client initiated a clean TCP disconnect.
         if (read_result == 0) {
             return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_CLIENT_CLOSED);
         }
@@ -112,6 +129,7 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
         }
 
         if (read_byte == '\n') {
+            // Replace newline with space as expected by the request decoder.
             network_client->read_buffer[network_client->read_buffer_index++] = ' ';
             break;
         }
@@ -119,6 +137,7 @@ let_error_t let_network_client_read(let_network_server_t *network_client,
         network_client->read_buffer[network_client->read_buffer_index] = read_byte;
     }
 
+    // Request exceeds the buffer size.
     if (network_client->read_buffer_index == LET_NETWORK_BUFFER_LENGTH && read_byte != '\n') {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_REQUEST_BUFFER_OVERFLOW);
     }
@@ -130,6 +149,7 @@ let_error_t let_network_client_write(let_network_server_t *network_client,
                                      const let_network_response_t response) {
     let_size_t response_length = 0;
 
+    // Encode the response into the write buffer.
     const auto encode_result = let_network_response_encode(
         response,
         network_client->write_buffer,
@@ -141,6 +161,8 @@ let_error_t let_network_client_write(let_network_server_t *network_client,
     }
 
     let_i64_t sent_bytes = 0;
+
+    // Write the encoded response to the client socket in a loop until all bytes are sent.
     for (network_client->write_buffer_index = 0
          ; network_client->write_buffer_index < response_length
          ; network_client->write_buffer_index += (size_t) sent_bytes) {
@@ -175,6 +197,6 @@ let_error_t let_network_client_write(let_network_server_t *network_client,
 void let_network_close(let_network_server_t *network_server) {
     if (network_server->handle >= 0) {
         close(network_server->handle);
-        network_server->handle = -1;
+        network_server->handle = -1; // Defend against double-close or use-after-close scenarios
     }
 }

@@ -1,8 +1,21 @@
 #ifndef LET_STORAGE_CRC_H
 #define LET_STORAGE_CRC_H
 
+/**
+ * @file crc.h
+ * @brief The CRC checksum interface.
+ *
+ * This header defines the interface for calculating CRC checksums, which are used
+ * for data integrity verification in the storage.
+ */
+
 #include "let/common.h"
 
+// -----------------------------------------------------------------------------
+// Compile-Time Constants
+// -----------------------------------------------------------------------------
+
+// The CRC32C lookup table for fast checksum calculation.
 constexpr let_u32_t LET_STORAGE_CRC_TABLE_CRC32C[1 << 8] = {
     0x00000000, 0xF26B8303, 0xE13B70F7, 0x1350F3F4,
     0xC79A971F, 0x35F1141C, 0x26A1E7E8, 0xD4CA64EB,
@@ -70,6 +83,15 @@ constexpr let_u32_t LET_STORAGE_CRC_TABLE_CRC32C[1 << 8] = {
     0xBE2DA0A5, 0x4C4623A6, 0x5F16D052, 0xAD7D5351,
 };
 
+// -----------------------------------------------------------------------------
+// Function Declarations
+// -----------------------------------------------------------------------------
+
+/**
+ * @brief Calculates the CRC32C checksum for given data.
+ *
+ * @return The computed CRC32C checksum as a 32-bit unsigned integer.
+ */
 [[nodiscard]] let_u32_t let_storage_crc32c(const void *bytes,
                                            let_size_t length);
 

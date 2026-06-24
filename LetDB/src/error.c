@@ -1,11 +1,17 @@
+/**
+ * @file error.c
+ * @brief The error implementation.
+ */
+
 #include "let/error.h"
 #include "let/log.h"
 
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
+
 let_error_t let_error_none(void) {
-    return (let_error_t){
-        .id = LET_ERROR_ID_NONE,
-        .error = 0
-    };
+    return (let_error_t){}; // Represents no error with an ID of LET_ERROR_ID_NONE and an error code of 0
 }
 
 let_error_t let_error_new(const let_error_id_t id,
@@ -15,13 +21,15 @@ let_error_t let_error_new(const let_error_id_t id,
         .error = code
     };
 
+    // Centralizes error handling by logging errors at the time of creation.
+    // To prevent duplicate logging, pass the existing error object through functions.
     const auto report = let_error_report(error);
     switch (report.action) {
-        case LET_ERROR_ACTION_IGNORE:
-            let_log_print(LET_LOG_LEVEL_INFO, "%s", report.message);
-            break;
         case LET_ERROR_ACTION_REJECT:
             let_log_print(LET_LOG_LEVEL_WARNING, "%s", report.message);
+            break;
+        case LET_ERROR_ACTION_IGNORE:
+            let_log_print(LET_LOG_LEVEL_INFO, "%s", report.message);
             break;
         case LET_ERROR_ACTION_CLOSE:
             let_log_print(LET_LOG_LEVEL_ERROR, "%s", report.message);

@@ -1,8 +1,21 @@
+/**
+ * @file encoder.c
+ * @brief The network response encoder implementation.
+ */
+
 #include "let/network/response/encoder.h"
+
+// ----------------------------------------------------------------------------
+// Forward Declarations
+// -----------------------------------------------------------------------------
 
 static let_error_t let_network_response_encoder_run_integer(let_network_response_encoder_t *response_encoder,
                                                             const void *value,
                                                             let_size_t size);
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 
 let_network_response_encoder_t let_network_response_encoder_empty(void) {
     return (let_network_response_encoder_t){};
@@ -20,6 +33,7 @@ void let_network_response_encoder_init(let_network_response_encoder_t *response_
 
 let_error_t let_network_response_encoder_run(let_network_response_encoder_t *response_encoder) {
     auto encoder_result = let_error_none();
+
     switch (response_encoder->response.type) {
         case LET_NETWORK_RESPONSE_TYPE_MAGIC:
             response_encoder->buffer[response_encoder->buffer_length++] = 'L';
@@ -29,9 +43,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
         case LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT:
             response_encoder->buffer[response_encoder->buffer_length++] = 'A';
             response_encoder->buffer[response_encoder->buffer_length++] = 'I';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'D';
-            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+            response_encoder->buffer[response_encoder->buffer_length++] = 'D'; // Add Account ID
+            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
 
+            // Encode the account ID as a hexadecimal string.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.add_account,
@@ -45,9 +60,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
         case LET_NETWORK_RESPONSE_TYPE_GET_ACCOUNT:
             response_encoder->buffer[response_encoder->buffer_length++] = 'A';
             response_encoder->buffer[response_encoder->buffer_length++] = 'C';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'C';
-            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+            response_encoder->buffer[response_encoder->buffer_length++] = 'C'; // Get Account Info
+            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
 
+            // Encode the account credits as a hexadecimal string.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.get_account.credits,
@@ -57,8 +73,9 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 return encoder_result;
             }
 
-            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
 
+            // Encode the account debits as a hexadecimal string.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.get_account.debits,
@@ -68,8 +85,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 return encoder_result;
             }
 
-            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
 
+
+            // Encode the account flags as a hexadecimal string.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.get_account.flags,
@@ -83,9 +102,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
         case LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES:
             response_encoder->buffer[response_encoder->buffer_length++] = 'S';
             response_encoder->buffer[response_encoder->buffer_length++] = 'E';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'C';
-            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+            response_encoder->buffer[response_encoder->buffer_length++] = 'C'; // Count Entries
+            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
 
+            // Encode the count of entries as a hexadecimal string.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.count_entries,
@@ -104,10 +124,12 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
         case LET_NETWORK_RESPONSE_TYPE_ERROR:
             response_encoder->buffer[response_encoder->buffer_length++] = 'E';
             response_encoder->buffer[response_encoder->buffer_length++] = 'R';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'R';
-            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+            response_encoder->buffer[response_encoder->buffer_length++] = 'R'; // Error Response
+            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
 
             const auto error_code = let_error_code(response_encoder->response.data.error);
+
+            // Encode the error code as a hexadecimal string.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &error_code,
@@ -120,9 +142,13 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
             break;
     }
 
-    response_encoder->buffer[response_encoder->buffer_length++] = '\n';
+    response_encoder->buffer[response_encoder->buffer_length++] = '\n'; // Newline terminator
     return encoder_result;
 }
+
+// ----------------------------------------------------------------------------
+// Internal Functions
+// -----------------------------------------------------------------------------
 
 static let_error_t let_network_response_encoder_run_integer(let_network_response_encoder_t *response_encoder,
                                                             const void *value,
@@ -130,14 +156,17 @@ static let_error_t let_network_response_encoder_run_integer(let_network_response
     const auto bytes = (const let_u8_t *) value;
     auto skip = size;
 
+    // Skip leading zero bytes for more compact representation.
     while (skip > 1 && bytes[skip - 1] == 0) {
         skip--;
     }
 
+    // Check if the buffer has enough capacity to hold the encoded hexadecimal representation.
     if (response_encoder->buffer_length + skip * 2 > response_encoder->buffer_capacity) {
         return let_error_new(LET_ERROR_ID_NETWORK, LET_ERROR_NETWORK_RESPONSE_BUFFER_OVERFLOW);
     }
 
+    // Convert the bytes to its hexadecimal representation and store it in the buffer.
     for (let_size_t index = skip; index-- > 0;) {
         const auto byte = bytes[index];
 

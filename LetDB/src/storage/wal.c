@@ -1,3 +1,8 @@
+/**
+ * @file wal.c
+ * @brief The Write-Ahead Log (WAL) implementation.
+ */
+
 #include "let/storage/wal.h"
 #include "let/storage/crc.h"
 #include "let/log.h"
@@ -5,6 +10,23 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+// -----------------------------------------------------------------------------
+// Forward Declarations
+// -----------------------------------------------------------------------------
+
+static let_error_t let_storage_wal_sync(const let_storage_wal_t *storage_wal);
+
+static let_error_t let_storage_wal_seek(const let_storage_wal_t *storage_wal,
+                                        let_size_t offset,
+                                        let_storage_wal_seek_t seek);
+
+static let_error_t let_storage_wal_truncate(const let_storage_wal_t *storage_wal,
+                                            let_size_t offset);
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 
 let_storage_wal_entry_t let_storage_wal_entry_new(const let_u64_t id,
                                                   const let_time_t timestamp,
@@ -15,7 +37,7 @@ let_storage_wal_entry_t let_storage_wal_entry_new(const let_u64_t id,
             .timestamp = timestamp,
             .type = type
         },
-        .data = {}
+        .data = {} // Zero-initialize to prevent possible garbage data
     };
 }
 
@@ -28,10 +50,12 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                                  const char *path) {
     storage_wal->state = state;
 
+    // Attempt to create a new file exclusively. If it already exists, open it for reading and writing.
     auto descriptor = open(path, O_RDWR | O_CREAT | O_EXCL, 0644);
     if (descriptor >= 0) {
         storage_wal->descriptor = descriptor;
 
+        // Write the magic bytes.
         auto write_result = write(descriptor, &LET_STORAGE_WAL_HEADER_MAGIC, sizeof(LET_STORAGE_WAL_HEADER_MAGIC));
         if (write_result != sizeof(LET_STORAGE_WAL_HEADER_MAGIC)) {
             close(descriptor);
@@ -39,6 +63,7 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
         }
 
+        // Write the version schema to ensure compatibility.
         write_result = write(descriptor, &LET_STORAGE_WAL_HEADER_VERSION, sizeof(LET_STORAGE_WAL_HEADER_VERSION));
         if (write_result != sizeof(LET_STORAGE_WAL_HEADER_VERSION)) {
             close(descriptor);
@@ -46,6 +71,7 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
         }
     } else if (errno == EEXIST) {
+        // The file already exists, so open it for reading and writing.
         descriptor = open(path, O_RDWR);
         if (descriptor < 0) {
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_OPEN_FAILED);
@@ -56,15 +82,9 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
         typeof_unqual(LET_STORAGE_WAL_HEADER_MAGIC) wal_magic = 0;
         typeof_unqual(LET_STORAGE_WAL_HEADER_VERSION) wal_version = 0;
 
+        // Read the magic bytes to verify the file format.
         auto read_result = read(descriptor, &wal_magic, sizeof(wal_magic));
         if (read_result != sizeof(wal_magic)) {
-            close(descriptor);
-            storage_wal->descriptor = -1;
-            return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
-        }
-
-        read_result = read(descriptor, &wal_version, sizeof(wal_version));
-        if (read_result != sizeof(wal_version)) {
             close(descriptor);
             storage_wal->descriptor = -1;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
@@ -76,15 +96,25 @@ let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_MAGIC);
         }
 
+        // Read the version schema to ensure compatibility.
+        read_result = read(descriptor, &wal_version, sizeof(wal_version));
+        if (read_result != sizeof(wal_version)) {
+            close(descriptor);
+            storage_wal->descriptor = -1;
+            return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
+        }
+
         if (wal_version != LET_STORAGE_WAL_HEADER_VERSION) {
             close(descriptor);
             storage_wal->descriptor = -1;
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_VERSION);
         }
     } else {
+        // The file could not be created or opened for an unknown reason.
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CREATE_FAILED);
     }
 
+    // Set the file cursor to the end so incoming writes append safely.
     const auto seek_result = let_storage_wal_seek(storage_wal, 0, LET_STORAGE_WAL_SEEK_END);
     if (let_error_exists(seek_result)) {
         close(storage_wal->descriptor);
@@ -98,6 +128,7 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal,
                                    const bool truncate_on_failure) {
     let_size_t file_offset = LET_STORAGE_WAL_HEADER_LENGTH;
 
+    // Seek to the start of the transaction log, skipping the header.
     auto seek_result = let_storage_wal_seek(storage_wal, file_offset, LET_STORAGE_WAL_SEEK_START);
     if (let_error_exists(seek_result)) {
         return seek_result;
@@ -106,15 +137,18 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal,
     let_storage_wal_entry_safe_t safe_entry;
     let_i64_t bytes_read;
 
+    // Read and replay each transaction entry in the WAL.
     for (storage_wal->transactions = 0
          ; (bytes_read = read(storage_wal->descriptor, &safe_entry, sizeof(safe_entry))) == sizeof(safe_entry)
          ; storage_wal->transactions++) {
+        // Verify the integrity of the entry using the CRC32C checksum.
         const auto crc_result = let_storage_crc32c(&safe_entry.entry, sizeof(let_storage_wal_entry_t));
         if (crc_result != safe_entry.checksum) {
             if (!truncate_on_failure) {
                 return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_CHECKSUM_MISMATCH);
             }
 
+            // Truncate the file to remove the corrupted entry and any later data.
             const auto truncate_result = let_storage_wal_truncate(storage_wal, file_offset);
             if (let_error_exists(truncate_result)) {
                 return truncate_result;
@@ -125,10 +159,13 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal,
                           storage_wal->transactions,
                           file_offset);
 
-            break;
+            break; // Stop replaying after truncation to avoid processing corrupted data
         }
 
+        // Move the file offset forward for the next read.
         file_offset += sizeof(safe_entry);
+
+        // Replay the transaction based on its type.
         switch (safe_entry.entry.header.type) {
             case LET_STORAGE_WAL_ENTRY_TYPE_ADD_ACCOUNT: {
                 const auto add_account = safe_entry.entry.data.add_account;
@@ -179,11 +216,13 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal,
         }
     }
 
+    // Check if the read was incomplete.
     if (bytes_read > 0 && (let_size_t) bytes_read < sizeof(safe_entry)) {
         if (!truncate_on_failure) {
             return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
         }
 
+        // Truncate the file to remove the incomplete entry.
         const auto truncate_result = let_storage_wal_truncate(storage_wal, file_offset);
         if (let_error_exists(truncate_result)) {
             return truncate_result;
@@ -195,30 +234,36 @@ let_error_t let_storage_wal_replay(let_storage_wal_t *storage_wal,
                       file_offset);
     }
 
+    // If the read failed entirely, return an error.
     if (bytes_read < 0) {
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_READ_FAILED);
     }
 
+    // Reset the file cursor to the end so incoming writes append safely.
     seek_result = let_storage_wal_seek(storage_wal, 0, LET_STORAGE_WAL_SEEK_END);
     return seek_result;
 }
 
 let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
                                   const let_storage_wal_entry_t *entry) {
+    // Ensure the transaction ID matches the expected sequence number.
     if (entry->header.id != storage_wal->transactions) {
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_NONCE_MISMATCH);
     }
 
+    // Create a safe entry that includes the checksum for integrity verification.
     const auto safe_entry = (let_storage_wal_entry_safe_t){
         .entry = *entry,
         .checksum = let_storage_crc32c(entry, sizeof(let_storage_wal_entry_t))
     };
 
+    // Write the safe entry to disk.
     const auto write_result = write(storage_wal->descriptor, &safe_entry, sizeof(safe_entry));
     if (write_result != sizeof(safe_entry)) {
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_WRITE_FAILED);
     }
 
+    // Ensure the data is flushed to disk to prevent data loss in case of a crash.
     const auto sync_result = let_storage_wal_sync(storage_wal);
     if (let_error_exists(sync_result)) {
         return sync_result;
@@ -228,7 +273,18 @@ let_error_t let_storage_wal_write(let_storage_wal_t *storage_wal,
     return let_error_none();
 }
 
-let_error_t let_storage_wal_sync(const let_storage_wal_t *storage_wal) {
+void let_storage_wal_close(let_storage_wal_t *storage_wal) {
+    if (storage_wal->descriptor >= 0) {
+        close(storage_wal->descriptor);
+        storage_wal->descriptor = -1; // Defend against use-after-close
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Internal Functions
+// -----------------------------------------------------------------------------
+
+static let_error_t let_storage_wal_sync(const let_storage_wal_t *storage_wal) {
 #if defined(__APPLE__) && defined(__MACH__)
     const bool sync_success = fcntl(storage_wal->descriptor, F_BARRIERFSYNC) == 0;
 #else
@@ -242,9 +298,9 @@ let_error_t let_storage_wal_sync(const let_storage_wal_t *storage_wal) {
     return let_error_none();
 }
 
-let_error_t let_storage_wal_seek(const let_storage_wal_t *storage_wal,
-                                 const let_size_t offset,
-                                 const let_storage_wal_seek_t seek) {
+static let_error_t let_storage_wal_seek(const let_storage_wal_t *storage_wal,
+                                        const let_size_t offset,
+                                        const let_storage_wal_seek_t seek) {
     const auto seek_result = lseek(storage_wal->descriptor, (off_t) offset, seek);
     if (seek_result == -1) {
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_SEEK_FAILED);
@@ -253,19 +309,12 @@ let_error_t let_storage_wal_seek(const let_storage_wal_t *storage_wal,
     return let_error_none();
 }
 
-let_error_t let_storage_wal_truncate(const let_storage_wal_t *storage_wal,
-                                     const let_size_t offset) {
+static let_error_t let_storage_wal_truncate(const let_storage_wal_t *storage_wal,
+                                            const let_size_t offset) {
     const auto truncate_result = ftruncate(storage_wal->descriptor, (off_t) offset);
     if (truncate_result == -1) {
         return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_TRUNCATE_FAILED);
     }
 
     return let_error_none();
-}
-
-void let_storage_wal_close(let_storage_wal_t *storage_wal) {
-    if (storage_wal->descriptor >= 0) {
-        close(storage_wal->descriptor);
-        storage_wal->descriptor = -1;
-    }
 }

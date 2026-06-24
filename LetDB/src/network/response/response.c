@@ -1,4 +1,13 @@
+/**
+ * @file response.c
+ * @brief The network response implementation.
+ */
+
 #include "let/network/response/encoder.h"
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 
 let_network_response_t let_network_response_empty(void) {
     return (let_network_response_t){};
@@ -13,6 +22,7 @@ let_error_t let_network_response_encode(const let_network_response_t network_res
 
     const auto encode_result = let_network_response_encoder_run(&response_encoder);
     if (!let_error_exists(encode_result)) {
+        // If encoding is successful, set the output parameter to the length of the encoded response.
         *output = response_encoder.buffer_length;
     }
 

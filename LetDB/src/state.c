@@ -1,4 +1,13 @@
+/**
+ * @file state.c
+ * @brief The state machine implementation.
+ */
+
 #include "let/state.h"
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 
 let_state_t let_state_empty(void) {
     return (let_state_t){};
@@ -17,13 +26,15 @@ let_error_t let_state_init(let_state_t *state,
 let_error_t let_state_add_account(const let_state_t *state,
                                   const let_account_t account,
                                   let_u64_t *account_id) {
-    const auto account_result = let_account_list_add(state->account_list, account);
+    // Store the current length of the account list before adding the new account.
+    const auto account_length = state->account_list->length;
 
+    const auto account_result = let_account_list_add(state->account_list, account);
     if (let_error_exists(account_result)) {
         return account_result;
     }
 
-    *account_id = state->account_list->length;
+    *account_id = account_length; // Account ID is the previous length of the account list
     return let_error_none();
 }
 

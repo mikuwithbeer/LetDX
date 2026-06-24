@@ -1,3 +1,8 @@
+/**
+ * @file cli.c
+ * @brief The command line interface (CLI) implementation.
+ */
+
 #include "let/cli.h"
 
 #include <errno.h>
@@ -5,6 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// -----------------------------------------------------------------------------
+// Data Structures
+// -----------------------------------------------------------------------------
+
+// The command line options for the application.
 static const struct option let_cli_options[] = {
     {"help", no_argument, nullptr, 'h'},
     {"version", no_argument, nullptr, 'v'},
@@ -17,6 +27,10 @@ static const struct option let_cli_options[] = {
     {"file", required_argument, nullptr, 'f'},
     {nullptr, 0, nullptr, 0}
 };
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 
 let_cli_t let_cli_empty(void) {
     return (let_cli_t){
@@ -41,8 +55,12 @@ let_error_t let_cli_parse(let_cli_t *cli,
                           char **argv) {
     char *end;
     let_i64_t option, value;
+
+    // Parse the command line arguments.
     while ((option = getopt_long(argc, argv, "hvp:b:r:w:l:tf:", let_cli_options, nullptr)) != -1) {
+        // Reset errno to 0 before each conversion to detect errors.
         errno = 0;
+
         switch (option) {
             case 'h':
                 cli->help = true;
@@ -124,5 +142,5 @@ void let_cli_help(void) {
 }
 
 void let_cli_version(void) {
-    printf("%s\n", LET_VERSION);
+    puts(LET_VERSION); // Print the version defined in CMake
 }

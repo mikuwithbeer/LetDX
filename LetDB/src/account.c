@@ -1,7 +1,16 @@
+/**
+ * @file account.c
+ * @brief The account implementation.
+ */
+
 #include "let/account.h"
 
 #include <stdlib.h>
 #include <stdckdint.h>
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 
 let_account_t let_account_new(const let_u128_t credits,
                               const let_u128_t debits,
@@ -30,7 +39,7 @@ let_account_list_t *let_account_list_new(void) {
 
     let_account_t *accounts = malloc(account_list->capacity * sizeof(let_account_t));
     if (accounts == nullptr) {
-        free(account_list);
+        free(account_list); // Free the previously allocated memory to prevent memory leak
         return nullptr;
     }
 
@@ -40,8 +49,11 @@ let_account_list_t *let_account_list_new(void) {
 
 let_error_t let_account_list_add(let_account_list_t *account_list,
                                  const let_account_t account) {
+    // Check if the account list needs to be resized.
     if (account_list->length >= account_list->capacity) {
         let_u64_t new_capacity;
+
+        // Check for potential overflow when doubling the capacity.
         if (ckd_mul(&new_capacity, account_list->capacity, 2)) {
             return let_error_new(LET_ERROR_ID_ACCOUNT, LET_ERROR_ACCOUNT_CAPACITY_OVERFLOW);
         }

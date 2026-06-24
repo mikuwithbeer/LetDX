@@ -1,19 +1,30 @@
+/**
+ * @file log.c
+ * @brief The logging implementation.
+ */
+
 #include "let/log.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 
-let_log_level_t let_log_level = LET_LOG_LEVEL_DEBUG;
+let_log_level_t let_log_level;
 
+//--------------------------------------------------------------------------
+// Data Structures
+// -----------------------------------------------------------------------------
+
+// Maps log levels to their string representations for logging output.
 static const char *const let_log_level_attributes[] = {
     "DEBUG",
     "INFO",
     "WARNING",
     "ERROR",
     "FATAL",
-    ""
+    "NONE"
 };
 
+// Maps log levels to their color codes for terminal output.
 static const char *const let_log_level_colors[] = {
     "\033[1;36m",
     "\033[0;34m",
@@ -22,6 +33,10 @@ static const char *const let_log_level_colors[] = {
     "\033[1;31m",
     "\033[0m"
 };
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 
 void let_log_level_set(const let_log_level_t log_level) {
     let_log_level = log_level;
@@ -43,15 +58,18 @@ void let_log_print(const let_log_level_t log_level,
         return;
     }
 
+    // Format the current time into a human-readable string for the log header.
     char header_buffer[LET_LOG_HEADER_CAPACITY] = {};
     strftime(header_buffer, sizeof(header_buffer), "%Y-%m-%d %H:%M:%S", time_info);
 
+    // Print the log header with color coding and timestamp.
     fprintf(stderr,
             "%s[%s] (%s): ",
             let_log_level_colors[log_level],
             header_buffer,
             let_log_level_attributes[log_level]);
 
+    // Print the formatted log message using variable arguments.
     va_list args = {};
     va_start(args, format);
     vfprintf(stderr, format, args);
