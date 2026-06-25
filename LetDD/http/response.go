@@ -38,7 +38,8 @@ func (r OkResponse) ToJSON(ctx *echo.Context) error {
 }
 
 type ErrResponse struct {
-	Code uint16 `json:"error"`
+	Message string `json:"message"`
+	Code    uint16 `json:"code"`
 }
 
 func (r ErrResponse) ToJSON(ctx *echo.Context) error {
@@ -54,7 +55,7 @@ func ToResponse(r tcp.Response) (Response, error) {
 	case tcp.OkeResponse:
 		return OkResponse{}, nil
 	case tcp.ErrorResponse:
-		return ErrResponse{Code: response.Code}, nil
+		return ErrResponse{Message: "Failed Request", Code: response.Code}, nil
 	default:
 		return nil, fmt.Errorf("unexpected response: %s", r.Kind())
 	}
