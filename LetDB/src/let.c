@@ -109,6 +109,9 @@ void let_run(const let_cli_t *cli) {
             // Handle any errors that occurred during reading or processing the request.
             auto error_report = let_error_report(let.error);
             switch (error_report.action) {
+                case LET_ERROR_ACTION_NONE:
+                    // No action needed, continue processing.
+                    break;
                 case LET_ERROR_ACTION_REJECT:
                     // Reject the request and send an error response back to the client.
                     network_response.type = LET_NETWORK_RESPONSE_TYPE_ERROR;
@@ -117,9 +120,8 @@ void let_run(const let_cli_t *cli) {
                     break;
                 case LET_ERROR_ACTION_IGNORE:
                     // Ignore the error and close the connection.
-                    let.executing = false;
                     let.error = let_error_none();
-                    break;
+                    [[fallthrough]]; // Fallthrough to close the connection
                 case LET_ERROR_ACTION_CLOSE:
                     // Close the connection due to an error.
                     let.executing = false;
@@ -129,8 +131,6 @@ void let_run(const let_cli_t *cli) {
                     let.executing = false;
                     let.accepting = false;
                     continue;
-                default:
-                    break;
             }
 
             // Write the response back to the network client.
