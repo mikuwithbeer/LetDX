@@ -7,13 +7,34 @@ import (
 
 	"context"
 	"errors"
-	"fmt"
-	"log"
-	stdhttp "net/http"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
+
+func init() {
+	replaceAttr := func(_ []string, attr slog.Attr) slog.Attr {
+		if attr.Key != slog.TimeKey {
+			return attr
+		}
+
+		timestamp, ok := attr.Value.Any().(time.Time)
+		if !ok {
+			return attr
+		}
+
+		return slog.String("time", timestamp.Format(time.RFC3339Nano))
+	}
+
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:       slog.LevelInfo,
+		ReplaceAttr: replaceAttr,
+	})
+
+	slog.SetDefault(slog.New(handler))
+}
 
 func run(ctx context.Context) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
@@ -30,17 +51,13 @@ func run(ctx context.Context) error {
 	defer client.Close()
 
 	server := http.NewServer(client, config)
-	err := server.Start(ctx)
-	if err != nil && !errors.Is(err, stdhttp.ErrServerClosed) {
-		return fmt.Errorf("HTTP server encountered an error: %w", err)
-	}
-
-	return nil
+	return server.Start(ctx)
 }
 
 func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
-		log.Fatalf("Failed to run application: %v", err)
+		slog.Error("Failed to run application", slog.Any("error", err))
+		os.Exit(1)
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"LetDD/tcp"
 
 	"context"
+	"errors"
+	"net/http"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -48,5 +50,9 @@ func (s *Server) Start(ctx context.Context) error {
 		HideBanner:      true,
 	}
 
-	return sc.Start(ctx, s.Echo)
+	if err := sc.Start(ctx, s.Echo); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	return nil
 }

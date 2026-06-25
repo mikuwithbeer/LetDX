@@ -39,7 +39,8 @@ func (s *Supervisor) Try(ctx context.Context) bool {
 	}
 
 	backoff := s.CalculateBackoff()
-	slog.Log(ctx, slog.LevelInfo, "Supervisor: retrying",
+
+	slog.Log(ctx, slog.LevelInfo, "SUPERVISOR",
 		slog.Duration("backoff", backoff),
 		slog.Uint64("try", s.currentTry),
 		slog.Uint64("max_tries", s.cancelAfter),
