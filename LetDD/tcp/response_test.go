@@ -21,9 +21,9 @@ func TestResponse(t *testing.T) {
 			failOnPurpose: false,
 		},
 		{
-			name:          "Oke Response",
+			name:          "Ok Response",
 			input:         []byte("OKE\n"),
-			expected:      OkeResponse{},
+			expected:      OkResponse{},
 			failOnPurpose: false,
 		},
 		{

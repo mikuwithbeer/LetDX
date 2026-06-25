@@ -6,7 +6,6 @@ import (
 	"LetDD/tcp"
 
 	"context"
-	"errors"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -14,7 +13,17 @@ import (
 	"time"
 )
 
+func main() {
+	ctx := context.Background()
+	if err := run(ctx); err != nil {
+		slog.Error("Failed to run application", slog.Any("error", err))
+		os.Exit(1)
+	}
+}
+
+// Initializes the application.
 func init() {
+	// Configure the logger to output JSON-formatted logs with timestamps.
 	replaceAttr := func(_ []string, attr slog.Attr) slog.Attr {
 		if attr.Key != slog.TimeKey {
 			return attr
@@ -28,6 +37,7 @@ func init() {
 		return slog.String("time", timestamp.Format(time.RFC3339Nano))
 	}
 
+	// Setup JSON logger.
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level:       slog.LevelInfo,
 		ReplaceAttr: replaceAttr,
@@ -36,28 +46,21 @@ func init() {
 	slog.SetDefault(slog.New(handler))
 }
 
+// Runs the main application logic.
 func run(ctx context.Context) error {
+	// Intercept OS interruption signals (e.g., Ctrl+C, SIGTERM) for graceful shutdown.
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	// Load application configuration.
 	config := &config.Config{}
 	config.Collect()
 
-	if config.ConnectAddress == nil {
-		return errors.New("connection address is missing from configuration")
-	}
-
-	client := tcp.NewClient(*config.ConnectAddress)
+	// Create a TCP client.
+	client := tcp.NewClient(config.ConnectAddress)
 	defer client.Close()
 
+	// Create and start the HTTP server.
 	server := http.NewServer(client, config)
 	return server.Start(ctx)
-}
-
-func main() {
-	ctx := context.Background()
-	if err := run(ctx); err != nil {
-		slog.Error("Failed to run application", slog.Any("error", err))
-		os.Exit(1)
-	}
 }

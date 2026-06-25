@@ -6,120 +6,63 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-func (s *Server) getAccount(ctx *echo.Context) error {
+// Handles GET requests to retrieve specific account information.
+func (s *Server) GetAccount(ctx *echo.Context) error {
 	accountId, err := echo.PathParam[uint64](ctx, "id")
 	if err != nil {
 		return err
 	}
 
-	clientResponse, err := s.Client.Communicate(ctx.Request().Context(), tcp.GetAccountRequest{
+	return s.Communicate(ctx, tcp.GetAccountRequest{
 		AccountID: accountId,
 	})
-	if err != nil {
-		return err
-	}
-
-	serverResponse, err := ToResponse(clientResponse)
-	if err != nil {
-		return err
-	}
-
-	return serverResponse.ToJSON(ctx)
 }
 
-func (s *Server) updateAccount(ctx *echo.Context) error {
+// Handles PUT requests to update specific account's flags.
+func (s *Server) UpdateAccount(ctx *echo.Context) error {
 	accountId, err := echo.PathParam[uint64](ctx, "id")
 	if err != nil {
 		return err
 	}
 
-	var updateAccount UpdateAccountRequest
-
-	err = ctx.Bind(&updateAccount)
+	updateAccount, err := BindAndValidate[UpdateAccountRequest](ctx)
 	if err != nil {
 		return err
 	}
 
-	err = ctx.Validate(&updateAccount)
-	if err != nil {
-		return err
-	}
-
-	clientResponse, err := s.Client.Communicate(ctx.Request().Context(), tcp.UpdateAccountRequest{
+	return s.Communicate(ctx, tcp.UpdateAccountRequest{
 		WalID:     s.Client.WalID(),
 		AccountID: accountId,
 		Flags:     *updateAccount.Flags,
 	})
-	if err != nil {
-		return err
-	}
-
-	serverResponse, err := ToResponse(clientResponse)
-	if err != nil {
-		return err
-	}
-
-	return serverResponse.ToJSON(ctx)
 }
 
-func (s *Server) postAccount(ctx *echo.Context) error {
-	var postAccount PostAccountRequest
-
-	err := ctx.Bind(&postAccount)
+// Handles POST requests to create a new account.
+func (s *Server) PostAccount(ctx *echo.Context) error {
+	postAccount, err := BindAndValidate[PostAccountRequest](ctx)
 	if err != nil {
 		return err
 	}
 
-	err = ctx.Validate(&postAccount)
-	if err != nil {
-		return err
-	}
-
-	clientResponse, err := s.Client.Communicate(ctx.Request().Context(), tcp.AddAccountRequest{
+	return s.Communicate(ctx, tcp.AddAccountRequest{
 		WalID:   s.Client.WalID(),
 		Credits: *postAccount.Credits,
 		Debits:  *postAccount.Debits,
 		Flags:   *postAccount.Flags,
 	})
-	if err != nil {
-		return err
-	}
-
-	serverResponse, err := ToResponse(clientResponse)
-	if err != nil {
-		return err
-	}
-
-	return serverResponse.ToJSON(ctx)
 }
 
-func (s *Server) postTransfer(ctx *echo.Context) error {
-	var postTransfer PostTransferRequest
-
-	err := ctx.Bind(&postTransfer)
+// Handles POST requests to create a new transfer.
+func (s *Server) PostTransfer(ctx *echo.Context) error {
+	postTransfer, err := BindAndValidate[PostTransferRequest](ctx)
 	if err != nil {
 		return err
 	}
 
-	err = ctx.Validate(&postTransfer)
-	if err != nil {
-		return err
-	}
-
-	clientResponse, err := s.Client.Communicate(ctx.Request().Context(), tcp.MakeTransferRequest{
+	return s.Communicate(ctx, tcp.MakeTransferRequest{
 		WalID:  s.Client.WalID(),
 		FromID: *postTransfer.FromID,
 		ToID:   *postTransfer.ToID,
 		Amount: *postTransfer.Amount,
 	})
-	if err != nil {
-		return err
-	}
-
-	serverResponse, err := ToResponse(clientResponse)
-	if err != nil {
-		return err
-	}
-
-	return serverResponse.ToJSON(ctx)
 }
