@@ -5,14 +5,18 @@
 >
 > Features, APIs, and architecture are subject to change without notice.
 
-### Layout
+---
+
+## Project Layout
 
 Project is separated into two primary parts:
 
 - **`LetDB`**: The core database server and storage engine.
 - **`LetDD`**: The public-facing database driver that serves as a secure exposure layer.
 
-### AI Usage
+---
+
+## Artificial Intelligence
 
 AI is used within the project but only in limited and clearly defined areas:
 
@@ -20,36 +24,102 @@ AI is used within the project but only in limited and clearly defined areas:
 - **Code Generation**: We are **NOT** relying on AI to write the actual code or core logic. This is a deliberate choice
   to maintain code quality and demystify the architecture. We don't want to turn the codebase to unmaintainable slop.
 
-### Building
+---
 
-#### Prerequisites
+## Building From Source
 
-To build from source, make sure your environment meets the following requirements:
+> [!NOTE]
+> This project aggressively targets modern toolchains.
 
-| Requirement | Version                                               | 
-|-------------|-------------------------------------------------------|
-| CMake       | **4.0** or newer                                      |
-| C Compiler  | **C23** compatible (We prefer latest LLVM toolchains) |
-| Go Compiler | **1.26** or newer                                     |
+### Prerequisites
 
-#### Steps
+To compile from source, make sure your environment meets the following requirements:
+
+| Requirement | Version                                                     | 
+|-------------|-------------------------------------------------------------|
+| CMake       | **4.0** or newer                                            |
+| C Compiler  | **C23** compatible (The latest LLVM toolchain has priority) |
+| Go Compiler | **1.26.4** or newer                                         |
+
+### Steps
 
 1. Clone the Repository:
    ```bash
    git clone https://github.com/mikuwithbeer/LetDX.git
    cd LetDX
    ```
+
 2. Configure the Build:
    ```bash
    cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
    ```
+
 3. Compile the Project(s):
    ```bash
    cmake --build build --config Release
    ```
+
    Upon a successful build, the compiled binaries will be located inside the `build/` directory.
 
-### License
+---
+
+### Docker Deployment
+
+You can quickly deploy the project using pre-built images hosted on the GitHub Container Registry (GHCR).
+
+1. Pull the Image:
+   ```bash
+   docker pull ghcr.io/mikuwithbeer/letdx:main
+   ```
+
+2. Docker Compose Setup:
+
+   For production or local development, we recommend using [Docker Compose](https://docs.docker.com/compose/) to manage
+   the database and daemon services together seamlessly.
+
+   Create a `docker-compose.yml` file and paste the example below:
+
+   ```yaml
+   services:
+     database:
+       image: ghcr.io/mikuwithbeer/letdx:main
+       entrypoint:
+         - /app/LetDB
+       restart: unless-stopped
+       volumes:
+         - transactions:/app/data
+
+     daemon:
+       image: ghcr.io/mikuwithbeer/letdx:main
+       entrypoint:
+         - /app/LetDD
+       command: [ '-serve', '0.0.0.0:5543', '-connect', 'database:55543' ]
+       ports:
+         - '5543:5543'
+       depends_on:
+         - database
+       restart: unless-stopped
+
+   volumes:
+     transactions:
+    ```
+
+3. Launch the Services:
+   ```bash
+   docker compose up -d
+   ```
+
+   To verify that both services are running smoothly, you can check the container status using `docker compose ps`.
+
+> [!IMPORTANT]
+> The provided `docker-compose.yml` file is a simple yet powerful setup.
+>
+> Depending on your specific use case, you might need to modify the given file (e.g., changing port mappings, updating
+> volume paths, or configuring environment variables).
+
+---
+
+### Project Licensing
 
 We use a dual-licensing model:
 
