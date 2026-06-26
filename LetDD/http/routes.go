@@ -3,6 +3,8 @@ package http
 import (
 	"LetDD/tcp"
 
+	"net/http"
+
 	"github.com/labstack/echo/v5"
 )
 
@@ -13,7 +15,7 @@ func (s *Server) GetAccount(ctx *echo.Context) error {
 		return err
 	}
 
-	return s.Communicate(ctx, tcp.GetAccountRequest{
+	return s.Communicate(ctx, &tcp.GetAccountRequest{
 		AccountID: accountId,
 	})
 }
@@ -30,8 +32,7 @@ func (s *Server) UpdateAccount(ctx *echo.Context) error {
 		return err
 	}
 
-	return s.Communicate(ctx, tcp.UpdateAccountRequest{
-		WalID:     s.Client.WalID(),
+	return s.Communicate(ctx, &tcp.UpdateAccountRequest{
 		AccountID: accountId,
 		Flags:     *updateAccount.Flags,
 	})
@@ -44,8 +45,7 @@ func (s *Server) PostAccount(ctx *echo.Context) error {
 		return err
 	}
 
-	return s.Communicate(ctx, tcp.AddAccountRequest{
-		WalID:   s.Client.WalID(),
+	return s.Communicate(ctx, &tcp.AddAccountRequest{
 		Credits: *postAccount.Credits,
 		Debits:  *postAccount.Debits,
 		Flags:   *postAccount.Flags,
@@ -54,15 +54,18 @@ func (s *Server) PostAccount(ctx *echo.Context) error {
 
 // Handles POST requests to create a new transfer.
 func (s *Server) PostTransfer(ctx *echo.Context) error {
-	postTransfer, err := BindAndValidate[PostTransferRequest](ctx)
-	if err != nil {
-		return err
-	}
+	// Retrieve the transfer request from the context.
+	getResult := ctx.Get("transfer")
 
-	return s.Communicate(ctx, tcp.MakeTransferRequest{
-		WalID:  s.Client.WalID(),
-		FromID: *postTransfer.FromID,
-		ToID:   *postTransfer.ToID,
-		Amount: *postTransfer.Amount,
-	})
+	// Ensure the retrieved value is of the expected type and process it.
+	switch postTransfer := getResult.(type) {
+	case *PostTransferRequest:
+		return s.Communicate(ctx, &tcp.MakeTransferRequest{
+			FromID: *postTransfer.FromID,
+			ToID:   *postTransfer.ToID,
+			Amount: *postTransfer.Amount,
+		})
+	default:
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Invalid Transfer Request"})
+	}
 }
