@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // -----------------------------------------------------------------------------
 // Data Structures
@@ -20,11 +21,11 @@ static const struct option let_cli_options[] = {
     {"version", no_argument, nullptr, 'v'},
     {"port", required_argument, nullptr, 'p'},
     {"backlog", required_argument, nullptr, 'b'},
-    {"read-timeout", required_argument, nullptr, 'r'},
-    {"write-timeout", required_argument, nullptr, 'w'},
     {"log-level", required_argument, nullptr, 'l'},
     {"truncate-on-fail", no_argument, nullptr, 't'},
     {"file", required_argument, nullptr, 'f'},
+    {"read-timeout", required_argument, nullptr, 0},
+    {"write-timeout", required_argument, nullptr, 0},
     {nullptr, 0, nullptr, 0}
 };
 
@@ -54,14 +55,36 @@ let_error_t let_cli_parse(let_cli_t *cli,
                           const int argc,
                           char **argv) {
     char *end;
-    let_i64_t option, value;
+    int option, index;
 
     // Parse the command line arguments.
-    while ((option = getopt_long(argc, argv, "hvp:b:r:w:l:tf:", let_cli_options, nullptr)) != -1) {
-        // Reset errno to 0 before each conversion to detect errors.
+    while ((option = getopt_long(argc, argv, "hvp:b:l:tf:", let_cli_options, &index)) != -1) {
+        // Reset `errno` before each conversion to detect errors.
         errno = 0;
 
+        // Defined to hold the converted value from the command line argument.
+        let_i64_t value = 0;
+
+        // Check which option was matched.
         switch (option) {
+            case 0:
+                if (strcmp(let_cli_options[index].name, "read-timeout") == 0) {
+                    value = (let_i64_t) strtoul(optarg, &end, 10);
+                    if (end == optarg || errno == ERANGE || value > LET_U32_MAX) {
+                        return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_READ_TIMEOUT);
+                    }
+
+                    cli->read_timeout = (let_u32_t) value;
+                } else if (strcmp(let_cli_options[index].name, "write-timeout") == 0) {
+                    value = (let_i64_t) strtoul(optarg, &end, 10);
+                    if (end == optarg || errno == ERANGE || value > LET_U32_MAX) {
+                        return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_WRITE_TIMEOUT);
+                    }
+
+                    cli->write_timeout = (let_u32_t) value;
+                }
+
+                break;
             case 'h':
                 cli->help = true;
                 break;
@@ -83,22 +106,6 @@ let_error_t let_cli_parse(let_cli_t *cli,
                 }
 
                 cli->backlog = (let_u16_t) value;
-                break;
-            case 'r':
-                value = (let_i64_t) strtoul(optarg, &end, 10);
-                if (end == optarg || errno == ERANGE || value > LET_U32_MAX) {
-                    return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_READ_TIMEOUT);
-                }
-
-                cli->read_timeout = (let_u32_t) value;
-                break;
-            case 'w':
-                value = (let_i64_t) strtoul(optarg, &end, 10);
-                if (end == optarg || errno == ERANGE || value > LET_U32_MAX) {
-                    return let_error_new(LET_ERROR_ID_CLI, LET_ERROR_CLI_INVALID_WRITE_TIMEOUT);
-                }
-
-                cli->write_timeout = (let_u32_t) value;
                 break;
             case 'l':
                 value = (let_i64_t) strtoul(optarg, &end, 10);
@@ -130,17 +137,17 @@ void let_cli_help(void) {
         "-v, --version              Show program version and exit\n"
         "-p, --port <PORT>          Specify the port number to listen on\n"
         "-b, --backlog <SIZE>       Set the connection backlog size\n"
-        "-r, --read-timeout <TIME>  Set the read timeout in seconds\n"
-        "-w, --write-timeout <TIME> Set the write timeout in seconds\n"
         "-l, --log-level <LEVEL>    Set the log level\n"
         "-t, --truncate-on-fail     Truncate the storage on failure\n"
         "-f, --file <PATH>          Specify the file to use\n"
+        "--read-timeout <TIME>      Set the read timeout in seconds\n"
+        "--write-timeout <TIME>     Set the write timeout in seconds\n"
         "\n"
         "Examples:\n"
         "LetDB --port 8080 -b 4 --write-timeout 0\n"
-        "LetDB --file debug.db -l 0 -r 60");
+        "LetDB --file debug.db -l 0 --read-timeout 60");
 }
 
 void let_cli_version(void) {
-    puts(LET_VERSION); // Print the version defined in CMake
+    puts(LET_VERSION); // Print the version defined inside CMake
 }
