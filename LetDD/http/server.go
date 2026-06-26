@@ -37,7 +37,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.Echo.Use(middleware.RequestLogger())
 
 	// Middleware to limit the size of incoming request.
-	s.Echo.Use(middleware.BodyLimit(s.Config.SizeLimit))
+	s.Echo.Use(middleware.BodyLimit(s.Config.BodyLimit))
 
 	// Middleware to handle authorization based on the provided server token.
 	if len(s.Config.ServerToken) > 0 {
@@ -45,7 +45,9 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	// Middleware to limit the rate of incoming requests.
-	s.Echo.Use(middleware.RateLimiterWithConfig(s.RateLimiter()))
+	if s.Config.RateLimiter != nil {
+		s.Echo.Use(middleware.RateLimiterWithConfig(s.RateLimiter()))
+	}
 
 	// Middleware to set a timeout for the request context.
 	s.Echo.Use(middleware.ContextTimeout(s.Config.ContextTimeout))

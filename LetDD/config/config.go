@@ -1,11 +1,15 @@
 package config
 
 import (
+	"LetDD/supervisor"
+
 	"crypto/subtle"
 	"flag"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/labstack/echo/v5/middleware"
 )
 
 // Represents the permission level for the server.
@@ -22,26 +26,54 @@ const (
 type Config struct {
 	ConnectAddress string
 	ServerAddress  string
-	SizeLimit      int64
 
 	ContextTimeout  time.Duration
 	GracefulTimeout time.Duration
+
+	BodyLimit int64
+
+	RateLimiter *middleware.RateLimiterMemoryStoreConfig
+	Supervisor  *supervisor.Supervisor
 
 	ServerToken []byte
 	ServerPerms Permission
 }
 
 // Collects configuration settings from command-line flags and environment variables.
-func (c *Config) Collect() {
+func (c *Config) Collect() error {
 	// Define command-line flags.
 	flag.StringVar(&c.ConnectAddress, "connect", "localhost:55543", "Address to connect TCP client")
 	flag.StringVar(&c.ServerAddress, "serve", "localhost:5543", "Address to serve HTTP server")
-	flag.Int64Var(&c.SizeLimit, "size-limit", 1024*1024, "Maximum accepted size of the request body")
 
 	flag.DurationVar(&c.ContextTimeout, "context-timeout", 5*time.Second, "Context timeout for requests")
 	flag.DurationVar(&c.GracefulTimeout, "graceful-timeout", 5*time.Second, "Graceful shutdown timeout for server")
 
+	flag.Int64Var(&c.BodyLimit, "limit", 1024*1024, "Maximum accepted size of the request body")
+
+	ratelimitString := flag.String("ratelimit", "", "Rate limit for transfers in the format <requests>/<window>[/<burst>][/<expires>]")
+	supervisorString := flag.String("supervisor", "", "Supervisor configuration in the format <attempt>/<maximum>/<minimum>")
+
 	flag.Parse() // Parse command-line flags
+
+	// Parse rate limiter configuration.
+	if ratelimitString != nil && *ratelimitString != "" {
+		ratelimiter, err := ParseRateLimiter(*ratelimitString)
+		if err != nil {
+			return err
+		}
+
+		c.RateLimiter = &ratelimiter
+	}
+
+	// Parse supervisor configuration.
+	if supervisorString != nil && *supervisorString != "" {
+		observer, err := ParseSupervisor(*supervisorString)
+		if err != nil {
+			return err
+		}
+
+		c.Supervisor = &observer
+	}
 
 	// Read server token from environment variable.
 	if token, exists := os.LookupEnv("LETDD_TOKEN"); exists && token != "" {
@@ -62,10 +94,11 @@ func (c *Config) Collect() {
 	default:
 		c.ServerPerms = PERMISSION_NONE
 	}
+
+	return nil
 }
 
 // Checks if the provided token matches the configured token.
-// Uses constant-time comparison for security.
 func (c *Config) IsMatches(token string) bool {
 	if len(c.ServerToken) == 0 {
 		return false

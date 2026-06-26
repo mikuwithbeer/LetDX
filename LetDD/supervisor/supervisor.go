@@ -8,21 +8,21 @@ import (
 
 // Manages the retry logic and exponential backoff timing for a specific operation.
 type Supervisor struct {
-	cancelAfter uint64 // Maximum number of retry attempts before giving up
-	currentTry  uint64 // Current retry attempt count
+	CancelAfter uint64 // Maximum number of retry attempts before giving up
+	CurrentTry  uint64 // Current retry attempt count
 
-	minimumDelay time.Duration // Minimum delay between retries
-	maximumDelay time.Duration // Maximum delay between retries
+	MaximumDelay time.Duration // Maximum delay between retries
+	MinimumDelay time.Duration // Minimum delay between retries
 }
 
 // Creates a new `Supervisor` instance with the specified parameters.
-func NewSupervisor(cancelAfter uint64, minimumDelay, maximumDelay time.Duration) *Supervisor {
+func NewSupervisor(cancelAfter uint64, maximumDelay, minimumDelay time.Duration) *Supervisor {
 	return &Supervisor{
-		cancelAfter: cancelAfter,
-		currentTry:  0,
+		CancelAfter: cancelAfter,
+		CurrentTry:  0,
 
-		minimumDelay: minimumDelay,
-		maximumDelay: maximumDelay,
+		MaximumDelay: maximumDelay,
+		MinimumDelay: minimumDelay,
 	}
 }
 
@@ -34,13 +34,13 @@ func (s *Supervisor) Try(ctx context.Context) bool {
 	}
 
 	// The first attempt requires no backoff delay.
-	if s.currentTry == 0 {
-		s.currentTry++
+	if s.CurrentTry == 0 {
+		s.CurrentTry++
 		return true
 	}
 
 	// Stop retrying if we have reached the allowed maximum attempts.
-	if s.currentTry >= s.cancelAfter {
+	if s.CurrentTry >= s.CancelAfter {
 		return false
 	}
 
@@ -48,8 +48,8 @@ func (s *Supervisor) Try(ctx context.Context) bool {
 
 	slog.Log(ctx, slog.LevelInfo, "SUPERVISOR",
 		slog.Duration("backoff", backoff),
-		slog.Uint64("try", s.currentTry),
-		slog.Uint64("max_tries", s.cancelAfter),
+		slog.Uint64("try", s.CurrentTry),
+		slog.Uint64("max_tries", s.CancelAfter),
 	)
 
 	timer := time.NewTimer(backoff)
@@ -60,18 +60,18 @@ func (s *Supervisor) Try(ctx context.Context) bool {
 	case <-ctx.Done():
 		return false
 	case <-timer.C:
-		s.currentTry++
+		s.CurrentTry++
 		return true
 	}
 }
 
 // Calculates the backoff duration.
 func (s *Supervisor) CalculateBackoff() time.Duration {
-	backoff := (time.Duration(1) << (s.currentTry - 1)) * s.minimumDelay
-	return min(max(backoff, s.minimumDelay), s.maximumDelay)
+	backoff := (time.Duration(1) << (s.CurrentTry - 1)) * s.MinimumDelay
+	return min(max(backoff, s.MinimumDelay), s.MaximumDelay)
 }
 
 // Resets the retry count.
 func (s *Supervisor) Reset() {
-	s.currentTry = 0
+	s.CurrentTry = 0
 }

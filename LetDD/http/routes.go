@@ -54,18 +54,31 @@ func (s *Server) PostAccount(ctx *echo.Context) error {
 
 // Handles POST requests to create a new transfer.
 func (s *Server) PostTransfer(ctx *echo.Context) error {
-	// Retrieve the transfer request from the context.
-	getResult := ctx.Get("transfer")
+	var makeTransfer *tcp.MakeTransferRequest
 
-	// Ensure the retrieved value is of the expected type and process it.
-	switch postTransfer := getResult.(type) {
+	switch transferResult := ctx.Get("transfer").(type) {
 	case *PostTransferRequest:
-		return s.Communicate(ctx, &tcp.MakeTransferRequest{
+		// The request has been already validated from the rate limiter middleware.
+		makeTransfer = &tcp.MakeTransferRequest{
+			FromID: *transferResult.FromID,
+			ToID:   *transferResult.ToID,
+			Amount: *transferResult.Amount,
+		}
+	case nil:
+		// No ratelimiter was set, so we bind and validate the request directly.
+		postTransfer, err := BindAndValidate[PostTransferRequest](ctx)
+		if err != nil {
+			return err
+		}
+
+		makeTransfer = &tcp.MakeTransferRequest{
 			FromID: *postTransfer.FromID,
 			ToID:   *postTransfer.ToID,
 			Amount: *postTransfer.Amount,
-		})
+		}
 	default:
-		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Invalid Transfer Request"})
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Unreachable Error"})
 	}
+
+	return s.Communicate(ctx, makeTransfer)
 }

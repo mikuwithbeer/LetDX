@@ -27,9 +27,11 @@ type Client struct {
 }
 
 // Creates a new TCP client instance with the specified server address.
-func NewClient(address string) *Client {
-	// The supervisor is configured to try up to 5 times, starting with a 200ms delay up to a maximum of 5 seconds.
-	supervisor := supervisor.NewSupervisor(5, 200*time.Millisecond, 5*time.Second)
+func NewClient(address string, observer *supervisor.Supervisor) *Client {
+	// If no supervisor is provided, create a default one with predefined parameters.
+	if observer == nil {
+		observer = supervisor.NewSupervisor(5, 5*time.Second, 200*time.Millisecond)
+	}
 
 	return &Client{
 		connection:   nil,
@@ -39,7 +41,7 @@ func NewClient(address string) *Client {
 		reader: nil,
 		writer: nil,
 
-		supervisor: supervisor,
+		supervisor: observer,
 		mutex:      sync.Mutex{},
 	}
 }

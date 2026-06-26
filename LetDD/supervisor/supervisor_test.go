@@ -9,20 +9,20 @@ import (
 func TestNewSupervisor(t *testing.T) {
 	s := NewSupervisor(5, 10*time.Millisecond, 100*time.Millisecond)
 
-	if s.cancelAfter != 5 {
-		t.Errorf("Expected cancelAfter to be 5, got %d", s.cancelAfter)
+	if s.CancelAfter != 5 {
+		t.Errorf("Expected CancelAfter to be 5, got %d", s.CancelAfter)
 	}
 
-	if s.minimumDelay != 10*time.Millisecond {
-		t.Errorf("Expected minimumDelay to be 10ms, got %v", s.minimumDelay)
+	if s.MinimumDelay != 10*time.Millisecond {
+		t.Errorf("Expected MinimumDelay to be 10ms, got %v", s.MinimumDelay)
 	}
 
-	if s.maximumDelay != 100*time.Millisecond {
-		t.Errorf("Expected maximumDelay to be 100ms, got %v", s.maximumDelay)
+	if s.MaximumDelay != 100*time.Millisecond {
+		t.Errorf("Expected MaximumDelay to be 100ms, got %v", s.MaximumDelay)
 	}
 
-	if s.currentTry != 0 {
-		t.Errorf("Expected currentTry to be 0, got %d", s.currentTry)
+	if s.CurrentTry != 0 {
+		t.Errorf("Expected CurrentTry to be 0, got %d", s.CurrentTry)
 	}
 }
 
@@ -43,7 +43,7 @@ func TestCalculateBackoff(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		s.currentTry = tt.try
+		s.CurrentTry = tt.try
 		got := s.CalculateBackoff()
 		if got != tt.expected {
 			t.Errorf("For try %d, expected backoff %v, got %v", tt.try, tt.expected, got)

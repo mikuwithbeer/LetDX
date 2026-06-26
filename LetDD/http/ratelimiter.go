@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -20,13 +19,6 @@ func (s *Server) RateLimiter() middleware.RateLimiterConfig {
 
 			return true
 		},
-		Store: middleware.NewRateLimiterMemoryStoreWithConfig(
-			middleware.RateLimiterMemoryStoreConfig{
-				Rate:      1.0 / 60.0,
-				Burst:     1,
-				ExpiresIn: 3 * time.Minute,
-			},
-		),
 		IdentifierExtractor: func(ctx *echo.Context) (string, error) {
 			// Extract the transfer request from the context.
 			postTransfer, err := BindAndValidate[PostTransferRequest](ctx)
@@ -37,8 +29,9 @@ func (s *Server) RateLimiter() middleware.RateLimiterConfig {
 			ctx.Set("transfer", postTransfer) // Store the request in the context for later use
 			return strconv.FormatUint(*postTransfer.FromID, 10), nil
 		},
+		Store: middleware.NewRateLimiterMemoryStoreWithConfig(*s.Config.RateLimiter), // Guaranteed that rate limiter store is not nil here
 		ErrorHandler: func(c *echo.Context, err error) error {
-			return c.JSON(http.StatusForbidden, map[string]string{"error": "Invalid request"})
+			return c.JSON(http.StatusForbidden, map[string]string{"error": "Invalid Request"})
 		},
 		DenyHandler: func(c *echo.Context, identifier string, err error) error {
 			return c.JSON(http.StatusTooManyRequests, map[string]string{"error": "Rate limit exceeded"})

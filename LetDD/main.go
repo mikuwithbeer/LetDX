@@ -57,7 +57,7 @@ func run(ctx context.Context) error {
 	config.Collect()
 
 	// Create a TCP client.
-	client := tcp.NewClient(config.ConnectAddress)
+	client := tcp.NewClient(config.ConnectAddress, config.Supervisor)
 	defer client.Close()
 
 	// Create and start the HTTP server.
