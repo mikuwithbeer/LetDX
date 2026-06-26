@@ -44,22 +44,13 @@ func NewClient(address string) *Client {
 	}
 }
 
-// Returns the current transaction count.
-func (c *Client) WalID() uint64 {
-	return c.transactions.Load()
-}
-
 // Communicates with the server by sending a request and receiving a response.
 func (c *Client) Communicate(ctx context.Context, request Request) (Response, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	// Determine if the request is one that modifies transactions.
+	// Flag to determine whether the transaction counter should be updated after a successful operation.
 	updateTransactions := false
-	switch request.(type) {
-	case AddAccountRequest, MakeTransferRequest, UpdateAccountRequest:
-		updateTransactions = true
-	}
 
 	var response Response
 	var err error
@@ -68,6 +59,13 @@ func (c *Client) Communicate(ctx context.Context, request Request) (Response, er
 	for c.supervisor.Try(ctx) {
 		if err = c.connect(ctx); err != nil {
 			continue
+		}
+
+		// Set the ID for requests that require it.
+		switch request := request.(type) {
+		case WalRequest:
+			request.SetID(c.transactions.Load())
+			updateTransactions = true
 		}
 
 		if err = c.sendRequest(request); err != nil {
@@ -90,7 +88,7 @@ func (c *Client) Communicate(ctx context.Context, request Request) (Response, er
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("LetDB communication failed after retries: %w", err)
+		return nil, fmt.Errorf("communication failed after retries: %w", err)
 	}
 
 	// Increment the transaction counter.
@@ -133,7 +131,7 @@ func (c *Client) connect(ctx context.Context) error {
 	c.writer = bufio.NewWriter(connection) // Initialize a buffered writer for the connection
 
 	// Synchronize with the server to get the current transaction count.
-	if err := c.sendRequest(CountEntriesRequest{}); err != nil {
+	if err := c.sendRequest(CountDatabaseRequest{}); err != nil {
 		c.disconnect()
 		return fmt.Errorf("handshake send failed: %w", err)
 	}
@@ -145,8 +143,9 @@ func (c *Client) connect(ctx context.Context) error {
 	}
 
 	// Handle the response from the server.
-	if response.Kind() == CountEntriesResponseKind {
-		c.transactions.Store(response.(CountEntriesResponse).Count)
+	if response.Kind() == CountDatabaseResponseKind {
+		count := response.(CountDatabaseResponse)
+		c.transactions.Store(count.Transactions) // Synchronize the transaction counter
 	} else {
 		c.disconnect()
 		return fmt.Errorf("unexpected handshake response: %s", response.Kind())
