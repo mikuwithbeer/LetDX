@@ -12,17 +12,30 @@ add_library(CompilationOpts INTERFACE)
 add_library(LetDX::CompilationOpts ALIAS CompilationOpts)
 
 target_compile_options(CompilationOpts INTERFACE
+    # --- Warnings ---
     -Wall
     -Wextra
     -Wpedantic
+    # --- Type Safety ---
     -Wconversion
     -Wshadow
+    # --- Function Declarations ---
     -Wstrict-prototypes
     -Wmissing-prototypes
+    -Wold-style-definition
     -Werror=implicit-function-declaration
+    # --- Format Strings ---
     -Wformat=2
+    # --- Code Quality ---
     -Wundef
-    -Wunreachable-code
+    -Wnull-dereference
+    -Wpointer-arith
+    -Wcast-align
+    -Wcast-qual
+    -Wbad-function-cast
+    -Wvla
+    -Wimplicit-fallthrough
+    -Wunused-macros
 )
 
 target_compile_definitions(CompilationOpts INTERFACE

@@ -39,7 +39,7 @@ constexpr bool LET_CLI_DEFAULT_TRUNCATE_ON_FAIL = false;
  * This structure holds the configuration options parsed from the command line arguments.
  */
 typedef struct {
-    char *storage_file;
+    const char *storage_file;
 
     let_u32_t read_timeout;
     let_u32_t write_timeout;

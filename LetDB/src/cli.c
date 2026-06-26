@@ -34,7 +34,7 @@ static const struct option let_cli_options[] = {
 
 let_cli_t let_cli_empty(void) {
     return (let_cli_t){
-        .storage_file = (char *) LET_CLI_DEFAULT_STORAGE_FILE,
+        .storage_file = LET_CLI_DEFAULT_STORAGE_FILE,
 
         .read_timeout = LET_CLI_DEFAULT_READ_TIMEOUT,
         .write_timeout = LET_CLI_DEFAULT_WRITE_TIMEOUT,
