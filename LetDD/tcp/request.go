@@ -12,6 +12,12 @@ type Request interface {
 	Encode() []byte
 }
 
+// Defines the interface for requests that require an ID to proceed.
+type WalRequest interface {
+	// Sets the WAL ID for the request.
+	SetID(id uint64)
+}
+
 // Represents a request to initiate a handshake with the server.
 type MagicRequest struct{}
 
@@ -29,6 +35,8 @@ func (r AddAccountRequest) Encode() []byte {
 	return fmt.Appendf(nil, "+%d %s %s %d\n", r.WalID, r.Credits, r.Debits, r.Flags)
 }
 
+func (r *AddAccountRequest) SetID(id uint64) { r.WalID = id }
+
 // Represents a request to make a transfer between accounts.
 type MakeTransferRequest struct {
 	WalID  uint64
@@ -41,6 +49,8 @@ func (r MakeTransferRequest) Encode() []byte {
 	return fmt.Appendf(nil, "%%%d %d %d %s\n", r.WalID, r.FromID, r.ToID, r.Amount)
 }
 
+func (r *MakeTransferRequest) SetID(id uint64) { r.WalID = id }
+
 // Represents a request to retrieve account details from the server.
 type GetAccountRequest struct {
 	AccountID uint64
@@ -48,10 +58,10 @@ type GetAccountRequest struct {
 
 func (r GetAccountRequest) Encode() []byte { return fmt.Appendf(nil, "?%d\n", r.AccountID) }
 
-// Represents a request to count the number of entries in the server.
-type CountEntriesRequest struct{}
+// Represents a request to count the number of accounts and transactions.
+type CountDatabaseRequest struct{}
 
-func (r CountEntriesRequest) Encode() []byte { return []byte("#\n") }
+func (r CountDatabaseRequest) Encode() []byte { return []byte("#\n") }
 
 // Represents a request to update an existing account on the server.
 type UpdateAccountRequest struct {
@@ -63,6 +73,8 @@ type UpdateAccountRequest struct {
 func (r UpdateAccountRequest) Encode() []byte {
 	return fmt.Appendf(nil, "=%d %d %d\n", r.WalID, r.AccountID, r.Flags)
 }
+
+func (r *UpdateAccountRequest) SetID(id uint64) { r.WalID = id }
 
 // Represents a request to close the connection with the server.
 type CloseRequest struct{}

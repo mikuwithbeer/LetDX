@@ -45,8 +45,8 @@ func TestRequests(t *testing.T) {
 			expected: "?834858\n",
 		},
 		{
-			name:     "Count Entries Request",
-			request:  CountEntriesRequest{},
+			name:     "Count Database Request",
+			request:  CountDatabaseRequest{},
 			expected: "#\n",
 		},
 		{

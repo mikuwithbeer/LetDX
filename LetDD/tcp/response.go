@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	MagicResponseKind        = "LET" // Response to a handshake request
-	AddAccountResponseKind   = "AID" // Response to an add account request
-	GetAccountResponseKind   = "ACC" // Response to a get account request
-	CountEntriesResponseKind = "SEC" // Response to a count entries request
-	OkResponseKind           = "OKE" // Response to a successful operation
-	ErrorResponseKind        = "ERR" // Response to an error condition
+	MagicResponseKind         = "LET" // Response to a handshake request
+	AddAccountResponseKind    = "AID" // Response to an add account request
+	GetAccountResponseKind    = "ACC" // Response to a get account request
+	CountDatabaseResponseKind = "LEN" // Response to a count database request
+	OkResponseKind            = "OKE" // Response to a successful operation
+	ErrorResponseKind         = "ERR" // Response to an error condition
 )
 
 // Defines the interface for TCP responses.
@@ -44,12 +44,13 @@ type GetAccountResponse struct {
 
 func (GetAccountResponse) Kind() string { return GetAccountResponseKind }
 
-// Represents a response to a count entries request.
-type CountEntriesResponse struct {
-	Count uint64
+// Represents a response to a count database request.
+type CountDatabaseResponse struct {
+	Accounts     uint64
+	Transactions uint64
 }
 
-func (CountEntriesResponse) Kind() string { return CountEntriesResponseKind }
+func (CountDatabaseResponse) Kind() string { return CountDatabaseResponseKind }
 
 // Represents a response to a successful operation.
 type OkResponse struct{}
@@ -123,17 +124,22 @@ func ParseResponse(data []byte) (Response, error) {
 		}
 
 		return GetAccountResponse{Credits: credits, Debits: debits, Flags: uint8(flags)}, nil
-	case CountEntriesResponseKind:
-		if len(parameters) != 2 {
-			return nil, fmt.Errorf("invalid count entries response format")
+	case CountDatabaseResponseKind:
+		if len(parameters) != 3 {
+			return nil, fmt.Errorf("invalid count database response format")
 		}
 
-		count, err := strconv.ParseUint(string(parameters[1]), 16, 64)
+		accounts, err := strconv.ParseUint(string(parameters[1]), 16, 64)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse count: %w", err)
+			return nil, fmt.Errorf("failed to parse accounts: %w", err)
 		}
 
-		return CountEntriesResponse{Count: count}, nil
+		transactions, err := strconv.ParseUint(string(parameters[2]), 16, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse transactions: %w", err)
+		}
+
+		return CountDatabaseResponse{Accounts: accounts, Transactions: transactions}, nil
 	case ErrorResponseKind:
 		if len(parameters) != 2 {
 			return nil, fmt.Errorf("invalid error response format")

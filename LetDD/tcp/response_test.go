@@ -43,9 +43,9 @@ func TestResponse(t *testing.T) {
 			failOnPurpose: false,
 		},
 		{
-			name:          "Count Entries Response",
-			input:         []byte("SEC 4F2"),
-			expected:      CountEntriesResponse{Count: 0x4F2},
+			name:          "Count Database Response",
+			input:         []byte("LEN 4F2 1A3"),
+			expected:      CountDatabaseResponse{Accounts: 0x4F2, Transactions: 0x1A3},
 			failOnPurpose: false,
 		},
 		{
