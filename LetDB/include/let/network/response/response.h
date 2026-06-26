@@ -24,7 +24,7 @@ typedef enum : let_u8_t {
     LET_NETWORK_RESPONSE_TYPE_MAGIC,
     LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT,
     LET_NETWORK_RESPONSE_TYPE_GET_ACCOUNT,
-    LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES,
+    LET_NETWORK_RESPONSE_TYPE_COUNT_DATABASE,
     LET_NETWORK_RESPONSE_TYPE_OK,
     LET_NETWORK_RESPONSE_TYPE_ERROR,
 } let_network_response_type_t;
@@ -39,8 +39,12 @@ typedef union {
         let_u8_t flags;
     } get_account;
 
+    struct {
+        let_u64_t accounts;
+        let_u64_t entries;
+    } count_database;
+
     let_u64_t add_account; // Account ID
-    let_u64_t count_entries; // Number of entries in the WAL
     let_error_t error; // Error information
 } let_network_response_data_t;
 

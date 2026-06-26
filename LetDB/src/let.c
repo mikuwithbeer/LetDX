@@ -277,9 +277,10 @@ static let_error_t let_request(const let_network_request_t *network_request,
             network_response->data.get_account.flags = account.flags;
             break;
         }
-        case LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES:
-            network_response->type = LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES;
-            network_response->data.count_entries = let.storage_wal.transactions;
+        case LET_NETWORK_REQUEST_TYPE_COUNT_DATABASE:
+            network_response->type = LET_NETWORK_RESPONSE_TYPE_COUNT_DATABASE;
+            network_response->data.count_database.accounts = let.account_list->length;
+            network_response->data.count_database.entries = let.storage_wal.transactions;
             break;
         case LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT: {
             const auto account_id = network_request->data.update_account.account_id;

@@ -116,7 +116,7 @@ static let_error_t let_network_request_decoder_run_command(let_network_request_d
             request_decoder->request_argc = 1;
             break;
         case '#':
-            request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES;
+            request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_COUNT_DATABASE;
             break;
         case '=':
             request_decoder->request.type = LET_NETWORK_REQUEST_TYPE_UPDATE_ACCOUNT; // wal_id, account_id, flags

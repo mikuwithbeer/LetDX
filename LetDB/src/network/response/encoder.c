@@ -43,10 +43,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
         case LET_NETWORK_RESPONSE_TYPE_ADD_ACCOUNT:
             response_encoder->buffer[response_encoder->buffer_length++] = 'A';
             response_encoder->buffer[response_encoder->buffer_length++] = 'I';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'D'; // Add Account ID
-            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
+            response_encoder->buffer[response_encoder->buffer_length++] = 'D';
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
 
-            // Encode the account ID as a hexadecimal string.
+            // Encode the account ID.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.add_account,
@@ -60,10 +60,10 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
         case LET_NETWORK_RESPONSE_TYPE_GET_ACCOUNT:
             response_encoder->buffer[response_encoder->buffer_length++] = 'A';
             response_encoder->buffer[response_encoder->buffer_length++] = 'C';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'C'; // Get Account Info
-            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
+            response_encoder->buffer[response_encoder->buffer_length++] = 'C';
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
 
-            // Encode the account credits as a hexadecimal string.
+            // Encode the account credits.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.get_account.credits,
@@ -73,9 +73,9 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 return encoder_result;
             }
 
-            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
 
-            // Encode the account debits as a hexadecimal string.
+            // Encode the account debits.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.get_account.debits,
@@ -85,10 +85,9 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
                 return encoder_result;
             }
 
-            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
 
-
-            // Encode the account flags as a hexadecimal string.
+            // Encode the account flags.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &response_encoder->response.data.get_account.flags,
@@ -99,17 +98,29 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
             }
 
             break;
-        case LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES:
-            response_encoder->buffer[response_encoder->buffer_length++] = 'S';
+        case LET_NETWORK_RESPONSE_TYPE_COUNT_DATABASE:
+            response_encoder->buffer[response_encoder->buffer_length++] = 'L';
             response_encoder->buffer[response_encoder->buffer_length++] = 'E';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'C'; // Count Entries
-            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
+            response_encoder->buffer[response_encoder->buffer_length++] = 'N';
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
 
-            // Encode the count of entries as a hexadecimal string.
+            // Encode the count of accounts.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
-                &response_encoder->response.data.count_entries,
-                sizeof(response_encoder->response.data.count_entries));
+                &response_encoder->response.data.count_database.accounts,
+                sizeof(response_encoder->response.data.count_database.accounts));
+
+            if (let_error_exists(encoder_result)) {
+                return encoder_result;
+            }
+
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
+
+            // Encode the count of entries.
+            encoder_result = let_network_response_encoder_run_integer(
+                response_encoder,
+                &response_encoder->response.data.count_database.entries,
+                sizeof(response_encoder->response.data.count_database.entries));
 
             if (let_error_exists(encoder_result)) {
                 return encoder_result;
@@ -124,12 +135,12 @@ let_error_t let_network_response_encoder_run(let_network_response_encoder_t *res
         case LET_NETWORK_RESPONSE_TYPE_ERROR:
             response_encoder->buffer[response_encoder->buffer_length++] = 'E';
             response_encoder->buffer[response_encoder->buffer_length++] = 'R';
-            response_encoder->buffer[response_encoder->buffer_length++] = 'R'; // Error Response
-            response_encoder->buffer[response_encoder->buffer_length++] = ' '; // Space separator
+            response_encoder->buffer[response_encoder->buffer_length++] = 'R';
+            response_encoder->buffer[response_encoder->buffer_length++] = ' ';
 
             const auto error_code = let_error_code(response_encoder->response.data.error);
 
-            // Encode the error code as a hexadecimal string.
+            // Encode the error code.
             encoder_result = let_network_response_encoder_run_integer(
                 response_encoder,
                 &error_code,

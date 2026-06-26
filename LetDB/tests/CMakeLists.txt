@@ -1,5 +1,5 @@
 # --- Test Sources ---
-set(TEST_SOURCES
+set(TestSources
     network/request.c
     network/response.c
     network/server.c
@@ -10,7 +10,7 @@ set(TEST_SOURCES
 )
 
 # --- Test Executables ---
-foreach (SourceFile IN LISTS TEST_SOURCES)
+foreach (SourceFile IN LISTS TestSources)
     get_filename_component(BaseName ${SourceFile} NAME_WE)
     set(TargetName "test_${BaseName}")
 
