@@ -5,6 +5,8 @@ project(LetDB
 
 # --- Core Library ---
 add_library(Let STATIC)
+add_library(LetDB::Let ALIAS Let)
+
 target_sources(Let PRIVATE
     src/network/request/decoder.c
     src/network/request/request.c
@@ -22,13 +24,19 @@ target_sources(Let PRIVATE
     src/state.c
 )
 
-target_include_directories(Let PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(Let PRIVATE CompilationOpts)
-target_compile_definitions(Let PRIVATE LET_VERSION="${PROJECT_VERSION}")
+target_include_directories(Let PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_compile_definitions(Let PRIVATE
+    LET_VERSION="${PROJECT_VERSION}"
+)
+
+target_link_libraries(Let PRIVATE LetDX::CompilationOpts)
 
 # --- Executable ---
 add_executable(LetDB src/main.c)
-target_link_libraries(LetDB PRIVATE Let)
+target_link_libraries(LetDB PRIVATE LetDB::Let)
 
 # --- Testing ---
 enable_testing()

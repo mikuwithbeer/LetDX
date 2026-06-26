@@ -9,6 +9,8 @@ set(CMAKE_C_EXTENSIONS ON)
 
 # --- Global Compilation Options ---
 add_library(CompilationOpts INTERFACE)
+add_library(LetDX::CompilationOpts ALIAS CompilationOpts)
+
 target_compile_options(CompilationOpts INTERFACE
     -Wall
     -Wextra
@@ -19,9 +21,10 @@ target_compile_options(CompilationOpts INTERFACE
     -Wmissing-prototypes
     -Werror=implicit-function-declaration
     -Wformat=2
+    -Wundef
+    -Wunreachable-code
 )
 
-# --- Debug Flags ---
 target_compile_definitions(CompilationOpts INTERFACE
     $<$<CONFIG:Debug>:DEBUG>
 )
