@@ -68,16 +68,17 @@ static void test_response_get_account(void) {
 }
 
 static void test_response_count_entries(void) {
-    response.type = LET_NETWORK_RESPONSE_TYPE_COUNT_ENTRIES;
-    response.data.count_entries = 123456789;
+    response.type = LET_NETWORK_RESPONSE_TYPE_COUNT_DATABASE;
+    response.data.count_database.accounts = 123456789;
+    response.data.count_database.entries = 0xFF;
 
     error = let_network_response_encode(response, buffer, sizeof(buffer), &written);
     assert(!let_error_exists(error));
-    assert(written == 13);
+    assert(written == 16);
 
-    assert(buffer[0] == 'S');
+    assert(buffer[0] == 'L');
     assert(buffer[1] == 'E');
-    assert(buffer[2] == 'C');
+    assert(buffer[2] == 'N');
     assert(buffer[3] == ' ');
     assert(buffer[4] == '0');
     assert(buffer[5] == '7');
@@ -87,7 +88,10 @@ static void test_response_count_entries(void) {
     assert(buffer[9] == 'D');
     assert(buffer[10] == '1');
     assert(buffer[11] == '5');
-    assert(buffer[12] == '\n');
+    assert(buffer[12] == ' ');
+    assert(buffer[13] == 'F');
+    assert(buffer[14] == 'F');
+    assert(buffer[15] == '\n');
 }
 
 static void test_response_ok(void) {

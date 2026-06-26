@@ -93,7 +93,7 @@ static void test_request_commands(void) {
     let_u8_t test_6[] = "# ";
     error = let_network_request_decode(test_6, sizeof(test_6) - 1, &request);
     assert(!let_error_exists(error));
-    assert(request.type == LET_NETWORK_REQUEST_TYPE_COUNT_ENTRIES);
+    assert(request.type == LET_NETWORK_REQUEST_TYPE_COUNT_DATABASE);
 
     let_u8_t test_7[] = ". ";
     error = let_network_request_decode(test_7, sizeof(test_7) - 1, &request);
