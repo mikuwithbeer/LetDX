@@ -26,7 +26,8 @@ func NewSupervisor(cancelAfter uint64, maximumDelay, minimumDelay time.Duration)
 	}
 }
 
-// Tries to execute the operation, returning true if successful or false if the maximum number of attempts has been reached.
+// Attempts to perform an operation.
+// Returns true if the operation can proceed, false otherwise.
 func (s *Supervisor) Try(ctx context.Context) bool {
 	// Abort immediately if the context is already done.
 	if ctx.Err() != nil {

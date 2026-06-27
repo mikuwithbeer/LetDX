@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewSupervisor(t *testing.T) {
-	s := NewSupervisor(5, 10*time.Millisecond, 100*time.Millisecond)
+	s := NewSupervisor(5, 100*time.Millisecond, 10*time.Millisecond)
 
 	if s.CancelAfter != 5 {
 		t.Errorf("Expected CancelAfter to be 5, got %d", s.CancelAfter)
@@ -29,7 +29,7 @@ func TestNewSupervisor(t *testing.T) {
 func TestCalculateBackoff(t *testing.T) {
 	minDelay := 10 * time.Millisecond
 	maxDelay := 50 * time.Millisecond
-	s := NewSupervisor(10, minDelay, maxDelay)
+	s := NewSupervisor(10, maxDelay, minDelay)
 
 	tests := []struct {
 		try      uint64
