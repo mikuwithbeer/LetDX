@@ -22,7 +22,7 @@ AI is used within the project but only in limited and clearly defined areas:
 
 - **Documentation & Comments**: AI is used to help for documenting and to ensure comments use clear, proper English.
 - **Code Generation**: We are **NOT** relying on AI to write the actual code or core logic. This is a deliberate choice
-  to maintain code quality and demystify the architecture. We don't want to turn the codebase to unmaintainable slop.
+  to maintain code quality. We don't want to turn the codebase to unmaintainable slop.
 
 ---
 
@@ -63,7 +63,7 @@ To compile from source, make sure your environment meets the following requireme
 
 ---
 
-### Docker Deployment
+## Docker Deployment
 
 You can quickly deploy the project using pre-built images hosted on the GitHub Container Registry (GHCR).
 
@@ -112,14 +112,14 @@ You can quickly deploy the project using pre-built images hosted on the GitHub C
    To verify that both services are running smoothly, you can check the container status using `docker compose ps`.
 
 > [!IMPORTANT]
-> The provided `docker-compose.yml` file is a simple yet powerful setup.
+> The provided `docker-compose.yml` serves as a baseline configuration.
 >
 > Depending on your specific use case, you might need to modify the given file (e.g., changing port mappings, updating
 > volume paths, or configuring environment variables).
 
 ---
 
-### Project Licensing
+## Project Licensing
 
 We use a dual-licensing model:
 
