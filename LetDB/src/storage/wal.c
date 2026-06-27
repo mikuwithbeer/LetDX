@@ -48,6 +48,14 @@ let_storage_wal_t let_storage_wal_empty(void) {
 let_error_t let_storage_wal_init(let_storage_wal_t *storage_wal,
                                  let_state_t *state,
                                  const char *path) {
+    if (state == nullptr) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_STATE);
+    }
+
+    if (path == nullptr) {
+        return let_error_new(LET_ERROR_ID_STORAGE, LET_ERROR_STORAGE_WAL_INVALID_PATH);
+    }
+
     storage_wal->state = state;
 
     // Attempt to create a new file exclusively. If it already exists, open it for reading and writing.

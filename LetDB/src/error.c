@@ -255,6 +255,12 @@ let_error_report_t let_error_report(const let_error_t error) {
                 case LET_ERROR_STORAGE_WAL_INVALID_TIME:
                     error_report.message = "The provided timestamp for storage subsystem is invalid";
                     break;
+                case LET_ERROR_STORAGE_WAL_INVALID_STATE:
+                    error_report.message = "The storage file contains an invalid state that cannot be processed";
+                    break;
+                case LET_ERROR_STORAGE_WAL_INVALID_PATH:
+                    error_report.message = "The provided path for storage subsystem is invalid";
+                    break;
             }
 
             break;
