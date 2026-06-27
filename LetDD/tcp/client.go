@@ -17,7 +17,7 @@ type Client struct {
 	connection net.Conn
 	address    string
 
-	transactions atomic.Uint64 // Keeps track of the number of transactions
+	transactions atomic.Uint64
 
 	reader *bufio.Reader
 	writer *bufio.Writer
@@ -28,14 +28,15 @@ type Client struct {
 
 // Creates a new TCP client instance with the specified server address.
 func NewClient(address string, observer *supervisor.Supervisor) *Client {
-	// If no supervisor is provided, create a default one with predefined parameters.
 	if observer == nil {
+		// Create a default one with predefined parameters.
 		observer = supervisor.NewSupervisor(5, 5*time.Second, 200*time.Millisecond)
 	}
 
 	return &Client{
-		connection:   nil,
-		address:      address,
+		connection: nil,
+		address:    address,
+
 		transactions: atomic.Uint64{},
 
 		reader: nil,
@@ -48,10 +49,10 @@ func NewClient(address string, observer *supervisor.Supervisor) *Client {
 
 // Communicates with the server by sending a request and receiving a response.
 func (c *Client) Communicate(ctx context.Context, request Request) (Response, error) {
+	// Server is single-threaded, only one request is processed at a time.
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	// Flag to determine whether the transaction counter should be updated after a successful operation.
 	updateTransactions := false
 
 	var response Response
@@ -127,7 +128,7 @@ func (c *Client) connect(ctx context.Context) error {
 		return err
 	}
 
-	c.connection = connection // Store the established connection
+	c.connection = connection
 
 	c.reader = bufio.NewReader(connection) // Initialize a buffered reader for the connection
 	c.writer = bufio.NewWriter(connection) // Initialize a buffered writer for the connection
@@ -181,10 +182,8 @@ func (c *Client) disconnect() error {
 		return nil
 	}
 
-	// Close the underlying TCP connection.
 	err := c.connection.Close()
 
-	// Clean up the client state.
 	c.connection = nil
 
 	c.reader = nil

@@ -31,10 +31,10 @@ func (s *Server) RateLimiter() middleware.RateLimiterConfig {
 		},
 		Store: middleware.NewRateLimiterMemoryStoreWithConfig(*s.Config.RateLimiter), // Guaranteed that rate limiter store is not nil here
 		ErrorHandler: func(c *echo.Context, err error) error {
-			return c.JSON(http.StatusForbidden, map[string]string{"error": "Invalid Request"})
+			return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid Request"})
 		},
 		DenyHandler: func(c *echo.Context, identifier string, err error) error {
-			return c.JSON(http.StatusTooManyRequests, map[string]string{"error": "Rate limit exceeded"})
+			return c.JSON(http.StatusTooManyRequests, map[string]string{"message": "Need to Cooldown"})
 		},
 	}
 }

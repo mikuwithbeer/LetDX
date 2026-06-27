@@ -11,12 +11,12 @@ import (
 type PostAccountRequest struct {
 	Credits *uint128.Uint128 `json:"credits" validate:"required"`
 	Debits  *uint128.Uint128 `json:"debits" validate:"required"`
-	Flags   *uint8           `json:"flags" validate:"required"`
+	Flags   Flags            `json:"flags" validate:"required"`
 }
 
 // Represents the structure of a request to update an existing account's flags.
 type UpdateAccountRequest struct {
-	Flags *uint8 `json:"flags" validate:"required"`
+	Flags Flags `json:"flags" validate:"required"`
 }
 
 // Represents the structure of a request to create a new transfer.

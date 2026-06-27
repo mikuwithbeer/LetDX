@@ -20,7 +20,7 @@ type Response interface {
 type GetAccountResponse struct {
 	Credits uint128.Uint128 `json:"credits"`
 	Debits  uint128.Uint128 `json:"debits"`
-	Flags   uint8           `json:"flags"`
+	Flags   Flags           `json:"flags"`
 }
 
 func (r GetAccountResponse) ToJSON(ctx *echo.Context) error {
@@ -59,7 +59,7 @@ func ToResponse(r tcp.Response) (Response, error) {
 	case tcp.GetAccountResponse:
 		return GetAccountResponse{Credits: response.Credits,
 			Debits: response.Debits,
-			Flags:  response.Flags,
+			Flags:  Uint8ToFlags(response.Flags),
 		}, nil
 	case tcp.AddAccountResponse:
 		return PostAccountResponse{

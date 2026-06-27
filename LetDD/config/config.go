@@ -13,7 +13,6 @@ import (
 )
 
 // Represents the permission level for the server.
-// It is defined as a bitmask, allowing for combinations of permissions.
 type Permission uint8
 
 const (

@@ -32,9 +32,14 @@ func (s *Server) UpdateAccount(ctx *echo.Context) error {
 		return err
 	}
 
+	flags, err := updateAccount.Flags.ToUint8()
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid Flags"})
+	}
+
 	return s.Communicate(ctx, &tcp.UpdateAccountRequest{
 		AccountID: accountId,
-		Flags:     *updateAccount.Flags,
+		Flags:     flags,
 	})
 }
 
@@ -45,10 +50,15 @@ func (s *Server) PostAccount(ctx *echo.Context) error {
 		return err
 	}
 
+	flags, err := postAccount.Flags.ToUint8()
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid Flags"})
+	}
+
 	return s.Communicate(ctx, &tcp.AddAccountRequest{
 		Credits: *postAccount.Credits,
 		Debits:  *postAccount.Debits,
-		Flags:   *postAccount.Flags,
+		Flags:   flags,
 	})
 }
 
@@ -65,7 +75,7 @@ func (s *Server) PostTransfer(ctx *echo.Context) error {
 			Amount: *transferResult.Amount,
 		}
 	case nil:
-		// No ratelimiter was set, so we bind and validate the request directly.
+		// No rate limiter was set, so we bind and validate the request directly.
 		postTransfer, err := BindAndValidate[PostTransferRequest](ctx)
 		if err != nil {
 			return err
@@ -77,7 +87,7 @@ func (s *Server) PostTransfer(ctx *echo.Context) error {
 			Amount: *postTransfer.Amount,
 		}
 	default:
-		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Unreachable Error"})
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Unreachable Error"})
 	}
 
 	return s.Communicate(ctx, makeTransfer)
