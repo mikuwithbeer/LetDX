@@ -63,6 +63,16 @@ To compile from source, make sure your environment meets the following requireme
 
 ---
 
+## Documentation
+
+> [!NOTE]
+> This section is currently being expanded and refined.
+
+Comprehensive technical documentation and architectural details are maintained inside the `docs/` directory.
+Check out the [OVERVIEW.md](docs/OVERVIEW.md) file for a high-level overview of the project.
+
+---
+
 ## Docker Deployment
 
 You can quickly deploy the project using pre-built images hosted on the GitHub Container Registry (GHCR).
